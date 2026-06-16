@@ -9,6 +9,9 @@ export const adminEmails = ['gracewu@unc.edu', 'grace0618w@gmail.com', 'akpsi.ch
 export function isAllowedEmail(email) {
   if (!email) return false
   const normalizedEmail = email.trim().toLowerCase()
+  if (adminEmails.includes(normalizedEmail)) {
+    return true
+  }
   const domain = normalizedEmail.split('@')[1] || ''
   return allowedEmailDomains.includes(domain)
 }
