@@ -4,7 +4,7 @@ export const allowedEmailDomains = ['unc.edu', 'ad.unc.edu']
 
 // Admin accounts for early access.
 // Later the admin role should be resolved from the members collection.
-export const adminEmails = ['gracewu@unc.edu']
+export const adminEmails = ['gracewu@unc.edu', 'grace0618w@gmail.com', 'akpsi.chapelhill@gmail.com']
 
 export function isAllowedEmail(email) {
   if (!email) return false
