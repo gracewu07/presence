@@ -1,6 +1,7 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
 import Button from '../components/Button'
 import { useAuth } from '../context/AuthContext'
+import { events as staticEvents } from '../data/events'
 import { fetchEvents, fetchMemberCheckIns, findCheckInByEventAndMember, recordCheckIn } from '../firebase'
 import { haversineDistance } from '../utils/haversine'
 
@@ -52,15 +53,21 @@ function MemberCheckIn() {
       setMessage(null)
 
       try {
-        const [eventsSnapshot, checkInsSnapshot] = await Promise.all([
-          fetchEvents(),
-          currentUser ? fetchMemberCheckIns(currentUser.uid) : Promise.resolve([]),
-        ])
-        setEvents(eventsSnapshot)
+        const eventsPromise = fetchEvents()
+        const checkInsPromise = currentUser
+          ? fetchMemberCheckIns(currentUser.uid).catch((err) => {
+              console.error('Unable to load member check-ins:', err)
+              return []
+            })
+          : Promise.resolve([])
+
+        const [eventsSnapshot, checkInsSnapshot] = await Promise.all([eventsPromise, checkInsPromise])
+        setEvents(eventsSnapshot.length > 0 ? eventsSnapshot : staticEvents)
         setMemberCheckIns(checkInsSnapshot)
       } catch (error) {
-        console.error('Unable to load check-in data:', error)
-        setMessage({ type: 'error', text: 'Unable to load events or check-in info. Please refresh the page.' })
+        console.error('Unable to load check-in events:', error)
+        setEvents(staticEvents)
+        setMemberCheckIns([])
       } finally {
         setLoading(false)
       }
@@ -68,6 +75,10 @@ function MemberCheckIn() {
 
     loadCheckInData()
   }, [currentUser])
+
+  useEffect(() => {
+    if (!events.length) return
+  }, [events])
 
   const enhancedEvents = useMemo(() => {
     const now = new Date()
@@ -194,13 +205,16 @@ function MemberCheckIn() {
               return (
                 <article
                   key={event.id}
-                  className={`card checkin-card ${isSelected ? 'checkin-card--selected' : ''}`}
+                  className={`card checkin-card event-surface event-surface--${typeClass} ${isSelected ? 'checkin-card--selected' : ''}`}
                   onClick={() => setSelectedEventId(event.id)}
                 >
-                  <div className="checkin-card__top">
+                  <div className="event-card__topline">
                     <div className={`event-card__type event-type-badge event-type-badge--${typeClass}`}>
                       {event.eventType}
                     </div>
+                    {event.required && <span className="required-note">Required</span>}
+                  </div>
+                  <div className="checkin-card__top">
                     <div className="checkin-card__meta">
                       <span>{event.date} · {event.startTime}</span>
                       <span>{event.status}</span>
@@ -210,7 +224,6 @@ function MemberCheckIn() {
                   <p className="muted">{event.locationName}</p>
                   <div className="checkin-card__footer">
                     <span>{event.points} pts</span>
-                    {event.required && <span className="required-note">Required event</span>}
                   </div>
                 </article>
               )
@@ -248,12 +261,7 @@ function MemberCheckIn() {
                   <p className="label">Points</p>
                   <p>{selectedEvent.points}</p>
                 </div>
-                {selectedEvent.required && (
-                  <div>
-                    <p className="label">Requirement</p>
-                    <p className="required-note">Required event</p>
-                  </div>
-                )}
+
               </div>
 
               <p className="muted">{selectedEvent.description}</p>

@@ -1,5 +1,6 @@
 function CalendarEventCard({ event }) {
   const isUpcoming = event.startDate > new Date()
+  const typeClass = event.eventType.replace(/\s+/g, '-').toLowerCase()
 
   const handleGoogleCalendar = () => {
     console.log('Add to Google Calendar:', event.title)
@@ -14,7 +15,13 @@ function CalendarEventCard({ event }) {
   }
 
   return (
-    <article className="card calendar-card">
+    <article className={`card calendar-card event-surface event-surface--${typeClass}`}>
+      <div className="event-card__topline">
+        <div className={`calendar-card__tag event-type-${typeClass}`}>
+          {event.eventType}
+        </div>
+        {event.required && <span className="required-note">Required</span>}
+      </div>
       <div className="calendar-card__top">
         <div>
           <span className="calendar-card__date">{event.date}</span>
@@ -23,10 +30,6 @@ function CalendarEventCard({ event }) {
             {event.startTime} - {event.endTime} · {event.locationName}
           </p>
           <p className="calendar-card__meta">{event.points} points</p>
-          {event.required && <p className="required-note">Required event</p>}
-        </div>
-        <div className={`calendar-card__tag event-type-${event.eventType.replace(/\s+/g, '-').toLowerCase()}`}>
-          {event.eventType}
         </div>
       </div>
 

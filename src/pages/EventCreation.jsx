@@ -1,16 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Button from '../components/Button'
+import { EVENT_TYPES } from '../constants/eventTypes'
 import { useAuth } from '../context/AuthContext'
 import { createEvent } from '../firebase'
-
-const eventTypes = [
-  'Chapter',
-  'Service',
-  'Professional Development',
-  'Social',
-  'Recruitment',
-]
 
 const initialFormState = {
   title: '',
@@ -163,7 +156,7 @@ const handleSubmit = async (event) => {
           Event type
           <select value={form.eventType} onChange={handleChange('eventType')}>
             <option value="">Select type</option>
-            {eventTypes.map((type) => (
+            {EVENT_TYPES.map((type) => (
               <option key={type} value={type}>
                 {type}
               </option>

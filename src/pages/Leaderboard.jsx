@@ -1,15 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
+import { EVENT_TYPE_FILTERS } from '../constants/eventTypes'
 import { useAuth } from '../context/AuthContext'
 import { fetchAppSettings, fetchCheckIns } from '../firebase'
-
-const eventTypes = [
-  'All',
-  'Chapter',
-  'Service',
-  'Professional Development',
-  'Social',
-  'Recruitment',
-]
 
 function Leaderboard() {
   const { currentUser } = useAuth()
@@ -95,7 +87,7 @@ function Leaderboard() {
           <label className="form-label">
             Event type filter
             <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-              {eventTypes.map((type) => (
+              {EVENT_TYPE_FILTERS.map((type) => (
                 <option key={type} value={type}>
                   {type}
                 </option>

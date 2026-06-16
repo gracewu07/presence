@@ -1,10 +1,33 @@
+import { useEffect, useState } from 'react'
 import EventCard from '../components/EventCard'
 import StatCard from '../components/StatCard'
-import { events } from '../data'
+import { fetchUpcomingEvents } from '../firebase'
 import { useAuth } from '../context/AuthContext'
 
 function Home() {
   const { currentUser } = useAuth()
+  const [events, setEvents] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    async function loadEvents() {
+      setLoading(true)
+      setError(null)
+      try {
+        const upcomingEvents = await fetchUpcomingEvents()
+        setEvents(upcomingEvents)
+      } catch (err) {
+        console.error('Unable to load upcoming events for Home:', err)
+        setError('Unable to load events. Please refresh the page.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadEvents()
+  }, [])
+
   const memberStats = [
     { label: 'Total Points', value: currentUser?.totalPoints ?? 0 },
     { label: 'Attendance Rate', value: `${Math.round((currentUser?.attendanceRate ?? 0) * 100)}%` },
@@ -32,11 +55,17 @@ function Home() {
           <h2>Upcoming events</h2>
           <p>Open check-ins and programs this week.</p>
         </div>
-        <div className="grid grid--cards">
-          {events.map((event) => (
-            <EventCard key={event.id} event={event} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="empty-state">Loading events…</div>
+        ) : error ? (
+          <div className="empty-state form-error">{error}</div>
+        ) : (
+          <div className="grid grid--cards">
+            {events.map((event) => (
+              <EventCard key={event.id} event={event} />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   )

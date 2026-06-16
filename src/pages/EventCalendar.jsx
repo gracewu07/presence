@@ -1,15 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import CalendarEventCard from '../components/CalendarEventCard'
+import { EVENT_TYPE_FILTERS } from '../constants/eventTypes'
+import { events as staticEvents } from '../data/events'
 import { fetchEvents } from '../firebase'
-
-const eventTypes = [
-  'All',
-  'Chapter',
-  'Service',
-  'Professional Development',
-  'Social',
-  'Recruitment',
-]
 
 const parseEventTime = (time) => {
   if (!time) return '00:00'
@@ -54,9 +47,10 @@ function EventCalendar() {
 
       try {
         const firestoreEvents = await fetchEvents()
-        setEvents(firestoreEvents)
+        setEvents(firestoreEvents.length > 0 ? firestoreEvents : staticEvents)
       } catch (err) {
-        console.error('Failed to fetch events:', err)
+        console.error('Failed to load events:', err)
+        setEvents(staticEvents)
         setError('Unable to load events. Please try again later.')
       } finally {
         setLoading(false)
@@ -131,7 +125,7 @@ function EventCalendar() {
 
       <div className="calendar-controls">
         <div className="calendar-filter-chips">
-          {eventTypes.map((type) => (
+          {EVENT_TYPE_FILTERS.map((type) => (
             <button
               key={type}
               type="button"

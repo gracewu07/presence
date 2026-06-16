@@ -13,6 +13,30 @@ import {
   limit,
   serverTimestamp,
 } from './lib/firebase'
+import { events as staticEvents } from './data/events'
+
+const parseEventDate = (date) => {
+  if (!date) return new Date().toISOString()
+  if (date.includes('-')) {
+    return new Date(`${date}T00:00:00`).toISOString()
+  }
+  const [monthName, day] = date.split(' ')
+  return new Date(`${monthName} ${day}, ${new Date().getFullYear()} 00:00:00`).toISOString()
+}
+
+const normalizeEvent = (event) => ({
+  ...event,
+  eventDate: event.eventDate || parseEventDate(event.date),
+})
+
+const mergeEventLists = (...lists) => {
+  const eventsMap = new Map()
+  lists.flat().forEach((event) => {
+    const normalized = normalizeEvent(event)
+    eventsMap.set(normalized.id, normalized)
+  })
+  return Array.from(eventsMap.values())
+}
 
 export async function fetchMemberProfile(memberId) {
   const memberRef = doc(db, 'members', memberId)
@@ -52,16 +76,30 @@ export async function createEvent(eventData) {
 export async function fetchEvents() {
   const eventsRef = collection(db, 'events')
   const q = query(eventsRef, orderBy('eventDate', 'asc'))
-  const snapshot = await getDocs(q)
-  return snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
+
+  try {
+    const snapshot = await getDocs(q)
+    const firestoreEvents = snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
+    return mergeEventLists(firestoreEvents, staticEvents)
+  } catch (error) {
+    console.error('Unable to load firestore events, falling back to static events:', error)
+    return staticEvents.map(normalizeEvent)
+  }
 }
 
 export async function fetchUpcomingEvents() {
   const eventsRef = collection(db, 'events')
   const now = new Date().toISOString()
   const q = query(eventsRef, where('eventDate', '>=', now), orderBy('eventDate', 'asc'))
-  const snapshot = await getDocs(q)
-  return snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
+
+  try {
+    const snapshot = await getDocs(q)
+    const firestoreEvents = snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
+    return mergeEventLists(firestoreEvents, staticEvents).filter((event) => event.eventDate >= now)
+  } catch (error) {
+    console.error('Unable to load upcoming firestore events, falling back to static events:', error)
+    return staticEvents.map(normalizeEvent).filter((event) => event.eventDate >= now)
+  }
 }
 
 export async function recordCheckIn(checkInData) {
