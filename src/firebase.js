@@ -103,6 +103,31 @@ export async function fetchMemberCheckIns(memberId) {
   return snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
 }
 
+export async function fetchEventById(eventId) {
+  const eventRef = doc(db, 'events', eventId)
+  const snapshot = await getDoc(eventRef)
+  if (!snapshot.exists()) {
+    return null
+  }
+  return { id: snapshot.id, ...snapshot.data() }
+}
+
+export async function findCheckInByEventAndMember(eventId, memberId) {
+  const checkInsRef = collection(db, 'checkIns')
+  const q = query(
+    checkInsRef,
+    where('eventId', '==', eventId),
+    where('memberId', '==', memberId),
+    limit(1)
+  )
+  const snapshot = await getDocs(q)
+  if (snapshot.empty) {
+    return null
+  }
+  const docSnap = snapshot.docs[0]
+  return { id: docSnap.id, ...docSnap.data() }
+}
+
 export async function fetchMembers() {
   const membersRef = collection(db, 'members')
   const snapshot = await getDocs(membersRef)
