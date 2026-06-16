@@ -1,5 +1,4 @@
 import { NavLink } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
 
 const memberLinks = [
   { to: '/', label: 'Home', end: true },
@@ -80,7 +79,6 @@ function MobileNavIcon({ label }) {
 }
 
 function Navbar({ currentUser }) {
-  const { signOut } = useAuth()
   const links = currentUser
     ? [...memberLinks, ...(currentUser.role === 'admin' ? adminLinks : [])]
     : [{ to: '/', label: 'Home', end: true }]
@@ -113,12 +111,7 @@ function Navbar({ currentUser }) {
 
         <div className="navbar__meta">
           {currentUser ? (
-            <>
-              <span>{currentUser.name}</span>
-              <button type="button" className="button button--secondary navbar__action" onClick={signOut}>
-                Sign Out
-              </button>
-            </>
+            <span>{currentUser.name}</span>
           ) : (
             <NavLink to="/login" className="button button--primary navbar__action">
               Sign In

@@ -31,18 +31,23 @@ const parseDateTime = (date, time) => {
 const canCheckIn = (event) => {
   const now = new Date()
   const start = new Date(event.startDate)
-  const earliest = new Date(start.getTime() - 10 * 60 * 1000)
-  const latest = new Date(start.getTime() + 15 * 60 * 1000)
+  const end = new Date(event.endDate)
+  const earliest = new Date(start.getTime() - 15 * 60 * 1000)
+  const latest = end
   return now >= earliest && now <= latest
 }
 
 const formatTime = (dateString) => new Date(dateString).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
 
+const getCheckInState = (event) => {
+  if (!event) return null
+  return canCheckIn(event) ? 'Check in now' : 'Upcoming'
+}
+
 function MemberCheckIn() {
   const { currentUser } = useAuth()
   const [events, setEvents] = useState([])
   const [memberCheckIns, setMemberCheckIns] = useState([])
-  const [selectedEventId, setSelectedEventId] = useState(null)
   const [message, setMessage] = useState(null)
   const [loading, setLoading] = useState(true)
   const [checkInLoading, setCheckInLoading] = useState(false)
@@ -76,10 +81,6 @@ function MemberCheckIn() {
     loadCheckInData()
   }, [currentUser])
 
-  useEffect(() => {
-    if (!events.length) return
-  }, [events])
-
   const enhancedEvents = useMemo(() => {
     const now = new Date()
     return events
@@ -93,8 +94,9 @@ function MemberCheckIn() {
       .sort((a, b) => a.startDate - b.startDate)
   }, [events])
 
-  const selectedEvent = enhancedEvents.find((event) => event.id === selectedEventId)
+  const selectedEvent = enhancedEvents[0] || null
   const checkedIn = selectedEvent && memberCheckIns.some((checkIn) => checkIn.eventId === selectedEvent.id)
+  const checkInState = getCheckInState(selectedEvent)
 
   const handleCheckIn = async () => {
     if (!currentUser) {
@@ -103,7 +105,7 @@ function MemberCheckIn() {
     }
 
     if (!selectedEvent) {
-      setMessage({ type: 'error', text: 'Please select an event first.' })
+      setMessage({ type: 'error', text: 'No upcoming event is available for check-in.' })
       return
     }
 
@@ -120,7 +122,7 @@ function MemberCheckIn() {
     if (!canCheckIn(selectedEvent)) {
       setMessage({
         type: 'error',
-        text: 'Check-in is only available from 10 minutes before the event starts until 15 minutes after it starts.',
+        text: 'Check-in is only available from 15 minutes before the event starts until the event ends.',
       })
       return
     }
@@ -190,109 +192,83 @@ function MemberCheckIn() {
         <div>
           <p className="eyebrow">Check-In</p>
           <h1>Member Check-In</h1>
-          <p className="muted">Select an active or upcoming event and record attendance.</p>
+          <p className="muted">Check in to the next active or upcoming chapter event.</p>
         </div>
       </div>
 
-      <div className="checkin-layout">
-        <div className="checkin-list">
-          {loading ? (
-            <div className="empty-state">Loading events…</div>
-          ) : enhancedEvents.length > 0 ? (
-            enhancedEvents.map((event) => {
-              const isSelected = event.id === selectedEventId
-              const typeClass = event.eventType.toLowerCase().replace(/[^a-z0-9]+/g, '-')
-              return (
-                <article
-                  key={event.id}
-                  className={`card checkin-card event-surface event-surface--${typeClass} ${isSelected ? 'checkin-card--selected' : ''}`}
-                  onClick={() => setSelectedEventId(event.id)}
-                >
-                  <div className="event-card__topline">
-                    <div className={`event-card__type event-type-badge event-type-badge--${typeClass}`}>
-                      {event.eventType}
-                    </div>
-                    {event.required && <span className="required-note">Required</span>}
-                  </div>
-                  <div className="checkin-card__top">
-                    <div className="checkin-card__meta">
-                      <span>{event.date} · {event.startTime}</span>
-                      <span>{event.status}</span>
-                    </div>
-                  </div>
-                  <h3>{event.title}</h3>
-                  <p className="muted">{event.locationName}</p>
-                  <div className="checkin-card__footer">
-                    <span>{event.points} pts</span>
-                  </div>
-                </article>
-              )
-            })
-          ) : (
-            <div className="empty-state">No active or upcoming events are available for check-in.</div>
-          )}
-        </div>
+      {loading ? (
+        <div className="empty-state">Loading event…</div>
+      ) : selectedEvent ? (
+        <div className="checkin-focus">
+          <section className={`checkin-status-strip ${canCheckIn(selectedEvent) ? 'checkin-status-strip--ready' : ''}`}>
+            <p>{checkInState}</p>
+            <span>
+              {canCheckIn(selectedEvent)
+                ? `Open until ${formatTime(selectedEvent.endDate)}`
+                : `Opens at ${formatTime(new Date(selectedEvent.startDate).getTime() - 15 * 60 * 1000)}`}
+            </span>
+          </section>
 
-        <div className="checkin-detail-card card">
-          {selectedEvent ? (
-            <>
-              <div className="checkin-detail-header">
-                <div>
-                  <p className="eyebrow">Event details</p>
-                  <h2>{selectedEvent.title}</h2>
-                </div>
-                <span className={`status-pill status-pill--${selectedEvent.status.toLowerCase()}`}>{selectedEvent.status}</span>
+          <article className={`card checkin-single-card event-surface event-surface--${selectedEvent.eventType.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}>
+            <div className="event-card__topline">
+              <div className={`event-card__type event-type-badge event-type-badge--${selectedEvent.eventType.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}>
+                {selectedEvent.eventType}
               </div>
+              {selectedEvent.required && <span className="required-note">Required</span>}
+            </div>
 
-              <div className="checkin-detail-grid">
-                <div>
-                  <p className="label">Type</p>
-                  <p>{selectedEvent.eventType}</p>
-                </div>
-                <div>
-                  <p className="label">Time</p>
-                  <p>{selectedEvent.startTime} - {selectedEvent.endTime}</p>
-                </div>
-                <div>
-                  <p className="label">Location</p>
-                  <p>{selectedEvent.locationName}</p>
-                </div>
-                <div>
-                  <p className="label">Points</p>
-                  <p>{selectedEvent.points}</p>
-                </div>
+            <div className="checkin-card-heading">
+              <h2>{selectedEvent.title}</h2>
+              <p className="muted">{selectedEvent.locationName}</p>
+            </div>
 
+            <div className="checkin-detail-grid">
+              <div>
+                <p className="label">Date</p>
+                <p>{selectedEvent.date}</p>
               </div>
+              <div>
+                <p className="label">Time</p>
+                <p>{selectedEvent.startTime} - {selectedEvent.endTime}</p>
+              </div>
+              <div>
+                <p className="label">Points</p>
+                <p>{selectedEvent.points}</p>
+              </div>
+            </div>
 
-              <p className="muted">{selectedEvent.description}</p>
+            {message && (
+              <div className={`checkin-message checkin-message--${message.type}`}>
+                {message.text}
+              </div>
+            )}
 
-              {message && (
-                <div className={`checkin-message checkin-message--${message.type}`}>
-                  {message.text}
-                </div>
-              )}
+            <Button
+              type="button"
+              variant="primary"
+              onClick={handleCheckIn}
+              disabled={Boolean(checkedIn) || checkInLoading || !canCheckIn(selectedEvent)}
+            >
+              {checkInLoading
+                ? 'Checking in…'
+                : checkedIn
+                  ? 'Already Checked In'
+                  : canCheckIn(selectedEvent)
+                    ? 'Check In'
+                    : 'Check In Opens Soon'}
+            </Button>
 
-              <Button
-                type="button"
-                variant="primary"
-                onClick={handleCheckIn}
-                disabled={Boolean(checkedIn) || checkInLoading}
-              >
-                {checkInLoading ? 'Checking in…' : checkedIn ? 'Already Checked In' : 'Check In'}
-              </Button>
-
-              {checkedIn && (
-                <div className="checkin-summary">
-                  <p className="label">Check-in status</p>
-                  <p>You have already checked in for this event.</p>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="card-empty">Select an event from the list to view details and check in.</div>
-          )}
+            {checkedIn && (
+              <div className="checkin-summary">
+                <p className="label">Check-in status</p>
+                <p>You have already checked in for this event.</p>
+              </div>
+            )}
+          </article>
         </div>
-      </div>
+      ) : (
+        <div className="empty-state">No active or upcoming event is available for check-in.</div>
+      )}
     </section>
   )
 }

@@ -29,8 +29,8 @@ function Home() {
   }, [])
 
   const memberStats = [
-    { label: 'Total Points', value: currentUser?.totalPoints ?? 0 },
     { label: 'Attendance Rate', value: `${Math.round((currentUser?.attendanceRate ?? 0) * 100)}%` },
+    { label: 'Total Points', value: currentUser?.totalPoints ?? 0 },
     { label: 'Excusals Submitted', value: currentUser?.excusalsSubmitted ?? 0 },
   ]
 

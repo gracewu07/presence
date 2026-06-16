@@ -32,11 +32,37 @@ const parseDateTime = (date, time) => {
   return new Date(`${monthName} ${day}, ${new Date().getFullYear()} ${normalizedTime}:00`)
 }
 
+const calendarMonths = [
+  { label: 'July', index: 6 },
+  { label: 'August', index: 7 },
+  { label: 'September', index: 8 },
+  { label: 'October', index: 9 },
+  { label: 'November', index: 10 },
+  { label: 'December', index: 11 },
+]
+
+const weekdayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+const buildMonthDays = (monthIndex, year) => {
+  const firstDay = new Date(year, monthIndex, 1)
+  const daysInMonth = new Date(year, monthIndex + 1, 0).getDate()
+  const blanks = Array.from({ length: firstDay.getDay() }, (_, index) => ({
+    key: `blank-${monthIndex}-${index}`,
+    day: null,
+  }))
+  const days = Array.from({ length: daysInMonth }, (_, index) => ({
+    key: `${monthIndex}-${index + 1}`,
+    day: index + 1,
+  }))
+  return [...blanks, ...days]
+}
+
 function EventCalendar() {
   const [view, setView] = useState('list')
   const [filter, setFilter] = useState('All')
   const [search, setSearch] = useState('')
   const [events, setEvents] = useState([])
+  const [selectedCalendarEvent, setSelectedCalendarEvent] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -68,7 +94,7 @@ function EventCalendar() {
         ...event,
         startDate,
         endDate,
-        searchText: `${event.title} ${event.locationName}`.toLowerCase(),
+        searchText: `${event.title} ${event.eventType}`.toLowerCase(),
       }
     })
   }, [events])
@@ -87,15 +113,23 @@ function EventCalendar() {
       .sort((a, b) => a.startDate - b.startDate)
   }, [enhancedEvents, filter, search])
 
-  const groupedByDate = useMemo(() => {
+  const calendarYear = useMemo(() => {
+    const firstEvent = selectedEvents.find((event) => event.startDate instanceof Date && !Number.isNaN(event.startDate))
+    return firstEvent ? firstEvent.startDate.getFullYear() : new Date().getFullYear()
+  }, [selectedEvents])
+
+  const eventsByMonthDay = useMemo(() => {
     return selectedEvents.reduce((group, event) => {
-      group[event.date] = group[event.date] || []
-      group[event.date].push(event)
+      const month = event.startDate.getMonth()
+      const day = event.startDate.getDate()
+      const key = `${month}-${day}`
+      group[key] = group[key] || []
+      group[key].push(event)
       return group
     }, {})
   }, [selectedEvents])
 
-  const searchPlaceholder = 'Search by title or location...'
+  const searchPlaceholder = 'Search by title or type...'
 
   return (
     <section className="page">
@@ -129,7 +163,7 @@ function EventCalendar() {
             <button
               key={type}
               type="button"
-              className={`calendar-chip ${filter === type ? 'calendar-chip--active' : ''}`}
+              className={`calendar-chip event-type-${type.replace(/\s+/g, '-').toLowerCase()} ${filter === type ? 'calendar-chip--active' : ''}`}
               onClick={() => setFilter(type)}
             >
               {type}
@@ -164,35 +198,90 @@ function EventCalendar() {
           )}
         </div>
       ) : (
-        <div className="calendar-board">
-          {Object.keys(groupedByDate).length > 0 ? (
-            Object.entries(groupedByDate).map(([date, dayEvents]) => (
-              <div key={date} className="calendar-day-card">
-                <div className="calendar-day-card__header">
-                  <span>{date}</span>
-                  <span>{dayEvents.length} event{dayEvents.length === 1 ? '' : 's'}</span>
-                </div>
-                <div className="calendar-day-card__events">
-                  {dayEvents.map((event) => (
-                    <div key={event.id} className="calendar-day-card__event">
-                      <div>
-                        <strong>{event.title}</strong>
-                        <p>{event.startTime} - {event.endTime}</p>
-                        <p className="muted">{event.locationName}</p>
-                      </div>
-                      <span className={`event-type-pill event-type-${event.eventType.replace(/\s+/g, '-').toLowerCase()}`}>
-                        {event.eventType}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+        <div className="calendar-months">
+          {calendarMonths.map((month) => (
+            <section key={month.label} className="calendar-month">
+              <div className="calendar-month__header">
+                <h2>{month.label}</h2>
+                <span>{calendarYear}</span>
               </div>
-            ))
-          ) : (
-            <div className="empty-state">
-              No calendar events match your filter or search.
+              <div className="calendar-month__weekdays">
+                {weekdayLabels.map((weekday) => (
+                  <span key={`${month.label}-${weekday}`}>{weekday}</span>
+                ))}
+              </div>
+              <div className="calendar-month__grid">
+                {buildMonthDays(month.index, calendarYear).map((day) => {
+                  const dayEvents = day.day ? eventsByMonthDay[`${month.index}-${day.day}`] || [] : []
+                  return (
+                    <div
+                      key={`${month.label}-${day.key}`}
+                      className={`calendar-month__day ${day.day ? '' : 'calendar-month__day--empty'}`}
+                    >
+                      {day.day && <span className="calendar-month__date">{day.day}</span>}
+                      {dayEvents.map((event) => (
+                        <button
+                          type="button"
+                          key={event.id}
+                          className={`calendar-month-event event-surface--${event.eventType.replace(/\s+/g, '-').toLowerCase()}`}
+                          onClick={() => setSelectedCalendarEvent(event)}
+                        >
+                          <strong>{event.title}</strong>
+                          <span>{event.startTime}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )
+                })}
+              </div>
+            </section>
+          ))}
+        </div>
+      )}
+
+      {selectedCalendarEvent && (
+        <div className="calendar-modal" role="dialog" aria-modal="true" aria-labelledby="calendar-modal-title">
+          <button
+            type="button"
+            className="calendar-modal__backdrop"
+            aria-label="Close event details"
+            onClick={() => setSelectedCalendarEvent(null)}
+          />
+          <article className={`calendar-modal__card event-surface event-surface--${selectedCalendarEvent.eventType.replace(/\s+/g, '-').toLowerCase()}`}>
+            <div className="event-card__topline">
+              <span className={`calendar-card__tag event-type-${selectedCalendarEvent.eventType.replace(/\s+/g, '-').toLowerCase()}`}>
+                {selectedCalendarEvent.eventType}
+              </span>
+              {selectedCalendarEvent.required && <span className="required-note">Required</span>}
             </div>
-          )}
+            <button
+              type="button"
+              className="calendar-modal__close"
+              aria-label="Close event details"
+              onClick={() => setSelectedCalendarEvent(null)}
+            >
+              ×
+            </button>
+            <h2 id="calendar-modal-title">{selectedCalendarEvent.title}</h2>
+            <div className="calendar-modal__details">
+              <div>
+                <p className="label">Date</p>
+                <p>{selectedCalendarEvent.date}</p>
+              </div>
+              <div>
+                <p className="label">Time</p>
+                <p>{selectedCalendarEvent.startTime} - {selectedCalendarEvent.endTime}</p>
+              </div>
+              <div>
+                <p className="label">Location</p>
+                <p>{selectedCalendarEvent.locationName}</p>
+              </div>
+              <div>
+                <p className="label">Points</p>
+                <p>{selectedCalendarEvent.points}</p>
+              </div>
+            </div>
+          </article>
         </div>
       )}
     </section>

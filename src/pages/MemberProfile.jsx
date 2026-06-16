@@ -20,7 +20,7 @@ function toLocaleShort(dateString) {
 }
 
 function MemberProfile() {
-  const { currentUser } = useAuth()
+  const { currentUser, signOut } = useAuth()
   const [loading, setLoading] = useState(true)
   const [memberCheckIns, setMemberCheckIns] = useState([])
   const [events, setEvents] = useState([])
@@ -124,6 +124,9 @@ function MemberProfile() {
           <h1>{currentUser.name}</h1>
           <p className="muted">Your attendance, history, and upcoming recommendations.</p>
         </div>
+        <Button type="button" variant="secondary" onClick={signOut}>
+          Sign Out
+        </Button>
       </div>
 
       <div className="profile-bubble-grid">
