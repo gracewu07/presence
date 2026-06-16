@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import CalendarEventCard from '../components/CalendarEventCard'
-import { calendarEvents } from '../data/mockData'
+import { calendarEvents } from '../data'
 
 function EventCalendar() {
   const [view, setView] = useState('list')
@@ -67,10 +67,10 @@ function EventCalendar() {
                   {dayEvents.length > 0 && <span className="calendar-day__badge">{dayEvents.length}</span>}
                 </div>
                 <div className="calendar-day__events">
-                  {dayEvents.map((event) => (
+                          {dayEvents.map((event) => (
                     <div key={event.id} className="calendar-day__event">
                       <strong>{event.title}</strong>
-                      <span>{event.time}</span>
+                      <span>{event.startTime} - {event.endTime}</span>
                     </div>
                   ))}
                 </div>

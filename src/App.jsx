@@ -14,7 +14,7 @@ import EventCreation from './pages/EventCreation'
 import MemberManagement from './pages/MemberManagement'
 import AnalyticsDashboard from './pages/AnalyticsDashboard'
 import Settings from './pages/Settings'
-import { currentUser } from './data/mockData'
+import { currentUser } from './data'
 
 function App() {
   return (

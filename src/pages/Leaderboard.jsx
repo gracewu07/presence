@@ -1,5 +1,5 @@
 import MemberCard from '../components/MemberCard'
-import { members } from '../data/mockData'
+import { members } from '../data'
 
 function Leaderboard() {
   return (
@@ -13,9 +13,12 @@ function Leaderboard() {
       </div>
 
       <div className="grid grid--cards">
-        {members.slice(0, 5).map((member) => (
-          <MemberCard key={member.id} member={member} />
-        ))}
+        {members
+          .sort((a, b) => b.totalPoints - a.totalPoints)
+          .slice(0, 5)
+          .map((member) => (
+            <MemberCard key={member.id} member={member} />
+          ))}
       </div>
     </section>
   )

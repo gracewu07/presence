@@ -4,9 +4,9 @@ function CalendarEventCard({ event }) {
       <div>
         <span className="calendar-card__date">{event.date}</span>
         <h3>{event.title}</h3>
-        <p>{event.time}</p>
+        <p>{event.startTime} - {event.endTime}</p>
       </div>
-      <div className="calendar-card__tag">{event.category}</div>
+      <div className="calendar-card__tag">{event.eventType}</div>
     </article>
   )
 }

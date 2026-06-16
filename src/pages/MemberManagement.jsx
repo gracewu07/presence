@@ -1,5 +1,5 @@
 import MemberCard from '../components/MemberCard'
-import { members } from '../data/mockData'
+import { members } from '../data'
 
 function MemberManagement() {
   return (

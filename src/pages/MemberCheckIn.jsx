@@ -1,5 +1,5 @@
 import Button from '../components/Button'
-import { events } from '../data/mockData'
+import { events } from '../data'
 
 function MemberCheckIn() {
   return (
@@ -14,16 +14,16 @@ function MemberCheckIn() {
 
       <div className="grid grid--cards">
         {events.map((event) => {
-          const typeClass = event.type.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+          const typeClass = event.eventType.toLowerCase().replace(/[^a-z0-9]+/g, '-')
           return (
             <article key={event.id} className="card checkin-card">
               <div>
                 <div className={`event-card__type event-type-badge event-type-badge--${typeClass}`}>
-                  {event.type}
+                  {event.eventType}
                 </div>
                 <h3>{event.title}</h3>
-                <p>{event.date} · {event.time}</p>
-                <p className="muted">{event.location}</p>
+                <p>{event.date} · {event.startTime}</p>
+                <p className="muted">{event.locationName}</p>
               </div>
               <Button variant="secondary">Check In</Button>
             </article>

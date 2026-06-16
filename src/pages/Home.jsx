@@ -1,6 +1,6 @@
 import EventCard from '../components/EventCard'
 import StatCard from '../components/StatCard'
-import { events, adminStats, currentUser } from '../data/mockData'
+import { events, adminStats, currentUser } from '../data'
 
 function Home() {
   return (

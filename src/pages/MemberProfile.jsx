@@ -1,5 +1,5 @@
 import StatusBadge from '../components/StatusBadge'
-import { currentUser } from '../data/mockData'
+import { currentUser } from '../data'
 
 function MemberProfile() {
   return (
@@ -14,20 +14,32 @@ function MemberProfile() {
 
       <div className="card profile-card">
         <div>
-          <p className="profile-card__label">Role</p>
-          <p>{currentUser.rank}</p>
+          <p className="profile-card__label">Email</p>
+          <p>{currentUser.email}</p>
         </div>
         <div>
-          <p className="profile-card__label">Points</p>
-          <p>{currentUser.points}</p>
+          <p className="profile-card__label">Role</p>
+          <p>{currentUser.role}</p>
+        </div>
+        <div>
+          <p className="profile-card__label">Pledge Class</p>
+          <p>{currentUser.pledgeClass}</p>
+        </div>
+        <div>
+          <p className="profile-card__label">Total Points</p>
+          <p>{currentUser.totalPoints}</p>
         </div>
         <div>
           <p className="profile-card__label">Status</p>
-          <StatusBadge label="Active" status="active" />
+          <StatusBadge label={currentUser.status} status={currentUser.status} />
         </div>
         <div>
-          <p className="profile-card__label">Location</p>
-          <p>{currentUser.location}</p>
+          <p className="profile-card__label">Committee</p>
+          <p>{currentUser.committee}</p>
+        </div>
+        <div>
+          <p className="profile-card__label">Attendance Rate</p>
+          <p>{Math.round(currentUser.attendanceRate * 100)}%</p>
         </div>
       </div>
     </section>

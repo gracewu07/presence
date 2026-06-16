@@ -1,5 +1,5 @@
 import StatCard from '../components/StatCard'
-import { adminStats } from '../data/mockData'
+import { adminStats } from '../data'
 
 function AdminDashboard() {
   return (

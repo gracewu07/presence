@@ -1,4 +1,4 @@
-import { excusalRequests } from '../data/mockData'
+import { excusalRequests } from '../data'
 import StatusBadge from '../components/StatusBadge'
 
 function ExcusalRequests() {
@@ -16,9 +16,10 @@ function ExcusalRequests() {
         {excusalRequests.map((request) => (
           <article key={request.id} className="card request-card">
             <div>
-              <h3>{request.name}</h3>
-              <p>{request.event}</p>
-              <p className="muted">{request.date}</p>
+              <h3>{request.memberName}</h3>
+              <p>{request.eventTitle}</p>
+              <p className="muted">{request.submittedAt}</p>
+              <p className="muted">Reason: {request.reason}</p>
             </div>
             <StatusBadge label={request.status} status={request.status} />
           </article>
