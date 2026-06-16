@@ -19,7 +19,7 @@ function toLocaleShort(dateString) {
 }
 
 function MemberProfile() {
-  const { currentUser, signOut } = useAuth()
+  const { currentUser, signOut, updateProfilePhoto } = useAuth()
   const [loading, setLoading] = useState(true)
   const [memberCheckIns, setMemberCheckIns] = useState([])
   const [events, setEvents] = useState([])
@@ -83,6 +83,19 @@ function MemberProfile() {
 
   const excusalsSubmitted = excusalRequests.length
 
+  const profileInitial = currentUser?.name?.charAt(0)?.toUpperCase() || 'P'
+
+  function handlePhotoChange(e) {
+    const file = e.target.files?.[0]
+    if (!file || !file.type.startsWith('image/')) return
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      updateProfilePhoto?.(reader.result)
+    }
+    reader.readAsDataURL(file)
+  }
+
   const leaderboardRank = useMemo(() => {
     const totals = new Map()
     allCheckIns.forEach((checkIn) => {
@@ -122,6 +135,23 @@ function MemberProfile() {
       </div>
 
       <div className="profile-bubble-grid">
+        <div className="profile-bubble profile-photo-card profile-bubble--wide">
+          <div className="profile-photo-preview" aria-hidden="true">
+            {currentUser.photoUrl ? (
+              <img src={currentUser.photoUrl} alt="" />
+            ) : (
+              <span>{profileInitial}</span>
+            )}
+          </div>
+          <div>
+            <p className="profile-card__label">Profile Picture</p>
+            <strong>{currentUser.name}</strong>
+            <label className="profile-photo-upload">
+              <input type="file" accept="image/*" onChange={handlePhotoChange} />
+              <span>Choose photo</span>
+            </label>
+          </div>
+        </div>
         <div className="profile-bubble profile-bubble--wide">
           <p className="profile-card__label">Email</p>
           <strong>{currentUser.email}</strong>

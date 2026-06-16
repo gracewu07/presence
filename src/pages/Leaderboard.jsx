@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
-import { EVENT_TYPE_FILTERS } from '../constants/eventTypes'
 import { useAuth } from '../context/AuthContext'
 import { fetchAppSettings, fetchCheckIns } from '../firebase'
+import { leaderboardCheckIns } from '../data/mockData'
 
 function Leaderboard() {
   const { currentUser } = useAuth()
   const [checkIns, setCheckIns] = useState([])
   const [settings, setSettings] = useState({ leaderboardVisibility: 'private' })
-  const [filter, setFilter] = useState('All')
+  const [usingMockData, setUsingMockData] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -21,12 +21,17 @@ function Leaderboard() {
           fetchCheckIns(),
           fetchAppSettings(),
         ])
+        const hasLiveCheckIns = checkInsSnapshot.length > 0
 
-        setCheckIns(checkInsSnapshot)
-        setSettings(settingsSnapshot[0] || { leaderboardVisibility: 'private' })
+        setCheckIns(hasLiveCheckIns ? checkInsSnapshot : leaderboardCheckIns)
+        setSettings(hasLiveCheckIns ? settingsSnapshot[0] || { leaderboardVisibility: 'private' } : { leaderboardVisibility: 'public' })
+        setUsingMockData(!hasLiveCheckIns)
       } catch (fetchError) {
         console.error('Failed to load leaderboard data', fetchError)
-        setError('Unable to load leaderboard data. Please refresh the page.')
+        setCheckIns(leaderboardCheckIns)
+        setSettings({ leaderboardVisibility: 'public' })
+        setUsingMockData(true)
+        setError(null)
       } finally {
         setLoading(false)
       }
@@ -38,34 +43,32 @@ function Leaderboard() {
   const leaderboardVisibility = settings.leaderboardVisibility || 'private'
   const isAdmin = currentUser?.role === 'admin'
   const canViewFullBoard = isAdmin || leaderboardVisibility === 'public'
-
-  const filteredCheckIns = useMemo(() => {
-    if (filter === 'All') return checkIns
-    return checkIns.filter((checkIn) => checkIn.eventType === filter)
-  }, [checkIns, filter])
+  const getMemberInitial = (name) => name?.charAt(0)?.toUpperCase() || 'M'
 
   const rankedMembers = useMemo(() => {
     const totals = new Map()
 
-    filteredCheckIns.forEach((checkIn) => {
+    checkIns.forEach((checkIn) => {
       const memberId = checkIn.memberId
       const existing = totals.get(memberId) || {
         memberId,
         memberName: checkIn.memberName || checkIn.memberEmail || 'Member',
         memberEmail: checkIn.memberEmail,
+        memberPhotoUrl: checkIn.memberPhotoUrl || (memberId === currentUser?.uid ? currentUser?.photoUrl : ''),
         totalPoints: 0,
-        eventsAttended: 0,
       }
 
+      if (memberId === currentUser?.uid && currentUser?.photoUrl) {
+        existing.memberPhotoUrl = currentUser.photoUrl
+      }
       existing.totalPoints += Number(checkIn.pointsAwarded ?? 0)
-      existing.eventsAttended += 1
       totals.set(memberId, existing)
     })
 
     return Array.from(totals.values())
       .sort((a, b) => b.totalPoints - a.totalPoints || a.memberName.localeCompare(b.memberName))
       .map((member, index) => ({ ...member, rank: index + 1 }))
-  }, [filteredCheckIns])
+  }, [checkIns, currentUser])
 
   const currentMemberRank = rankedMembers.find((entry) => entry.memberId === currentUser?.uid)
   const totalRankedMembers = rankedMembers.length
@@ -73,7 +76,7 @@ function Leaderboard() {
   const displayRows = canViewFullBoard ? rankedMembers : currentMemberRank ? [currentMemberRank] : []
 
   return (
-    <section className="page">
+    <section className="page leaderboard-page">
       <div className="page__header">
         <div>
           <p className="eyebrow">Leaderboard</p>
@@ -84,20 +87,9 @@ function Leaderboard() {
 
       <div className="leaderboard-panel">
         <div className="leaderboard-toolbar">
-          <label className="form-label">
-            Event type filter
-            <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-              {EVENT_TYPE_FILTERS.map((type) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
-              ))}
-            </select>
-          </label>
-
           <div className="leaderboard-summary">
             <p className="label">Visibility</p>
-            <p>{isAdmin ? 'Admin view' : leaderboardVisibility === 'public' ? 'Public' : 'Private'}</p>
+            <p>{usingMockData ? 'Preview data' : isAdmin ? 'Admin view' : leaderboardVisibility === 'public' ? 'Public' : 'Private'}</p>
           </div>
         </div>
 
@@ -108,26 +100,59 @@ function Leaderboard() {
         ) : (
           <>
             {canViewFullBoard ? (
-              <div className="leaderboard-table">
-                <div className="leaderboard-row leaderboard-row--header">
-                  <div>Rank</div>
-                  <div>Name</div>
-                  <div>Points</div>
-                  <div>Events</div>
-                </div>
-                {displayRows.length > 0 ? (
-                  displayRows.map((member) => (
-                    <div key={member.memberId} className="leaderboard-row">
-                      <div>{member.rank}</div>
-                      <div>{member.memberName}</div>
-                      <div>{member.totalPoints}</div>
-                      <div>{member.eventsAttended}</div>
+              <>
+                {currentMemberRank && (
+                  <article className="leaderboard-spotlight">
+                    <div className="leaderboard-avatar leaderboard-avatar--large" aria-hidden="true">
+                      {currentMemberRank.memberPhotoUrl ? (
+                        <img src={currentMemberRank.memberPhotoUrl} alt="" />
+                      ) : (
+                        <span>{getMemberInitial(currentMemberRank.memberName)}</span>
+                      )}
                     </div>
-                  ))
-                ) : (
-                  <div className="empty-state">No leaderboard data available yet.</div>
+                    <div className="leaderboard-spotlight__chips">
+                      <span>#{currentMemberRank.rank}</span>
+                      <strong>{currentMemberRank.memberName}</strong>
+                    </div>
+                  </article>
                 )}
-              </div>
+
+                <div className="leaderboard-table">
+                  <div className="leaderboard-row leaderboard-row--header">
+                    <div>Rank</div>
+                    <div>Name</div>
+                    <div>Points</div>
+                  </div>
+                  {displayRows.length > 0 ? (
+                    displayRows.map((member) => (
+                      <div
+                        key={member.memberId}
+                        className={`leaderboard-row ${member.memberId === currentUser?.uid ? 'leaderboard-row--current' : ''}`}
+                      >
+                      <div className="leaderboard-rank-cell"><span className="leaderboard-rank">#{member.rank}</span></div>
+                      <div className="leaderboard-person-cell">
+                        <span className="leaderboard-avatar" aria-hidden="true">
+                          {member.memberPhotoUrl ? (
+                            <img src={member.memberPhotoUrl} alt="" />
+                          ) : (
+                            <span>{getMemberInitial(member.memberName)}</span>
+                          )}
+                        </span>
+                        <span>
+                          <span className="leaderboard-member-name">{member.memberName}</span>
+                          <span className="leaderboard-member-subtext">{member.memberEmail}</span>
+                        </span>
+                      </div>
+                        <div className="leaderboard-stat-cell">
+                          <strong>{member.totalPoints}</strong>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="empty-state">No leaderboard data available yet.</div>
+                  )}
+                </div>
+              </>
             ) : (
               <div className="card leaderboard-card">
                 <p className="eyebrow">Private leaderboard</p>
@@ -140,10 +165,6 @@ function Leaderboard() {
                     <div>
                       <p className="label">Total points</p>
                       <p>{currentMemberRank.totalPoints}</p>
-                    </div>
-                    <div>
-                      <p className="label">Events attended</p>
-                      <p>{currentMemberRank.eventsAttended}</p>
                     </div>
                     <div>
                       <p className="label">Members ranked</p>
