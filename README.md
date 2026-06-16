@@ -1,4 +1,4 @@
-# Presence — UNC AKPsi chapter app
+# Presence — UNC AKPsi Chapter App
 
 Presence is a mobile-first React + Vite application for managing event attendance, member engagement, and chapter operations for UNC AKPsi.
 
