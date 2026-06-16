@@ -56,7 +56,7 @@ function App() {
             }
           />
           <Route
-            path="excusal-requests"
+            path="excusals"
             element={
               <PrivateRoute user={currentUser}>
                 <ExcusalRequests />
@@ -72,7 +72,7 @@ function App() {
             }
           />
           <Route
-            path="admin/event-creation"
+            path="admin/create-event"
             element={
               <AdminRoute user={currentUser}>
                 <EventCreation />
@@ -80,7 +80,7 @@ function App() {
             }
           />
           <Route
-            path="admin/member-management"
+            path="admin/members"
             element={
               <AdminRoute user={currentUser}>
                 <MemberManagement />
@@ -96,11 +96,11 @@ function App() {
             }
           />
           <Route
-            path="settings"
+            path="admin/settings"
             element={
-              <PrivateRoute user={currentUser}>
+              <AdminRoute user={currentUser}>
                 <Settings />
-              </PrivateRoute>
+              </AdminRoute>
             }
           />
         </Route>

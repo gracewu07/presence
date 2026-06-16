@@ -21,13 +21,35 @@ function Navbar({ currentUser }) {
         <NavLink to="/leaderboard" className="navbar__link">
           Leaderboard
         </NavLink>
+        <NavLink to="/profile" className="navbar__link">
+          Profile
+        </NavLink>
+        <NavLink to="/excusals" className="navbar__link">
+          Excusals
+        </NavLink>
+        {currentUser.role === 'admin' && (
+          <>
+            <NavLink to="/admin" className="navbar__link">
+              Admin
+            </NavLink>
+            <NavLink to="/admin/create-event" className="navbar__link">
+              Create Event
+            </NavLink>
+            <NavLink to="/admin/members" className="navbar__link">
+              Members
+            </NavLink>
+            <NavLink to="/admin/analytics" className="navbar__link">
+              Analytics
+            </NavLink>
+            <NavLink to="/admin/settings" className="navbar__link">
+              Settings
+            </NavLink>
+          </>
+        )}
       </nav>
 
       <div className="navbar__meta">
         <span>{currentUser.name}</span>
-        <NavLink to="/profile" className="navbar__profile-link">
-          Profile
-        </NavLink>
       </div>
     </header>
   )
