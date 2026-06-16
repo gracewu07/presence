@@ -24,10 +24,10 @@ function Login() {
     <section className="page auth-page">
       <div className="auth-card card">
         <h1>Member Login</h1>
-        <p>Sign in with your UNC Google account to access attendance and chapter tools.</p>
+        <p>Sign in with your UNC Microsoft (Outlook/SSO) account to access attendance and chapter tools.</p>
         <form className="auth-form" onSubmit={handleSubmit}>
           <Button type="submit" variant="primary" disabled={loading}>
-            {loading ? 'Signing in…' : 'Sign in with Google'}
+            {loading ? 'Signing in…' : 'Sign in with Microsoft'}
           </Button>
           {error && <p className="form-error">{error}</p>}
         </form>

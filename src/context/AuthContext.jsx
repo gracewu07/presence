@@ -3,25 +3,27 @@ import {
   createOrUpdateMemberProfile,
   fetchMemberProfile,
   onAuthStateChanged,
-  signInWithGoogle as firebaseSignInWithGoogle,
+  signInWithMicrosoft as firebaseSignInWithMicrosoft,
   signOutUser as firebaseSignOutUser,
+  findApprovedMemberByEmail,
 } from '../firebase'
-import { adminEmails, isAllowedEmail } from '../config/authConfig'
+import { isAllowedEmail } from '../config/authConfig'
 
 const AuthContext = createContext(null)
 
-function buildMemberProfile(user) {
+function buildMemberProfile(user, opts = {}) {
   return {
     uid: user.uid,
     name: user.displayName || user.email?.split('@')[0] || 'Member',
     email: user.email,
-    role: adminEmails.includes(user.email) ? 'admin' : 'member',
-    pledgeClass: 'Pending',
-    totalPoints: 0,
-    status: 'active',
-    committee: 'General',
-    attendanceRate: 0,
-    createdAt: new Date().toISOString(),
+    role: opts.role || 'member',
+    pledgeClass: opts.pledgeClass || 'Pending',
+    totalPoints: opts.totalPoints || 0,
+    status: opts.status || 'active',
+    committee: opts.committee || 'General',
+    attendanceRate: opts.attendanceRate || 0,
+    createdAt: opts.createdAt || new Date().toISOString(),
+    accessStatus: opts.accessStatus || 'approved',
   }
 }
 
@@ -37,7 +39,7 @@ export function AuthProvider({ children }) {
         setLoading(false)
         return
       }
-
+      // Verify UNC email domain first
       if (!isAllowedEmail(user.email)) {
         await firebaseSignOutUser()
         setError('Please sign in with your UNC email address.')
@@ -46,11 +48,30 @@ export function AuthProvider({ children }) {
         return
       }
 
+      // Check approved members list (approvedMembers or members.accessStatus)
+      const approved = await findApprovedMemberByEmail(user.email)
+      if (!approved) {
+        await firebaseSignOutUser()
+        setError('Your account has not been approved for Presence. Please contact the VP of Standards.')
+        setCurrentUser(null)
+        setLoading(false)
+        return
+      }
+
+      // Ensure a members profile exists for the signed-in uid; if not, create one
       const profile = await fetchMemberProfile(user.uid)
       if (profile) {
         setCurrentUser(profile)
       } else {
-        const newProfile = buildMemberProfile(user)
+        const newProfile = buildMemberProfile(user, {
+          role: approved.role || 'member',
+          pledgeClass: approved.pledgeClass || 'Pending',
+          totalPoints: approved.totalPoints || 0,
+          status: approved.status || 'active',
+          committee: approved.committee || 'General',
+          attendanceRate: approved.attendanceRate || 0,
+          accessStatus: 'approved',
+        })
         await createOrUpdateMemberProfile(user.uid, newProfile)
         setCurrentUser({ id: user.uid, ...newProfile })
       }
@@ -66,10 +87,19 @@ export function AuthProvider({ children }) {
     setError(null)
 
     try {
-      const user = await firebaseSignInWithGoogle()
+      const user = await firebaseSignInWithMicrosoft()
+
       if (!isAllowedEmail(user.email)) {
         await firebaseSignOutUser()
         setError('Please sign in with your UNC email address.')
+        setCurrentUser(null)
+        return null
+      }
+
+      const approved = await findApprovedMemberByEmail(user.email)
+      if (!approved) {
+        await firebaseSignOutUser()
+        setError('Your account has not been approved for Presence. Please contact the VP of Standards.')
         setCurrentUser(null)
         return null
       }
@@ -80,7 +110,15 @@ export function AuthProvider({ children }) {
         return profile
       }
 
-      const newProfile = buildMemberProfile(user)
+      const newProfile = buildMemberProfile(user, {
+        role: approved.role || 'member',
+        pledgeClass: approved.pledgeClass || 'Pending',
+        totalPoints: approved.totalPoints || 0,
+        status: approved.status || 'active',
+        committee: approved.committee || 'General',
+        attendanceRate: approved.attendanceRate || 0,
+        accessStatus: 'approved',
+      })
       await createOrUpdateMemberProfile(user.uid, newProfile)
       const savedProfile = { id: user.uid, ...newProfile }
       setCurrentUser(savedProfile)
