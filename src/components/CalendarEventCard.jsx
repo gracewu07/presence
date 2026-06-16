@@ -22,9 +22,8 @@ function CalendarEventCard({ event }) {
           <p className="calendar-card__meta">
             {event.startTime} - {event.endTime} · {event.locationName}
           </p>
-          <p className="calendar-card__meta">
-            {event.points} points · {event.required ? 'Required' : 'Optional'}
-          </p>
+          <p className="calendar-card__meta">{event.points} points</p>
+          {event.required && <p className="required-note">Required event</p>}
         </div>
         <div className={`calendar-card__tag event-type-${event.eventType.replace(/\s+/g, '-').toLowerCase()}`}>
           {event.eventType}

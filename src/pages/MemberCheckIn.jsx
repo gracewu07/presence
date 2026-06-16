@@ -210,7 +210,7 @@ function MemberCheckIn() {
                   <p className="muted">{event.locationName}</p>
                   <div className="checkin-card__footer">
                     <span>{event.points} pts</span>
-                    <span>{event.required ? 'Required' : 'Optional'}</span>
+                    {event.required && <span className="required-note">Required event</span>}
                   </div>
                 </article>
               )
@@ -248,10 +248,12 @@ function MemberCheckIn() {
                   <p className="label">Points</p>
                   <p>{selectedEvent.points}</p>
                 </div>
-                <div>
-                  <p className="label">Status</p>
-                  <p>{selectedEvent.required ? 'Required' : 'Optional'}</p>
-                </div>
+                {selectedEvent.required && (
+                  <div>
+                    <p className="label">Requirement</p>
+                    <p className="required-note">Required event</p>
+                  </div>
+                )}
               </div>
 
               <p className="muted">{selectedEvent.description}</p>

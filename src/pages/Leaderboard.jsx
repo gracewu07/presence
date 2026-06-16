@@ -5,13 +5,10 @@ import { fetchAppSettings, fetchCheckIns } from '../firebase'
 const eventTypes = [
   'All',
   'Chapter',
-  'Professional Development',
   'Service',
+  'Professional Development',
   'Social',
-  'DEI',
   'Recruitment',
-  'Committee',
-  'Other',
 ]
 
 function Leaderboard() {

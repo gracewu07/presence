@@ -57,6 +57,6 @@ export const checkins = [
     distanceMeters: 10,
     locationVerified: true,
     pointsAwarded: 7,
-    eventType: 'DEI',
+    eventType: 'Professional Development',
   },
 ]

@@ -11,11 +11,13 @@ import Leaderboard from './pages/Leaderboard'
 import MemberProfile from './pages/MemberProfile'
 import ExcusalRequests from './pages/ExcusalRequests'
 import AdminDashboard from './pages/AdminDashboard'
+import StandardsDashboard from './pages/StandardsDashboard'
 import EventCreation from './pages/EventCreation'
 import MemberManagement from './pages/MemberManagement'
 import AnalyticsDashboard from './pages/AnalyticsDashboard'
 import QRCheckIn from './pages/QRCheckIn'
 import Settings from './pages/Settings'
+import More from './pages/More'
 
 function App() {
   const { currentUser, loading } = useAuth()
@@ -79,6 +81,22 @@ function App() {
             }
           />
           <Route
+            path="more"
+            element={
+              <PrivateRoute user={currentUser}>
+                <More />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="settings"
+            element={
+              <PrivateRoute user={currentUser}>
+                <Settings />
+              </PrivateRoute>
+            }
+          />
+          <Route
             path="admin"
             element={
               <AdminRoute user={currentUser}>
@@ -91,6 +109,14 @@ function App() {
             element={
               <AdminRoute user={currentUser}>
                 <EventCreation />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="admin/standards"
+            element={
+              <AdminRoute user={currentUser}>
+                <StandardsDashboard />
               </AdminRoute>
             }
           />

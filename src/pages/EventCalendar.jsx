@@ -5,13 +5,10 @@ import { fetchEvents } from '../firebase'
 const eventTypes = [
   'All',
   'Chapter',
-  'Professional Development',
   'Service',
+  'Professional Development',
   'Social',
-  'DEI',
   'Recruitment',
-  'Committee',
-  'Other',
 ]
 
 const parseEventTime = (time) => {
@@ -87,7 +84,6 @@ function EventCalendar() {
     return enhancedEvents
       .filter((event) => {
         if (filter === 'All') return true
-        if (filter === 'Other') return !eventTypes.includes(event.eventType)
         return event.eventType === filter
       })
       .filter((event) => {
@@ -190,7 +186,9 @@ function EventCalendar() {
                         <p>{event.startTime} - {event.endTime}</p>
                         <p className="muted">{event.locationName}</p>
                       </div>
-                      <span className="event-type-pill">{event.eventType}</span>
+                      <span className={`event-type-pill event-type-${event.eventType.replace(/\s+/g, '-').toLowerCase()}`}>
+                        {event.eventType}
+                      </span>
                     </div>
                   ))}
                 </div>

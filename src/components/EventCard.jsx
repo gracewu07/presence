@@ -1,5 +1,4 @@
 import Button from './Button'
-import StatusBadge from './StatusBadge'
 
 function EventCard({ event }) {
   const typeClass = event.eventType.toLowerCase().replace(/[^a-z0-9]+/g, '-')
@@ -16,7 +15,7 @@ function EventCard({ event }) {
         <p className="event-card__description">{event.description}</p>
       </div>
       <div className="event-card__footer">
-        <StatusBadge label={event.required ? 'Required' : 'Optional'} status={event.required ? 'active' : 'pending'} />
+        {event.required && <span className="required-note">Required event</span>}
         <Button variant="secondary">View</Button>
       </div>
     </article>

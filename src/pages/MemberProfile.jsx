@@ -126,34 +126,34 @@ function MemberProfile() {
         </div>
       </div>
 
-      <div className="card profile-card">
-        <div>
+      <div className="profile-bubble-grid">
+        <div className="profile-bubble profile-bubble--wide">
           <p className="profile-card__label">Email</p>
-          <p>{currentUser.email}</p>
+          <strong>{currentUser.email}</strong>
         </div>
-        <div>
+        <div className="profile-bubble">
           <p className="profile-card__label">Total Points</p>
-          <p>{totalPoints}</p>
+          <strong>{totalPoints}</strong>
         </div>
-        <div>
+        <div className="profile-bubble">
           <p className="profile-card__label">Events Attended</p>
-          <p>{eventsAttended}</p>
+          <strong>{eventsAttended}</strong>
         </div>
-        <div>
+        <div className="profile-bubble">
           <p className="profile-card__label">Attendance Rate</p>
-          <p>{Math.round(attendanceRate * 100)}%</p>
+          <strong>{Math.round(attendanceRate * 100)}%</strong>
         </div>
-        <div>
+        <div className="profile-bubble">
           <p className="profile-card__label">Excusals Submitted</p>
-          <p>{excusalsSubmitted}</p>
+          <strong>{excusalsSubmitted}</strong>
         </div>
-        <div>
+        <div className="profile-bubble">
           <p className="profile-card__label">Status</p>
           <StatusBadge label={currentUser.status} status={currentUser.status} />
         </div>
-        <div>
+        <div className="profile-bubble profile-bubble--wide">
           <p className="profile-card__label">Private leaderboard rank</p>
-          <p>{leaderboardRank ?? 'Unranked'}</p>
+          <strong>{leaderboardRank ?? 'Unranked'}</strong>
         </div>
       </div>
 

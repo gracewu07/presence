@@ -68,6 +68,48 @@ export async function createMember(id, data) {
   })
 }
 
+export async function importApprovedMembers(members) {
+  const results = {
+    successCount: 0,
+    errorCount: 0,
+    errors: [],
+  }
+
+  for (const member of members) {
+    const email = normalizeEmail(member.email)
+    const id = email.replace(/[^a-z0-9]/gi, '_')
+
+    try {
+      if (!member.name?.trim()) {
+        throw new Error('Name is required.')
+      }
+      if (!isAllowedEmail(email)) {
+        throw new Error('Email must end in @unc.edu.')
+      }
+
+      await createMember(id, {
+        name: member.name.trim(),
+        email,
+        pledgeClass: member.pledgeClass?.trim() || '',
+        family: member.family?.trim() || '',
+        role: normalizeRole(member.role) === 'admin' ? 'admin' : 'member',
+        status: member.status?.trim() || 'active',
+        accessStatus: 'approved',
+      })
+
+      results.successCount += 1
+    } catch (error) {
+      results.errorCount += 1
+      results.errors.push({
+        email: email || member.email || 'unknown',
+        message: error.message || 'Import failed.',
+      })
+    }
+  }
+
+  return results
+}
+
 export async function updateMember(id, updates) {
   const safeUpdates = { ...updates }
   if (safeUpdates.email !== undefined) {

@@ -6,13 +6,10 @@ import { createEvent } from '../firebase'
 
 const eventTypes = [
   'Chapter',
-  'Professional Development',
   'Service',
+  'Professional Development',
   'Social',
-  'DEI',
   'Recruitment',
-  'Committee',
-  'Other',
 ]
 
 const initialFormState = {

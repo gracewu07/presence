@@ -180,7 +180,7 @@ export const events = [
   {
     id: 'e05',
     title: 'DEI Roundtable',
-    eventType: 'DEI',
+    eventType: 'Professional Development',
     date: 'Jun 28',
     startTime: '4:00 PM',
     endTime: '5:30 PM',
@@ -214,7 +214,7 @@ export const events = [
   {
     id: 'e07',
     title: 'Standards Committee Review',
-    eventType: 'Committee',
+    eventType: 'Chapter',
     date: 'Jul 2',
     startTime: '5:30 PM',
     endTime: '7:00 PM',
@@ -289,7 +289,7 @@ export const checkins = [
     distanceMeters: 10,
     locationVerified: true,
     pointsAwarded: 7,
-    eventType: 'DEI',
+    eventType: 'Professional Development',
   },
 ]
 

@@ -6,11 +6,18 @@ import { fetchAppSettings, updateLeaderboardVisibility } from '../firebase'
 function Settings() {
   const { currentUser } = useAuth()
   const [settings, setSettings] = useState({ leaderboardVisibility: 'private' })
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(currentUser?.role === 'admin')
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState(null)
 
+  const isAdmin = currentUser?.role === 'admin'
+
   useEffect(() => {
+    if (!isAdmin) {
+      setLoading(false)
+      return
+    }
+
     async function loadSettings() {
       setLoading(true)
       try {
@@ -25,14 +32,14 @@ function Settings() {
     }
 
     loadSettings()
-  }, [])
+  }, [isAdmin])
 
   const handleVisibilityChange = (event) => {
     setSettings((current) => ({ ...current, leaderboardVisibility: event.target.value }))
   }
 
   const saveVisibility = async () => {
-    if (currentUser?.role !== 'admin') return
+    if (!isAdmin) return
     setSaving(true)
     setMessage(null)
 
@@ -47,8 +54,6 @@ function Settings() {
     }
   }
 
-  const isAdmin = currentUser?.role === 'admin'
-
   return (
     <section className="page form-page">
       <div className="page__header">
@@ -62,11 +67,11 @@ function Settings() {
       <div className="card settings-card">
         <label>
           Display name
-          <input type="text" placeholder="Jordan Brooks" />
+          <input type="text" placeholder={currentUser?.name || 'Member name'} />
         </label>
         <label>
           Email
-          <input type="email" placeholder="member@presence.app" />
+          <input type="email" placeholder={currentUser?.email || 'member@unc.edu'} />
         </label>
         <label>
           Notifications
@@ -76,34 +81,34 @@ function Settings() {
           </select>
         </label>
 
-        <div className="settings-divider" />
+        {isAdmin && (
+          <>
+            <div className="settings-divider" />
 
-        <div className="settings-section">
-          <p className="section-heading">Leaderboard Visibility</p>
-          <p className="muted">Admins can toggle whether the leaderboard is public or private.</p>
+            <div className="settings-section">
+              <p className="section-heading">Leaderboard Visibility</p>
+              <p className="muted">Admins can toggle whether the leaderboard is public or private.</p>
 
-          {loading ? (
-            <p className="muted">Loading leaderboard settings…</p>
-          ) : (
-            <label>
-              Visibility
-              <select value={settings.leaderboardVisibility} onChange={handleVisibilityChange} disabled={!isAdmin}>
-                <option value="private">Private</option>
-                <option value="public">Public</option>
-              </select>
-            </label>
-          )}
+              {loading ? (
+                <p className="muted">Loading leaderboard settings...</p>
+              ) : (
+                <label>
+                  Visibility
+                  <select value={settings.leaderboardVisibility} onChange={handleVisibilityChange}>
+                    <option value="private">Private</option>
+                    <option value="public">Public</option>
+                  </select>
+                </label>
+              )}
 
-          {!isAdmin && (
-            <p className="muted">Only admins can change leaderboard visibility.</p>
-          )}
+              <Button type="button" onClick={saveVisibility} disabled={saving || loading}>
+                {saving ? 'Saving...' : 'Save Leaderboard Visibility'}
+              </Button>
+            </div>
+          </>
+        )}
 
-          <Button type="button" onClick={saveVisibility} disabled={!isAdmin || saving || loading}>
-            {saving ? 'Saving…' : 'Save Leaderboard Visibility'}
-          </Button>
-
-          {message && <p className={`settings-message ${message.includes('Unable') ? 'error-message' : 'success-message'}`}>{message}</p>}
-        </div>
+        {message && <p className={`settings-message ${message.includes('Unable') ? 'error-message' : 'success-message'}`}>{message}</p>}
       </div>
     </section>
   )
