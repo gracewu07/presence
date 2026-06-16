@@ -2866,6 +2866,7 @@ textarea:focus {
 .calendar-add-button {
   gap: 8px;
   width: fit-content;
+  white-space: nowrap;
 }
 
 .calendar-add-button__icon {
@@ -3113,6 +3114,15 @@ textarea:focus {
   text-align: right;
 }
 
+.calendar-modal__actions {
+  display: grid;
+  gap: 10px;
+}
+
+.calendar-modal__actions .calendar-options {
+  width: 100%;
+}
+
 /* Soft app-wide typography and palette tuning */
 :root {
   --planner-text: #26242a;
@@ -3304,8 +3314,65 @@ body {
   border-left: 8px solid var(--event-accent);
 }
 
+.event-surface,
+.event-card,
+.calendar-card,
+.checkin-single-card {
+  display: grid;
+  gap: 18px;
+  padding: 26px;
+  border-radius: var(--app-radius-card);
+}
+
+.event-card__topline {
+  margin-bottom: 0;
+}
+
+.event-card h3,
+.calendar-card h3,
+.checkin-card-heading h2 {
+  margin: 0;
+  color: #25252d;
+  font-size: clamp(1.45rem, 6vw, 2rem);
+  line-height: 1.06;
+}
+
+.event-card__meta,
+.event-card__location,
+.calendar-card__date,
+.calendar-card__meta,
+.checkin-card-heading .muted {
+  margin: 0;
+  color: var(--planner-muted);
+  font-size: 0.95rem;
+}
+
+.calendar-card__top,
+.calendar-card__top > div,
+.checkin-card-heading {
+  display: grid;
+  gap: 10px;
+}
+
+.event-card > div {
+  display: grid;
+  gap: 10px;
+}
+
+.checkin-single-card .checkin-detail-grid,
+.calendar-modal__details {
+  gap: 12px;
+}
+
+.checkin-single-card .checkin-detail-grid > div,
+.calendar-modal__details > div {
+  padding: 0;
+}
+
 .calendar-month-event {
   border-left-width: 4px;
+  padding: 10px;
+  gap: 4px;
 }
 
 .button--primary,
@@ -3317,7 +3384,7 @@ body {
 .home-page .stat-card:nth-child(2),
 .home-page .stat-card:nth-child(3),
 .home-page .stat-card:nth-child(4) {
-  background: #eef8fd;
+  background: #f6fbff;
 }
 
 .home-page .stat-card {
@@ -3340,6 +3407,65 @@ body {
 
 .home-page .stat-card:first-child {
   grid-column: 1 / -1;
+}
+
+.calendar-controls .calendar-chip,
+.calendar-controls .calendar-chip--active,
+.calendar-controls .calendar-chip.event-type-all.calendar-chip--active,
+.calendar-controls .calendar-chip.event-type-chapter.calendar-chip--active,
+.calendar-controls .calendar-chip.event-type-service.calendar-chip--active,
+.calendar-controls .calendar-chip.event-type-professional-development.calendar-chip--active,
+.calendar-controls .calendar-chip.event-type-social.calendar-chip--active,
+.calendar-controls .calendar-chip.event-type-recruitment.calendar-chip--active {
+  border-color: var(--border);
+}
+
+.calendar-card .calendar-add-button,
+.calendar-card .calendar-options {
+  width: min(100%, 220px);
+}
+
+.calendar-card__date {
+  font-size: 1.08rem;
+}
+
+.home-page .event-card__type {
+  padding-block: 0.28rem;
+}
+
+.home-page .event-card {
+  gap: 12px;
+  padding: 20px 22px;
+}
+
+.home-page .event-card > div {
+  gap: 7px;
+}
+
+.home-page .event-card h3 {
+  font-size: clamp(1.28rem, 4.8vw, 1.5rem);
+}
+
+.home-page .event-card__meta,
+.home-page .event-card__location {
+  font-size: 0.9rem;
+}
+
+.calendar-modal__card .event-card__topline {
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  padding-right: 120px;
+}
+
+.calendar-modal__card .required-note {
+  position: absolute;
+  top: 27px;
+  right: 66px;
+}
+
+.calendar-modal__details .label {
+  font-weight: 400;
 }
 
 @media (min-width: 768px) {

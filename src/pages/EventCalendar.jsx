@@ -3,6 +3,7 @@ import CalendarEventCard from '../components/CalendarEventCard'
 import { EVENT_TYPE_FILTERS } from '../constants/eventTypes'
 import { events as staticEvents } from '../data/events'
 import { fetchEvents } from '../firebase'
+import { buildCalendarUrls, downloadIcs } from '../utils/calendarLinks'
 
 const parseEventTime = (time) => {
   if (!time) return '00:00'
@@ -33,6 +34,7 @@ const parseDateTime = (date, time) => {
 }
 
 const calendarMonths = [
+  { label: 'June', index: 5 },
   { label: 'July', index: 6 },
   { label: 'August', index: 7 },
   { label: 'September', index: 8 },
@@ -63,6 +65,7 @@ function EventCalendar() {
   const [search, setSearch] = useState('')
   const [events, setEvents] = useState([])
   const [selectedCalendarEvent, setSelectedCalendarEvent] = useState(null)
+  const [showModalCalendarOptions, setShowModalCalendarOptions] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -130,6 +133,17 @@ function EventCalendar() {
   }, [selectedEvents])
 
   const searchPlaceholder = 'Search by title or type...'
+  const selectedCalendarUrls = selectedCalendarEvent ? buildCalendarUrls(selectedCalendarEvent) : null
+
+  const openCalendarEvent = (event) => {
+    setShowModalCalendarOptions(false)
+    setSelectedCalendarEvent(event)
+  }
+
+  const closeCalendarEvent = () => {
+    setShowModalCalendarOptions(false)
+    setSelectedCalendarEvent(null)
+  }
 
   return (
     <section className="page">
@@ -224,7 +238,7 @@ function EventCalendar() {
                           type="button"
                           key={event.id}
                           className={`calendar-month-event event-surface--${event.eventType.replace(/\s+/g, '-').toLowerCase()}`}
-                          onClick={() => setSelectedCalendarEvent(event)}
+                          onClick={() => openCalendarEvent(event)}
                         >
                           <strong>{event.title}</strong>
                           <span>{event.startTime}</span>
@@ -245,7 +259,7 @@ function EventCalendar() {
             type="button"
             className="calendar-modal__backdrop"
             aria-label="Close event details"
-            onClick={() => setSelectedCalendarEvent(null)}
+            onClick={closeCalendarEvent}
           />
           <article className={`calendar-modal__card event-surface event-surface--${selectedCalendarEvent.eventType.replace(/\s+/g, '-').toLowerCase()}`}>
             <div className="event-card__topline">
@@ -258,7 +272,7 @@ function EventCalendar() {
               type="button"
               className="calendar-modal__close"
               aria-label="Close event details"
-              onClick={() => setSelectedCalendarEvent(null)}
+              onClick={closeCalendarEvent}
             >
               ×
             </button>
@@ -280,6 +294,24 @@ function EventCalendar() {
                 <p className="label">Points</p>
                 <p>{selectedCalendarEvent.points}</p>
               </div>
+            </div>
+            <div className="calendar-card__actions calendar-modal__actions">
+              <button
+                type="button"
+                className="button button--secondary calendar-add-button"
+                onClick={() => setShowModalCalendarOptions((current) => !current)}
+                aria-expanded={showModalCalendarOptions}
+              >
+                <span className="calendar-add-button__icon" aria-hidden="true">+</span>
+                Add to Calendar
+              </button>
+              {showModalCalendarOptions && selectedCalendarUrls && (
+                <div className="calendar-options">
+                  <a href={selectedCalendarUrls.google} target="_blank" rel="noreferrer">Google Calendar</a>
+                  <a href={selectedCalendarUrls.outlook} target="_blank" rel="noreferrer">Outlook Calendar</a>
+                  <button type="button" onClick={() => downloadIcs(selectedCalendarEvent)}>Apple Calendar</button>
+                </div>
+              )}
             </div>
           </article>
         </div>
