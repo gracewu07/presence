@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import QRCode from 'qrcode.react'
+import QRCode from 'react-qr-code'
 import { Html5Qrcode } from 'html5-qrcode'
 import { fetchUpcomingEvents, recordCheckIn, fetchEventById } from '../firebase'
 import { useAuth } from '../context/AuthContext'
