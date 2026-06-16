@@ -1,5 +1,8 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Button from '../components/Button'
+import { useAuth } from '../context/AuthContext'
+import { createEvent } from '../firebase'
 
 const eventTypes = [
   'Chapter',
@@ -74,14 +77,23 @@ function EventCreation() {
     return Object.keys(nextErrors).length === 0
   }
 
-  const handleSubmit = (event) => {
+  const [loading, setLoading] = useState(false)
+const [errorMessage, setErrorMessage] = useState('')
+const navigate = useNavigate()
+const { currentUser } = useAuth()
+
+const handleSubmit = async (event) => {
     event.preventDefault()
     setSuccessMessage('')
+    setErrorMessage('')
 
     if (!validate()) return
+    if (!currentUser?.email) {
+      setErrorMessage('You must be signed in to create an event.')
+      return
+    }
 
     const newEvent = {
-      id: `e_${Date.now()}`,
       title: form.title.trim(),
       eventType: form.eventType,
       date: form.date,
@@ -94,13 +106,23 @@ function EventCreation() {
       points: Number(form.points),
       required: form.required,
       description: form.description.trim(),
-      createdAt: new Date().toISOString(),
+      createdBy: currentUser.email,
+      eventDate: new Date(form.date).toISOString(),
     }
 
-    console.log('New event created:', newEvent)
-    setSuccessMessage('Event created successfully. Check the console for details.')
-    setForm(initialFormState)
-    setErrors({})
+    setLoading(true)
+
+    try {
+      await createEvent(newEvent)
+      setSuccessMessage(`Event "${newEvent.title}" created successfully.`)
+      setForm(initialFormState)
+      setErrors({})
+    } catch (error) {
+      console.error('Event creation failed:', error)
+      setErrorMessage('Unable to create event. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -114,7 +136,20 @@ function EventCreation() {
       </div>
 
       <form className="card event-form" onSubmit={handleSubmit} noValidate>
-        {successMessage && <div className="form-success">{successMessage}</div>}
+        {errorMessage && <div className="form-error">{errorMessage}</div>}
+        {successMessage && (
+          <div className="form-success">
+            {successMessage}
+            <div className="form-success-actions">
+              <button type="button" className="button button--secondary" onClick={() => navigate('/admin')}>
+                Go to Admin Dashboard
+              </button>
+              <button type="button" className="button button--secondary" onClick={() => navigate('/calendar')}>
+                View Event Calendar
+              </button>
+            </div>
+          </div>
+        )}
 
         <label>
           Event title
@@ -239,7 +274,9 @@ function EventCreation() {
           />
         </label>
 
-        <Button type="submit">Create Event</Button>
+        <Button type="submit" disabled={loading}>
+          {loading ? 'Saving event…' : 'Create Event'}
+        </Button>
       </form>
     </section>
   )

@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { useAuth } from './context/AuthContext'
 import Layout from './components/Layout'
 import PrivateRoute from './components/PrivateRoute'
 import AdminRoute from './components/AdminRoute'
@@ -14,9 +15,14 @@ import EventCreation from './pages/EventCreation'
 import MemberManagement from './pages/MemberManagement'
 import AnalyticsDashboard from './pages/AnalyticsDashboard'
 import Settings from './pages/Settings'
-import { currentUser } from './data'
 
 function App() {
+  const { currentUser, loading } = useAuth()
+
+  if (loading) {
+    return <div className="loading-screen">Loading authentication...</div>
+  }
+
   return (
     <BrowserRouter>
       <Routes>

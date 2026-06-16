@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import CalendarEventCard from '../components/CalendarEventCard'
-import { events } from '../data'
+import { fetchEvents } from '../firebase'
 
 const eventTypes = [
   'All',
@@ -14,35 +14,73 @@ const eventTypes = [
   'Other',
 ]
 
+const parseEventTime = (time) => {
+  if (!time) return '00:00'
+  if (time.includes('AM') || time.includes('PM')) {
+    const [clock, period] = time.split(' ')
+    const [hourValue, minuteValue] = clock.split(':').map(Number)
+    let hour = hourValue
+    if (period === 'PM' && hour !== 12) hour += 12
+    if (period === 'AM' && hour === 12) hour = 0
+    return `${hour.toString().padStart(2, '0')}:${minuteValue.toString().padStart(2, '0')}`
+  }
+  return time
+}
+
 const parseDateTime = (date, time) => {
+  const normalizedTime = parseEventTime(time)
+
+  if (!date) {
+    return new Date(`1970-01-01T${normalizedTime}:00`)
+  }
+
+  if (date.includes('-')) {
+    return new Date(`${date}T${normalizedTime}:00`)
+  }
+
   const [monthName, day] = date.split(' ')
-  const [clock, period] = time.split(' ')
-  const [hourValue, minuteValue] = clock.split(':').map(Number)
-  let hour = hourValue
-  if (period === 'PM' && hour !== 12) hour += 12
-  if (period === 'AM' && hour === 12) hour = 0
-  return new Date(`${monthName} ${day}, 2025 ${hour.toString().padStart(2, '0')}:${minuteValue.toString().padStart(2, '0')}:00`)
+  return new Date(`${monthName} ${day}, ${new Date().getFullYear()} ${normalizedTime}:00`)
 }
 
 function EventCalendar() {
   const [view, setView] = useState('list')
   const [filter, setFilter] = useState('All')
   const [search, setSearch] = useState('')
+  const [events, setEvents] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
-  const enhancedEvents = useMemo(
-    () =>
-      events.map((event) => {
-        const startDate = parseDateTime(event.date, event.startTime)
-        const endDate = parseDateTime(event.date, event.endTime)
-        return {
-          ...event,
-          startDate,
-          endDate,
-          searchText: `${event.title} ${event.locationName}`.toLowerCase(),
-        }
-      }),
-    []
-  )
+  useEffect(() => {
+    async function loadEvents() {
+      setLoading(true)
+      setError(null)
+
+      try {
+        const firestoreEvents = await fetchEvents()
+        setEvents(firestoreEvents)
+      } catch (err) {
+        console.error('Failed to fetch events:', err)
+        setError('Unable to load events. Please try again later.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadEvents()
+  }, [])
+
+  const enhancedEvents = useMemo(() => {
+    return events.map((event) => {
+      const startDate = parseDateTime(event.date, event.startTime)
+      const endDate = parseDateTime(event.date, event.endTime)
+      return {
+        ...event,
+        startDate,
+        endDate,
+        searchText: `${event.title} ${event.locationName}`.toLowerCase(),
+      }
+    })
+  }, [events])
 
   const selectedEvents = useMemo(() => {
     const normalizedSearch = search.toLowerCase().trim()
@@ -119,7 +157,11 @@ function EventCalendar() {
         </div>
       </div>
 
-      {view === 'list' ? (
+      {loading ? (
+        <div className="empty-state">Loading events…</div>
+      ) : error ? (
+        <div className="empty-state form-error">{error}</div>
+      ) : view === 'list' ? (
         <div className="grid grid--cards">
           {selectedEvents.length > 0 ? (
             selectedEvents.map((event) => (

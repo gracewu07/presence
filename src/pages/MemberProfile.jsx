@@ -1,7 +1,13 @@
+import { useAuth } from '../context/AuthContext'
 import StatusBadge from '../components/StatusBadge'
-import { currentUser } from '../data'
 
 function MemberProfile() {
+  const { currentUser } = useAuth()
+
+  if (!currentUser) {
+    return <div className="page page--loading">Loading profile...</div>
+  }
+
   return (
     <section className="page profile-page">
       <div className="page__header">

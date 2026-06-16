@@ -1,6 +1,9 @@
 import { NavLink } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 function Navbar({ currentUser }) {
+  const { signOut } = useAuth()
+
   return (
     <header className="navbar">
       <div className="navbar__brand">
@@ -12,22 +15,26 @@ function Navbar({ currentUser }) {
         <NavLink to="/" end className="navbar__link">
           Home
         </NavLink>
-        <NavLink to="/check-in" className="navbar__link">
-          Check-In
-        </NavLink>
-        <NavLink to="/calendar" className="navbar__link">
-          Calendar
-        </NavLink>
-        <NavLink to="/leaderboard" className="navbar__link">
-          Leaderboard
-        </NavLink>
-        <NavLink to="/profile" className="navbar__link">
-          Profile
-        </NavLink>
-        <NavLink to="/excusals" className="navbar__link">
-          Excusals
-        </NavLink>
-        {currentUser.role === 'admin' && (
+        {currentUser && (
+          <>
+            <NavLink to="/check-in" className="navbar__link">
+              Check-In
+            </NavLink>
+            <NavLink to="/calendar" className="navbar__link">
+              Calendar
+            </NavLink>
+            <NavLink to="/leaderboard" className="navbar__link">
+              Leaderboard
+            </NavLink>
+            <NavLink to="/profile" className="navbar__link">
+              Profile
+            </NavLink>
+            <NavLink to="/excusals" className="navbar__link">
+              Excusals
+            </NavLink>
+          </>
+        )}
+        {currentUser?.role === 'admin' && (
           <>
             <NavLink to="/admin" className="navbar__link">
               Admin
@@ -49,7 +56,18 @@ function Navbar({ currentUser }) {
       </nav>
 
       <div className="navbar__meta">
-        <span>{currentUser.name}</span>
+        {currentUser ? (
+          <>
+            <span>{currentUser.name}</span>
+            <button type="button" className="button button--secondary navbar__action" onClick={signOut}>
+              Sign Out
+            </button>
+          </>
+        ) : (
+          <NavLink to="/login" className="button button--primary navbar__action">
+            Sign In
+          </NavLink>
+        )}
       </div>
     </header>
   )

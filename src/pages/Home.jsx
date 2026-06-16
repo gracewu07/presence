@@ -1,14 +1,17 @@
 import EventCard from '../components/EventCard'
 import StatCard from '../components/StatCard'
-import { events, adminStats, currentUser } from '../data'
+import { events, adminStats } from '../data'
+import { useAuth } from '../context/AuthContext'
 
 function Home() {
+  const { currentUser } = useAuth()
+
   return (
     <section className="page home-page">
       <div className="page__header">
         <div>
           <p className="eyebrow">Welcome back,</p>
-          <h1>{currentUser.name}</h1>
+          <h1>{currentUser?.name || 'Presence Member'}</h1>
           <p className="muted">Ready to check in and track points for your chapter?</p>
         </div>
       </div>
