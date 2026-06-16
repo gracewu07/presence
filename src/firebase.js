@@ -1,7 +1,5 @@
-import { initializeApp } from 'firebase/app'
-import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup, signOut, onAuthStateChanged as firebaseOnAuthStateChanged } from 'firebase/auth'
 import {
-  getFirestore,
+  db,
   doc,
   setDoc,
   getDoc,
@@ -14,36 +12,7 @@ import {
   orderBy,
   limit,
   serverTimestamp,
-} from 'firebase/firestore'
-import firebaseConfig from './firebaseConfig'
-
-// Initialize Firebase app
-const app = initializeApp(firebaseConfig)
-const auth = getAuth(app)
-const provider = new GoogleAuthProvider()
-const microsoftProvider = new OAuthProvider('microsoft.com')
-const db = getFirestore(app)
-
-// Authentication helpers
-export async function signInWithGoogle() {
-  const result = await signInWithPopup(auth, provider)
-  return result.user
-}
-
-export async function signInWithMicrosoft() {
-  // Using Firebase OAuthProvider for Microsoft
-  microsoftProvider.setCustomParameters({ prompt: 'select_account' })
-  const result = await signInWithPopup(auth, microsoftProvider)
-  return result.user
-}
-
-export async function signOutUser() {
-  await signOut(auth)
-}
-
-export function onAuthStateChanged(callback) {
-  return firebaseOnAuthStateChanged(auth, callback)
-}
+} from './lib/firebase'
 
 export async function fetchMemberProfile(memberId) {
   const memberRef = doc(db, 'members', memberId)
@@ -54,27 +23,16 @@ export async function fetchMemberProfile(memberId) {
   return { id: document.id, ...document.data() }
 }
 
-// Find approved member by email: check approvedMembers collection first, then members with accessStatus === 'approved'
 export async function findApprovedMemberByEmail(email) {
   if (!email) return null
-  const approvedRef = collection(db, 'approvedMembers')
-  const q = query(approvedRef, where('email', '==', email), limit(1))
+  const membersRef = collection(db, 'members')
+  const q = query(membersRef, where('email', '==', email.toLowerCase()), where('accessStatus', '==', 'approved'), limit(1))
   const snapshot = await getDocs(q)
   if (!snapshot.empty) return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() }
-
-  const membersRef = collection(db, 'members')
-  const q2 = query(membersRef, where('email', '==', email), where('accessStatus', '==', 'approved'), limit(1))
-  const snapshot2 = await getDocs(q2)
-  if (!snapshot2.empty) return { id: snapshot2.docs[0].id, ...snapshot2.docs[0].data() }
 
   return null
 }
 
-export function getCurrentUser() {
-  return auth.currentUser
-}
-
-// Firestore helpers
 export async function createOrUpdateMemberProfile(memberId, profileData) {
   const memberRef = doc(db, 'members', memberId)
   await setDoc(memberRef, {

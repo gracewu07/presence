@@ -19,22 +19,30 @@ function Login() {
 
   async function handleSubmit(e) {
     e.preventDefault()
-    const res = await signIn(email.trim())
-    if (res && res.sent) setSent(true)
+    const res = await signIn(email)
+    if (res?.sent) setSent(true)
   }
 
   return (
     <section className="page auth-page">
       <div className="auth-card card">
         <h1>Member Login</h1>
-        <p>Enter your UNC email (ending with @unc.edu). We'll send a sign-in link to your Outlook account.</p>
+        <p>Enter your UNC email. Presence will send a passwordless sign-in link and check your email against the approved AKPsi member list.</p>
         <form className="auth-form" onSubmit={handleSubmit}>
           <label>
-            Email
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            UNC email
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="onyen@unc.edu"
+              required
+            />
           </label>
-          <Button type="submit" variant="primary" disabled={loading}>{loading ? 'Sending…' : 'Send sign-in link'}</Button>
-          {sent && <p className="muted">Sign-in link sent. Check your UNC email and follow the link to complete sign-in.</p>}
+          <Button type="submit" variant="primary" disabled={loading}>
+            {loading ? 'Sending...' : 'Send sign-in link'}
+          </Button>
+          {sent && <p className="muted">Sign-in link sent. Check your UNC email and open the link to finish signing in.</p>}
           {error && <p className="form-error">{error}</p>}
         </form>
       </div>

@@ -28,7 +28,7 @@ npm run build
 
 Features
 
-- Google Sign-In with UNC email enforcement and admin allowlist
+- Firebase email-link sign-in with UNC email enforcement and Firestore member approval
 - Firestore-backed members, events, check-ins, and excusal requests
 - Member check-in with location verification and duplicate prevention
 - Admin dashboard with engagement scoring and at-risk flags

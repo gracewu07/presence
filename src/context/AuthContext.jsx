@@ -4,6 +4,7 @@ import * as memberService from '../services/memberService'
 import { isAllowedEmail } from '../config/authConfig'
 
 const AuthContext = createContext(null)
+const UNAPPROVED_MESSAGE = 'Your account is not approved for Presence. Please contact the VP of Standards.'
 
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null)
@@ -11,75 +12,91 @@ export function AuthProvider({ children }) {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    // Complete sign-in if this URL contains an email sign-in link
-    async function tryCompleteSignIn() {
-      const href = typeof window !== 'undefined' ? window.location.href : ''
-      try {
-        if (authService.isSignInLink(href)) {
-          try {
-            const user = await authService.signInWithLink(href)
-            // signInWithLink will sign the user in via Firebase; onAuthStateChanged below will handle approval
-          } catch (err) {
-            setError(err.message || 'Unable to complete sign-in. Please request a new sign-in link.')
+    let isMounted = true
+    let unsubscribe = () => {}
+
+    const initialize = async () => {
+      if (typeof window !== 'undefined' && authService.isEmailSignInLink(window.location.href)) {
+        try {
+          const storedEmail = authService.getStoredSignInEmail()
+          const email = storedEmail || window.prompt('Please enter the UNC email used to request this sign-in link:')
+
+          await authService.completeSignInWithEmailLink(window.location.href, email)
+
+          if (isMounted) {
+            const cleanUrl = window.location.origin + window.location.pathname
+            window.history.replaceState({}, document.title, cleanUrl)
+          }
+        } catch (err) {
+          console.error(err)
+          if (isMounted) {
+            setError(err.message || 'Unable to complete sign-in. Please request a new link.')
           }
         }
-      } catch (e) {
-        // ignore
       }
+
+      unsubscribe = authService.onAuthStateChanged(async (user) => {
+        if (!isMounted) return
+
+        if (!user) {
+          setCurrentUser(null)
+          setLoading(false)
+          return
+        }
+
+        try {
+          const normalizedEmail = user.email?.trim().toLowerCase()
+          const member = await memberService.fetchMemberByEmail(normalizedEmail)
+          const canAccessApp = member?.role === 'member' || member?.role === 'admin'
+
+          if (!member || member.accessStatus !== 'approved' || !canAccessApp) {
+            await authService.signOutUser()
+            setError(UNAPPROVED_MESSAGE)
+            setCurrentUser(null)
+            setLoading(false)
+            return
+          }
+
+          setCurrentUser(member)
+          setError(null)
+          setLoading(false)
+        } catch (err) {
+          await authService.signOutUser()
+          console.error(err)
+          setError('Unable to verify your member approval. Please try again.')
+          setCurrentUser(null)
+          setLoading(false)
+          return
+        }
+      })
     }
 
-    tryCompleteSignIn()
+    initialize()
 
-    const unsubscribe = authService.onAuthStateChanged(async (user) => {
-      if (!user) {
-        setCurrentUser(null)
-        setLoading(false)
-        return
+    return () => {
+      isMounted = false
+      if (typeof unsubscribe === 'function') {
+        unsubscribe()
       }
-
-      // Require UNC email domain
-      if (!isAllowedEmail(user.email)) {
-        await authService.signOutUser()
-        setError('Please sign in with your UNC email address.')
-        setCurrentUser(null)
-        setLoading(false)
-        return
-      }
-
-      // Lookup member record; user must exist in members with accessStatus === 'approved'
-      const member = await memberService.fetchMemberByEmail(user.email)
-      if (!member || member.accessStatus !== 'approved') {
-        await authService.signOutUser()
-        setError('Your account has not been approved for Presence. Please contact the VP of Standards.')
-        setCurrentUser(null)
-        setLoading(false)
-        return
-      }
-
-      // Member is approved: set currentUser to the member document (includes role)
-      setCurrentUser(member)
-      setLoading(false)
-    })
-
-    return unsubscribe
+    }
   }, [])
 
-  // Send sign-in link to email (passwordless)
   async function signIn(email) {
     setLoading(true)
     setError(null)
-    if (!email || !isAllowedEmail(email)) {
-      setError('Please enter a valid UNC email (ending with @unc.edu).')
-      setLoading(false)
-      return null
-    }
 
     try {
-      await authService.sendSignInLink(email)
+      const normalizedEmail = email?.trim().toLowerCase()
+      if (!isAllowedEmail(normalizedEmail)) {
+        setError('Please enter a valid UNC email ending in @unc.edu.')
+        return null
+      }
+
+      await authService.sendSignInLink(normalizedEmail)
       return { sent: true }
     } catch (err) {
       console.error(err)
-      setError('Failed to send sign-in link. Please try again.')
+      setError(err.message || 'Unable to send sign-in link. Please try again.')
       return null
     } finally {
       setLoading(false)
@@ -100,6 +117,7 @@ export function AuthProvider({ children }) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   return useContext(AuthContext)
 }

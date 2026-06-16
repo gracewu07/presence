@@ -74,6 +74,22 @@ export const members = [
     excusalsSubmitted: 0,
     createdAt: '2023-09-10T08:50:00Z',
   },
+  {
+    id: 'm06',
+    uid: 'uid_006',
+    name: 'Grace Wu',
+    email: 'gracewu@unc.edu',
+    role: 'admin',
+    accessStatus: 'approved',
+    pledgeClass: '',
+    totalPoints: 0,
+    status: 'active',
+    committee: 'Standards',
+    attendanceRate: 1,
+    absences: 0,
+    excusalsSubmitted: 0,
+    createdAt: '2026-06-16T00:00:00Z',
+  },
 ]
 
 export const currentUser = {
