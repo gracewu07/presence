@@ -531,18 +531,50 @@ button {
   color: var(--text);
 }
 
+.form-row {
+  display: grid;
+  gap: 16px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+}
+
+.field-error {
+  color: var(--danger);
+  font-size: 0.9rem;
+}
+
+.form-success {
+  background: rgba(56, 189, 248, 0.12);
+  color: #0284c7;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  padding: 14px 16px;
+  border-radius: 14px;
+}
+
 input,
-select {
+select,
+textarea {
   width: 100%;
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 14px 16px;
   background: var(--surface-alt);
   color: var(--text);
+  font: inherit;
+}
+
+textarea {
+  resize: vertical;
 }
 
 input:focus,
-select:focus {
+select:focus,
+textarea:focus {
   outline: 2px solid rgba(53, 102, 255, 0.25);
 }
 
@@ -660,5 +692,9 @@ select:focus {
   .member-card,
   .request-card {
     padding: 18px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
   }
 }
