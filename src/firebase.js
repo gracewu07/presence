@@ -103,6 +103,13 @@ export async function fetchMemberCheckIns(memberId) {
   return snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
 }
 
+export async function fetchMemberExcusalRequests(memberId) {
+  const requestsRef = collection(db, 'excusalRequests')
+  const q = query(requestsRef, where('memberId', '==', memberId), orderBy('submittedAt', 'desc'))
+  const snapshot = await getDocs(q)
+  return snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
+}
+
 export async function fetchEventById(eventId) {
   const eventRef = doc(db, 'events', eventId)
   const snapshot = await getDoc(eventRef)
