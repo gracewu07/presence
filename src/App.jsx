@@ -14,6 +14,7 @@ import AdminDashboard from './pages/AdminDashboard'
 import EventCreation from './pages/EventCreation'
 import MemberManagement from './pages/MemberManagement'
 import AnalyticsDashboard from './pages/AnalyticsDashboard'
+import QRCheckIn from './pages/QRCheckIn'
 import Settings from './pages/Settings'
 
 function App() {
@@ -34,6 +35,14 @@ function App() {
             element={
               <PrivateRoute user={currentUser}>
                 <MemberCheckIn />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="check-in/qr"
+            element={
+              <PrivateRoute user={currentUser}>
+                <QRCheckIn />
               </PrivateRoute>
             }
           />

@@ -1,16 +1,49 @@
-# React + Vite
+# Presence — UNC AKPsi chapter app
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Presence is a mobile-first React + Vite application for managing event attendance, member engagement, and chapter operations for UNC AKPsi.
 
-Currently, two official plugins are available:
+Quick start
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+1. Install dependencies
 
-## React Compiler
+```bash
+npm install
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+2. Add Firebase config
 
-## Expanding the ESLint configuration
+Create `src/firebaseConfig.js` with your Firebase web configuration (not included in source for security). Example values are in `.env.example` if present.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+3. Run locally
+
+```bash
+npm run dev
+```
+
+4. Build for production
+
+```bash
+npm run build
+```
+
+Features
+
+- Google Sign-In with UNC email enforcement and admin allowlist
+- Firestore-backed members, events, check-ins, and excusal requests
+- Member check-in with location verification and duplicate prevention
+- Admin dashboard with engagement scoring and at-risk flags
+- Analytics dashboard (attendance trends, event breakdowns, engagement distribution)
+- QR code event generation and camera-based scanning for quick check-ins
+- Member management CRUD for admins
+
+Notes
+
+- Keep `src/firebaseConfig.js` out of source control.
+- The app uses Firestore server timestamps for check-ins and excusal submissions.
+
+Development pointers
+
+- Analytics charts use `recharts`.
+- QR scanning uses `html5-qrcode` and QR generation uses `qrcode.react`.
+
+If you'd like, I can add CI/CD steps or a production deployment guide.
