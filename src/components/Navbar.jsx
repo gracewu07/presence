@@ -1,9 +1,11 @@
 import { NavLink } from 'react-router-dom'
+import akpsiLogo from '../assets/akpsi-logo.jpg'
 
 const memberLinks = [
   { to: '/', label: 'Home', end: true },
   { to: '/check-in', label: 'Check-In' },
   { to: '/calendar', label: 'Calendar' },
+  { to: '/progress', label: 'Progress' },
   { to: '/leaderboard', label: 'Leaderboard' },
   { to: '/profile', label: 'Profile' },
   { to: '/excusals', label: 'Excusals' },
@@ -97,8 +99,7 @@ function Navbar({ currentUser }) {
     <>
       <header className="navbar">
         <div className="navbar__brand">
-          <strong>Presence</strong>
-          <span>UNC AKPsi</span>
+          <img src={akpsiLogo} alt="AKPsi UNC" className="navbar__logo" />
         </div>
 
         <nav className="navbar__nav" aria-label="Primary navigation">

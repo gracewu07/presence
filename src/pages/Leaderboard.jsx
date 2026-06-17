@@ -140,7 +140,6 @@ function Leaderboard() {
                         </span>
                         <span>
                           <span className="leaderboard-member-name">{member.memberName}</span>
-                          <span className="leaderboard-member-subtext">{member.memberEmail}</span>
                         </span>
                       </div>
                         <div className="leaderboard-stat-cell">

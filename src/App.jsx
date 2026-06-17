@@ -15,9 +15,9 @@ import StandardsDashboard from './pages/StandardsDashboard'
 import EventCreation from './pages/EventCreation'
 import MemberManagement from './pages/MemberManagement'
 import AnalyticsDashboard from './pages/AnalyticsDashboard'
-import QRCheckIn from './pages/QRCheckIn'
 import Settings from './pages/Settings'
 import More from './pages/More'
+import RequirementsProgress from './pages/RequirementsProgress'
 
 function App() {
   const { currentUser, loading } = useAuth()
@@ -37,14 +37,6 @@ function App() {
             element={
               <PrivateRoute user={currentUser}>
                 <MemberCheckIn />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="check-in/qr"
-            element={
-              <PrivateRoute user={currentUser}>
-                <QRCheckIn />
               </PrivateRoute>
             }
           />
@@ -77,6 +69,14 @@ function App() {
             element={
               <PrivateRoute user={currentUser}>
                 <ExcusalRequests />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="progress"
+            element={
+              <PrivateRoute user={currentUser}>
+                <RequirementsProgress />
               </PrivateRoute>
             }
           />

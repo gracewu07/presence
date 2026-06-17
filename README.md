@@ -33,7 +33,6 @@ Features
 - Member check-in with location verification and duplicate prevention
 - Admin dashboard with engagement scoring and at-risk flags
 - Analytics dashboard (attendance trends, event breakdowns, engagement distribution)
-- QR code event generation and camera-based scanning for quick check-ins
 - Member management CRUD for admins
 
 Notes
@@ -44,6 +43,5 @@ Notes
 Development pointers
 
 - Analytics charts use `recharts`.
-- QR scanning uses `html5-qrcode` and QR generation uses `qrcode.react`.
 
 If you'd like, I can add CI/CD steps or a production deployment guide.

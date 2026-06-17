@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import StatusBadge from '../components/StatusBadge'
 import Button from '../components/Button'
+import { getGroupClassName } from '../constants/memberGroups'
 import {
   fetchMemberCheckIns,
   fetchEvents,
@@ -84,6 +85,8 @@ function MemberProfile() {
   const excusalsSubmitted = excusalRequests.length
 
   const profileInitial = currentUser?.name?.charAt(0)?.toUpperCase() || 'P'
+  const memberClass = currentUser?.pledgeClass || 'Delta'
+  const memberFamily = currentUser?.family || 'Fireball'
 
   function handlePhotoChange(e) {
     const file = e.target.files?.[0]
@@ -129,27 +132,31 @@ function MemberProfile() {
           <h1>{currentUser.name}</h1>
           <p className="muted">Your attendance, profile details, and check-in history.</p>
         </div>
-        <Button type="button" variant="secondary" onClick={signOut}>
-          Sign Out
-        </Button>
       </div>
 
       <div className="profile-bubble-grid">
         <div className="profile-bubble profile-photo-card profile-bubble--wide">
-          <div className="profile-photo-preview" aria-hidden="true">
-            {currentUser.photoUrl ? (
-              <img src={currentUser.photoUrl} alt="" />
-            ) : (
-              <span>{profileInitial}</span>
-            )}
-          </div>
+          <label className="profile-photo-upload" aria-label="Choose profile photo">
+            <span className="profile-photo-preview" aria-hidden="true">
+              {currentUser.photoUrl ? (
+                <img src={currentUser.photoUrl} alt="" />
+              ) : (
+                <span>{profileInitial}</span>
+              )}
+            </span>
+            <input type="file" accept="image/*" onChange={handlePhotoChange} />
+            <span className="profile-photo-upload__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M4 20h4l11-11-4-4L4 16v4Z" />
+                <path d="m13.5 6.5 4 4" />
+              </svg>
+            </span>
+          </label>
           <div>
-            <p className="profile-card__label">Profile Picture</p>
             <strong>{currentUser.name}</strong>
-            <label className="profile-photo-upload">
-              <input type="file" accept="image/*" onChange={handlePhotoChange} />
-              <span>Choose photo</span>
-            </label>
+            <div className="profile-photo-status">
+              <StatusBadge label={currentUser.status} status={currentUser.status} />
+            </div>
           </div>
         </div>
         <div className="profile-bubble profile-bubble--wide">
@@ -172,36 +179,48 @@ function MemberProfile() {
           <p className="profile-card__label">Excusals Submitted</p>
           <strong>{excusalsSubmitted}</strong>
         </div>
-        <div className="profile-bubble">
-          <p className="profile-card__label">Status</p>
-          <StatusBadge label={currentUser.status} status={currentUser.status} />
-        </div>
         <div className="profile-bubble profile-bubble--wide">
           <p className="profile-card__label">Points Leaderboard rank</p>
           <strong>{leaderboardRank ?? 'Unranked'}</strong>
         </div>
       </div>
 
-      <div className="section-block">
-        <h2>Attendance History</h2>
-        <div className="card">
-          {attendanceHistory.length === 0 ? (
-            <div className="empty-state">No attendance history available.</div>
-          ) : (
-            attendanceHistory.map((history) => (
-              <div key={history.id} className="event-card">
-                <div>
-                  <strong>{history.title}</strong>
-                  <p className="muted">{history.eventType} - {toLocaleShort(history.date)}</p>
+      <div className="section-block profile-info-layout">
+        <div>
+          <h2>Attendance History</h2>
+          <div className="card profile-section-card">
+            {attendanceHistory.length === 0 ? (
+              <div className="empty-state">No attendance history available.</div>
+            ) : (
+              attendanceHistory.map((history) => (
+                <div key={history.id} className="event-card">
+                  <div>
+                    <strong>{history.title}</strong>
+                    <p className="muted">{history.eventType} - {toLocaleShort(history.date)}</p>
+                  </div>
+                  <div>
+                    <p className="muted">Points: {history.points}</p>
+                    <p className="muted">Checked at: {toLocaleShort(history.timestamp)}</p>
+                    <p className="muted">Location verified: {history.locationVerified ? 'Yes' : 'No'}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="muted">Points: {history.points}</p>
-                  <p className="muted">Checked at: {toLocaleShort(history.timestamp)}</p>
-                  <p className="muted">Location verified: {history.locationVerified ? 'Yes' : 'No'}</p>
-                </div>
-              </div>
-            ))
-          )}
+              ))
+            )}
+          </div>
+        </div>
+
+        <div>
+          <h2>Member Information</h2>
+          <div className="card profile-section-card profile-member-info">
+            <div className={`profile-member-info-card profile-member-info-card--class-${getGroupClassName(memberClass)}`}>
+              <p className="profile-card__label">Class</p>
+              <strong>{memberClass}</strong>
+            </div>
+            <div className={`profile-member-info-card profile-member-info-card--family-${getGroupClassName(memberFamily)}`}>
+              <p className="profile-card__label">Family</p>
+              <strong>{memberFamily}</strong>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -214,6 +233,12 @@ function MemberProfile() {
             {missedRequired.length === 0 && attendanceRate >= 0.5 && <li>No recommended actions right now.</li>}
           </ul>
         </div>
+      </div>
+
+      <div className="profile-signout">
+        <Button type="button" variant="secondary" onClick={signOut}>
+          Sign Out
+        </Button>
       </div>
     </section>
   )

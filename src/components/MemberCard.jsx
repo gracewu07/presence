@@ -1,4 +1,5 @@
 import StatusBadge from './StatusBadge'
+import { getGroupClassName } from '../constants/memberGroups'
 
 function MemberCard({ member }) {
   return (
@@ -6,7 +7,18 @@ function MemberCard({ member }) {
       <div>
         <h3>{member.name}</h3>
         <p className="member-card__role">{member.role}</p>
-        {member.family && <p className="member-card__role">Family: {member.family}</p>}
+        <div className="member-group-badges">
+          {member.pledgeClass && (
+            <span className={`member-group-badge member-group-badge--class-${getGroupClassName(member.pledgeClass)}`}>
+              {member.pledgeClass}
+            </span>
+          )}
+          {member.family && (
+            <span className={`member-group-badge member-group-badge--family-${getGroupClassName(member.family)}`}>
+              {member.family}
+            </span>
+          )}
+        </div>
       </div>
       <div>
         <p>{member.points} pts</p>

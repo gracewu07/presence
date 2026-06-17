@@ -4,6 +4,7 @@ import MemberCard from '../components/MemberCard'
 import Button from '../components/Button'
 import * as memberService from '../services/memberService'
 import { isAllowedEmail } from '../config/authConfig'
+import { FAMILIES, PLEDGE_CLASSES } from '../constants/memberGroups'
 
 const REQUIRED_CSV_COLUMNS = ['name', 'email', 'pledgeClass', 'family', 'role', 'status']
 
@@ -242,8 +243,22 @@ function MemberManagement() {
           <form onSubmit={handleCreate} className="auth-form">
             <label>Name<input value={form.name} onChange={(e) => setForm((s) => ({ ...s, name: e.target.value }))} /></label>
             <label>UNC email<input type="email" value={form.email} onChange={(e) => setForm((s) => ({ ...s, email: e.target.value }))} /></label>
-            <label>Pledge class<input value={form.pledgeClass} onChange={(e) => setForm((s) => ({ ...s, pledgeClass: e.target.value }))} /></label>
-            <label>Family<input value={form.family} onChange={(e) => setForm((s) => ({ ...s, family: e.target.value }))} /></label>
+            <label>Pledge class
+              <select value={form.pledgeClass} onChange={(e) => setForm((s) => ({ ...s, pledgeClass: e.target.value }))}>
+                <option value="">Select class</option>
+                {PLEDGE_CLASSES.map((pledgeClass) => (
+                  <option key={pledgeClass} value={pledgeClass}>{pledgeClass}</option>
+                ))}
+              </select>
+            </label>
+            <label>Family
+              <select value={form.family} onChange={(e) => setForm((s) => ({ ...s, family: e.target.value }))}>
+                <option value="">Select family</option>
+                {FAMILIES.map((family) => (
+                  <option key={family} value={family}>{family}</option>
+                ))}
+              </select>
+            </label>
             <label>Role
               <select value={form.role} onChange={(e) => setForm((s) => ({ ...s, role: e.target.value }))}>
                 <option value="member">Member</option>
@@ -316,9 +331,22 @@ function MemberManagement() {
               <div key={m.id} style={{ marginBottom: 12 }}>
                 <MemberCard member={m} />
                 {editing === m.id ? (
-                  <form onSubmit={(e) => { e.preventDefault(); handleSave(m.id, { name: m.name, family: e.target.family.value, role: e.target.role.value, accessStatus: e.target.accessStatus.value }) }}>
+                  <form onSubmit={(e) => { e.preventDefault(); handleSave(m.id, { name: m.name, pledgeClass: e.target.pledgeClass.value, family: e.target.family.value, role: e.target.role.value, accessStatus: e.target.accessStatus.value }) }}>
+                    <label>Pledge class
+                      <select name="pledgeClass" defaultValue={m.pledgeClass || ''}>
+                        <option value="">Select class</option>
+                        {PLEDGE_CLASSES.map((pledgeClass) => (
+                          <option key={pledgeClass} value={pledgeClass}>{pledgeClass}</option>
+                        ))}
+                      </select>
+                    </label>
                     <label>Family
-                      <input name="family" defaultValue={m.family || ''} />
+                      <select name="family" defaultValue={m.family || ''}>
+                        <option value="">Select family</option>
+                        {FAMILIES.map((family) => (
+                          <option key={family} value={family}>{family}</option>
+                        ))}
+                      </select>
                     </label>
                     <label>Role
                       <select name="role" defaultValue={m.role}>

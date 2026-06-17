@@ -88,7 +88,7 @@ export const events = [
     id: 'test-quad-event',
     title: 'Quad Event',
     eventType: 'Recruitment',
-    date: 'August 30',
+    date: 'August 20',
     startTime: '10:00 AM',
     endTime: '2:00 PM',
     locationName: 'Quad',

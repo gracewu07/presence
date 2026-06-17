@@ -1,59 +1,130 @@
 import { useEffect, useState } from 'react'
 import EventCard from '../components/EventCard'
 import StatCard from '../components/StatCard'
-import { fetchUpcomingEvents } from '../firebase'
+import { fetchCheckIns, fetchEvents } from '../firebase'
 import { useAuth } from '../context/AuthContext'
+import { events as staticEvents } from '../data/events'
+import { leaderboardCheckIns } from '../data/mockData'
+
+const SERVICE_REQUIREMENT = 2
+const PD_REQUIREMENT = 3
+
+const normalizeType = (eventType = '') =>
+  eventType
+    .toLowerCase()
+    .trim()
+    .replace(/&/g, 'and')
+    .replace(/\s+/g, '-')
+
+const typeClassForEvent = (eventType) => {
+  const normalized = normalizeType(eventType)
+  if (normalized === 'pd' || normalized === 'professional-development') return 'professional-development'
+  return normalized || 'other'
+}
 
 const getEventDateValue = (event) => {
-  const value = event.eventDate || event.date
-  const date = value?.toDate ? value.toDate() : new Date(value)
+  const value = event.eventDate
+  if (value?.toDate) return value.toDate()
+  if (value) {
+    const date = new Date(value)
+    return Number.isNaN(date.getTime()) ? null : date
+  }
+
+  if (!event.date) return null
+  const date = event.date.includes('-')
+    ? new Date(event.date)
+    : new Date(`${event.date}, ${new Date().getFullYear()} ${event.startTime || '00:00'}`)
   return Number.isNaN(date.getTime()) ? null : date
+}
+
+const uniqueEventCount = (checkIns) => new Set(checkIns.map((checkIn) => checkIn.eventId).filter(Boolean)).size
+
+const getMemberCheckIns = (checkIns, currentUser) => {
+  const memberId = currentUser?.uid || currentUser?.id
+  const memberEmail = currentUser?.email?.toLowerCase()
+
+  return checkIns.filter((checkIn) => {
+    const checkInEmail = checkIn.memberEmail?.toLowerCase()
+    return checkIn.memberId === memberId || checkIn.memberId === currentUser?.id || checkInEmail === memberEmail
+  })
+}
+
+const calculateRequirementBlurbs = (allEvents, checkIns, currentUser) => {
+  const eventMap = new Map(allEvents.map((event) => [event.id, event]))
+  const memberCheckIns = getMemberCheckIns(checkIns, currentUser)
+  const attendedEventIds = new Set(memberCheckIns.map((checkIn) => checkIn.eventId).filter(Boolean))
+  const requiredChapterEvents = allEvents.filter(
+    (event) => event.required && typeClassForEvent(event.eventType) === 'chapter'
+  )
+
+  const chapterCompleted = requiredChapterEvents.filter((event) => attendedEventIds.has(event.id)).length
+  const serviceCompleted = uniqueEventCount(memberCheckIns.filter((checkIn) => {
+    const event = eventMap.get(checkIn.eventId)
+    return typeClassForEvent(event?.eventType || checkIn.eventType) === 'service'
+  }))
+  const pdCompleted = uniqueEventCount(memberCheckIns.filter((checkIn) => {
+    const event = eventMap.get(checkIn.eventId)
+    return typeClassForEvent(event?.eventType || checkIn.eventType) === 'professional-development'
+  }))
+  const checkInPoints = memberCheckIns.reduce((sum, checkIn) => sum + Number(checkIn.pointsAwarded ?? 0), 0)
+  const totalPoints = checkInPoints || currentUser?.totalPoints || 0
+  const chapterRequired = requiredChapterEvents.length
+  const chapterProgress = chapterRequired > 0 ? Math.min(chapterCompleted / chapterRequired, 1) : 0
+
+  return [
+    { label: 'Chapter', value: `${chapterCompleted}/${chapterRequired}`, progress: chapterProgress, variant: 'chapter' },
+    { label: 'Service', value: `${serviceCompleted}/${SERVICE_REQUIREMENT}`, progress: Math.min(serviceCompleted / SERVICE_REQUIREMENT, 1), variant: 'service' },
+    { label: 'Professional Development', value: `${pdCompleted}/${PD_REQUIREMENT}`, progress: Math.min(pdCompleted / PD_REQUIREMENT, 1), variant: 'professional-development' },
+    { label: 'Total Points', value: totalPoints, variant: 'points' },
+  ]
 }
 
 function Home() {
   const { currentUser } = useAuth()
   const [events, setEvents] = useState([])
+  const [memberStats, setMemberStats] = useState(() => calculateRequirementBlurbs([], [], currentUser))
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    async function loadEvents() {
+    async function loadHomeData() {
       setLoading(true)
       setError(null)
       try {
-        const upcomingEvents = await fetchUpcomingEvents()
+        const [eventSnapshot, checkInSnapshot] = await Promise.all([
+          fetchEvents().catch(() => staticEvents),
+          fetchCheckIns().catch(() => leaderboardCheckIns),
+        ])
+        const allEvents = eventSnapshot?.length ? eventSnapshot : staticEvents
+        const allCheckIns = checkInSnapshot?.length ? checkInSnapshot : leaderboardCheckIns
         const now = new Date()
         const sevenDaysFromNow = new Date(now)
         sevenDaysFromNow.setDate(now.getDate() + 7)
 
-        setEvents(upcomingEvents.filter((event) => {
+        setEvents(allEvents.filter((event) => {
           const eventDate = getEventDateValue(event)
           return eventDate && eventDate >= now && eventDate <= sevenDaysFromNow
         }))
+        setMemberStats(calculateRequirementBlurbs(allEvents, allCheckIns, currentUser))
       } catch (err) {
-        console.error('Unable to load upcoming events for Home:', err)
+        console.error('Unable to load home data:', err)
         setError('Unable to load events. Please refresh the page.')
       } finally {
         setLoading(false)
       }
     }
 
-    loadEvents()
-  }, [])
-
-  const memberStats = [
-    { label: 'Attendance Rate', value: `${Math.round((currentUser?.attendanceRate ?? 0) * 100)}%` },
-    { label: 'Total Points', value: currentUser?.totalPoints ?? 0 },
-    { label: 'Excusals Submitted', value: currentUser?.excusalsSubmitted ?? 0 },
-  ]
+    loadHomeData()
+  }, [currentUser])
+  const firstName = currentUser?.name?.trim().split(/\s+/)[0] || 'Presence Member'
 
   return (
     <section className="page home-page">
       <div className="page__header">
         <div>
-          <p className="eyebrow">Member Dashboard</p>
-          <h1>{currentUser?.name || 'Presence Member'}</h1>
-          <p className="muted">Ready to check in and track points for your chapter?</p>
+          <p className="eyebrow">Welcome,</p>
+          <h1>{firstName}</h1>
+          <p className="muted">Check in, view events, and track points for your chapter.</p>
         </div>
       </div>
 

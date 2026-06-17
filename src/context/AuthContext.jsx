@@ -11,6 +11,8 @@ const TEST_MEMBER_USER = {
   role: 'member',
   accessStatus: 'approved',
   status: 'active',
+  pledgeClass: 'Delta',
+  family: 'Fireball',
   totalPoints: 0,
   attendanceRate: 1,
   absences: 0,
