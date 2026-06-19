@@ -1988,17 +1988,6 @@ body {
   transform: translateY(-2px);
 }
 
-.home-page .page__header {
-  background: transparent;
-  padding-inline: 4px;
-}
-
-.home-page .page__header h1 {
-  max-width: 12ch;
-  font-size: clamp(2.05rem, 8vw, 3.1rem);
-  line-height: 1.02;
-}
-
 .home-page .grid--stats {
   gap: 14px;
 }
@@ -4724,4 +4713,2652 @@ body,
 .app-shell,
 .app-shell__content {
   background: #ffffff !important;
+}
+
+/* White canvas consistency layer */
+:root {
+  --app-blue-softest: #f6fbff;
+  --app-blue-soft: #eef7fc;
+  --app-blue-mid: #d6eaf8;
+  --app-blue-accent: #72a0c0;
+  --app-blue-accent-2: #87b8d6;
+  --app-blue-ink: #25252d;
+}
+
+.page {
+  color: var(--app-blue-ink);
+}
+
+.page__header {
+  margin-bottom: 18px;
+  padding: 4px;
+  border: 0;
+  background: transparent;
+  backdrop-filter: none;
+}
+
+.page__header h1,
+.section-heading h2,
+.section-block h2 {
+  color: var(--app-blue-ink);
+  font-weight: 800;
+}
+
+.page__header .muted,
+.section-heading p {
+  color: var(--planner-muted);
+}
+
+.card,
+.leaderboard-panel,
+.calendar-controls,
+.calendar-month,
+.calendar-modal__card,
+.checkin-single-card,
+.excusal-panel,
+.settings-panel,
+.event-form,
+.member-management-page .member-management-panel,
+.member-management-page .member-import-card,
+.analytics-page .grid--charts .card,
+.admin-page .card,
+.standards-page .card,
+.more-link-card {
+  border: 1px solid rgba(214, 234, 248, 0.96);
+  background: #ffffff;
+}
+
+.leaderboard-panel,
+.calendar-controls,
+.calendar-month,
+.calendar-modal__card {
+  border-radius: var(--app-radius-panel);
+}
+
+.stat-card,
+.settings-info-card,
+.more-link-card,
+.member-card,
+.leaderboard-admin-card,
+.profile-bubble,
+.location-autofill-summary,
+.csv-upload,
+.csv-preview__row,
+.member-edit-form,
+.empty-state {
+  border: 1px solid rgba(214, 234, 248, 0.96);
+  background: var(--app-blue-softest);
+}
+
+.grid--stats .stat-card {
+  --stat-accent: var(--app-blue-accent);
+  border-left: 7px solid var(--stat-accent);
+}
+
+.grid--stats .stat-card:nth-child(2) {
+  --stat-accent: var(--app-blue-accent-2);
+}
+
+.grid--stats .stat-card:nth-child(3) {
+  --stat-accent: #9bc8e0;
+}
+
+.grid--stats .stat-card:nth-child(4) {
+  --stat-accent: #b0d5e9;
+}
+
+.home-page .stat-card:nth-child(1),
+.home-page .stat-card:nth-child(2),
+.home-page .stat-card:nth-child(3),
+.home-page .stat-card:nth-child(4) {
+  background: var(--app-blue-softest);
+}
+
+.home-page .stat-card--chapter {
+  --home-stat-accent: var(--app-blue-accent);
+  background: var(--app-blue-softest);
+}
+
+.home-page .stat-card--service {
+  --home-stat-accent: var(--app-blue-accent-2);
+  background: var(--app-blue-soft);
+}
+
+.home-page .stat-card--professional-development {
+  --home-stat-accent: #9bc8e0;
+  background: #f1f9fd;
+}
+
+.home-page .stat-card--points {
+  --home-stat-accent: var(--app-blue-ink);
+  background: #f2f5f8;
+}
+
+.event-surface,
+.event-card,
+.calendar-card,
+.calendar-month-event {
+  border-top: 1px solid rgba(255, 255, 255, 0.72);
+  border-right: 1px solid rgba(214, 234, 248, 0.86);
+  border-bottom: 1px solid rgba(214, 234, 248, 0.86);
+}
+
+.calendar-controls .calendar-chip,
+.calendar-view-toggle button,
+.leaderboard-admin-select select,
+.settings-field input,
+.settings-field select,
+.event-creation-page .event-form input,
+.event-creation-page .event-form select,
+.event-creation-page .event-form textarea,
+.member-management-page input,
+.member-management-page select,
+.excusal-select-wrap select,
+.excusal-field textarea,
+.excusal-upload {
+  border-color: rgba(214, 234, 248, 0.96);
+  background-color: #ffffff;
+}
+
+.calendar-controls .calendar-chip:hover,
+.calendar-view-toggle button:hover,
+.more-link-card:hover,
+.button:hover {
+  background-color: var(--app-blue-softest);
+}
+
+.button--primary,
+.checkin-single-card .button--primary {
+  background: var(--app-blue-ink);
+  color: #ffffff;
+}
+
+.button--secondary {
+  border-color: rgba(214, 234, 248, 0.96);
+  background: #ffffff;
+  color: var(--app-blue-ink);
+}
+
+.more-link-card {
+  align-items: center;
+  border-left: 7px solid var(--app-blue-accent);
+}
+
+.more-link-card:nth-child(2n) {
+  border-left-color: var(--app-blue-accent-2);
+}
+
+.more-link-card:nth-child(3n) {
+  border-left-color: #9bc8e0;
+}
+
+.leaderboard-row,
+.excusal-request-card,
+.admin-page .request-card,
+.standards-page .request-card {
+  border-color: rgba(214, 234, 248, 0.96);
+}
+
+.leaderboard-row--current,
+.leaderboard-spotlight,
+.calendar-modal__card,
+.checkin-single-card,
+.excusal-panel,
+.settings-panel,
+.event-form,
+.member-management-page .member-management-panel,
+.member-management-page .member-import-card {
+  background: #ffffff;
+}
+
+.leaderboard-admin-card,
+.settings-info-card,
+.location-autofill-summary,
+.csv-upload,
+.member-edit-form {
+  border-left: 7px solid var(--app-blue-accent);
+}
+
+.analytics-page .recharts-cartesian-grid line {
+  stroke: rgba(214, 234, 248, 0.96);
+}
+
+.navbar,
+.mobile-nav {
+  background: rgba(255, 255, 255, 0.98);
+}
+
+.form-success,
+.checkin-message--success {
+  border: 1px solid rgba(59, 178, 115, 0.24);
+  background: rgba(59, 178, 115, 0.12);
+}
+
+.form-error,
+.checkin-message--error {
+  border: 1px solid rgba(239, 111, 108, 0.24);
+  background: rgba(239, 111, 108, 0.12);
+}
+
+/* Full-app inspo pass: white canvas, light blue accents, navy actions */
+:root {
+  --ui-navy: #121a27;
+  --ui-navy-soft: #1d2a3a;
+  --ui-blue: #8ed8ee;
+  --ui-blue-2: #bfeaf6;
+  --ui-blue-soft: #f1fbff;
+  --ui-blue-panel: #f7fcff;
+  --ui-border: rgba(30, 55, 78, 0.1);
+  --ui-border-strong: rgba(30, 55, 78, 0.16);
+  --ui-text: #171b22;
+  --ui-muted: #747d87;
+  --planner-text: var(--ui-text);
+  --planner-muted: var(--ui-muted);
+  --planner-card: #ffffff;
+  --app-radius-card: 30px;
+  --app-radius-panel: 36px;
+}
+
+html,
+body,
+#root,
+.app-shell,
+.app-shell__content {
+  background: #ffffff !important;
+  color: var(--ui-text);
+}
+
+body {
+  font-size: 16px;
+  letter-spacing: 0;
+}
+
+.app-shell__content {
+  min-height: 100vh;
+}
+
+.page {
+  max-width: 1180px;
+  padding: 22px clamp(16px, 4vw, 38px) 112px;
+}
+
+.page__header {
+  margin-bottom: 20px;
+  padding: 0;
+}
+
+.page__header h1 {
+  color: var(--ui-text);
+  font-size: clamp(2rem, 7vw, 3.2rem);
+  font-weight: 760;
+  line-height: 0.98;
+}
+
+.page__header .muted,
+.section-heading p,
+.muted {
+  color: var(--ui-muted);
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--ui-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.section-block {
+  margin-top: 30px;
+}
+
+.section-heading {
+  margin-bottom: 14px;
+  align-items: center;
+}
+
+.section-heading h2,
+.section-block h2,
+.card h2,
+.card h3 {
+  color: var(--ui-text);
+  font-weight: 720;
+  letter-spacing: 0;
+}
+
+.card,
+.leaderboard-panel,
+.calendar-controls,
+.calendar-month,
+.calendar-modal__card,
+.checkin-single-card,
+.excusal-panel,
+.settings-panel,
+.event-form,
+.member-management-page .member-management-panel,
+.member-management-page .member-import-card,
+.analytics-page .grid--charts .card,
+.admin-page .card,
+.standards-page .card,
+.more-link-card,
+.profile-hero-card,
+.profile-section-card,
+.profile-actions-card {
+  border: 1px solid var(--ui-border);
+  border-radius: var(--app-radius-card);
+  background: #ffffff;
+}
+
+.leaderboard-panel,
+.calendar-controls,
+.calendar-month,
+.calendar-modal__card,
+.profile-hero-card {
+  border-radius: var(--app-radius-panel);
+}
+
+.stat-card,
+.settings-info-card,
+.leaderboard-admin-card,
+.profile-bubble,
+.profile-hero-meta__item,
+.profile-member-info-card,
+.location-autofill-summary,
+.csv-upload,
+.csv-preview__row,
+.member-edit-form,
+.empty-state,
+.leaderboard-spotlight,
+.leaderboard-row--current,
+.excusal-request-card,
+.request-card {
+  border: 1px solid var(--ui-border);
+  background: var(--ui-blue-panel);
+}
+
+.grid {
+  gap: 16px;
+}
+
+.grid--cards {
+  gap: 16px;
+}
+
+.grid--stats {
+  gap: 14px;
+}
+
+.stat-card,
+.profile-stats-grid .stat-card,
+.home-page .stat-card {
+  min-height: 148px;
+  border-left: 0;
+  border-radius: 28px;
+  background: var(--ui-blue-soft);
+}
+
+.stat-card:nth-child(2),
+.home-page .stat-card:nth-child(2),
+.profile-stats-grid .stat-card:nth-child(2) {
+  background: #e9f8fd;
+}
+
+.stat-card:nth-child(3),
+.home-page .stat-card:nth-child(3),
+.profile-stats-grid .stat-card:nth-child(3) {
+  background: #f5fbff;
+}
+
+.stat-card:nth-child(4),
+.home-page .stat-card:nth-child(4),
+.profile-stats-grid .stat-card:nth-child(4) {
+  background: #edf7fc;
+}
+
+.stat-card__label,
+.profile-card__label,
+.leaderboard-card__details .label,
+.checkin-single-card .checkin-detail-grid .label,
+.settings-field span,
+.excusal-field > span:first-child,
+.excusal-upload__topline > span:first-child {
+  color: var(--ui-muted);
+  font-size: 0.82rem;
+  font-weight: 560;
+  line-height: 1.1;
+}
+
+.stat-card__value,
+.profile-bubble strong,
+.leaderboard-card__details p:last-child {
+  color: var(--ui-text);
+  font-weight: 760;
+}
+
+.home-page .stat-card__value,
+.profile-stats-grid .stat-card__value {
+  font-size: clamp(2.1rem, 9vw, 2.7rem);
+}
+
+.button,
+.calendar-chip,
+.calendar-view-toggle button,
+.calendar-add-button,
+.calendar-options button,
+.csv-upload__button,
+.excusal-upload__button {
+  min-height: 42px;
+  border-radius: 999px;
+  font-weight: 620;
+  letter-spacing: 0;
+}
+
+.button--primary,
+.checkin-single-card .button--primary,
+.calendar-add-button,
+.event-form .button--primary,
+.auth-card .button--primary {
+  border: 1px solid var(--ui-navy);
+  background: var(--ui-navy);
+  color: #ffffff;
+}
+
+.button--secondary,
+.calendar-options button,
+.csv-upload__button,
+.excusal-upload__button {
+  border: 1px solid var(--ui-border);
+  background: #ffffff;
+  color: var(--ui-navy);
+}
+
+.button:hover,
+.calendar-chip:hover,
+.calendar-view-toggle button:hover,
+.calendar-options button:hover {
+  background-color: var(--ui-blue-soft);
+}
+
+input,
+select,
+textarea,
+.settings-field input,
+.settings-field select,
+.event-creation-page .event-form input,
+.event-creation-page .event-form select,
+.event-creation-page .event-form textarea,
+.member-management-page input,
+.member-management-page select,
+.excusal-select-wrap select,
+.excusal-field textarea,
+.excusal-upload {
+  border: 1px solid var(--ui-border);
+  background-color: #ffffff;
+  color: var(--ui-text);
+}
+
+input,
+select {
+  min-height: 48px;
+  border-radius: 999px;
+}
+
+textarea {
+  border-radius: 24px;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+.settings-field select:focus,
+.excusal-select-wrap select:focus,
+.excusal-field textarea:focus,
+.excusal-upload:focus-within {
+  border-color: var(--ui-blue);
+  outline: 4px solid rgba(142, 216, 238, 0.24);
+}
+
+.navbar {
+  border-bottom: 1px solid var(--ui-border);
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(18px);
+}
+
+.navbar__link {
+  border-radius: 999px;
+  color: var(--ui-muted);
+  font-weight: 600;
+}
+
+.navbar__link.active,
+.navbar__link:hover {
+  background: var(--ui-blue-soft);
+  color: var(--ui-navy);
+}
+
+.mobile-nav {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  border: 1px solid var(--ui-border);
+  border-right: 0;
+  border-bottom: 0;
+  border-left: 0;
+  border-radius: 0;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(18px);
+}
+
+.mobile-nav__link {
+  border-radius: 0;
+  background: transparent;
+  color: #a2aab3;
+}
+
+.mobile-nav__link.active {
+  background: transparent;
+  color: var(--ui-navy);
+}
+
+.mobile-nav__icon {
+  width: 23px;
+  height: 23px;
+}
+
+.event-surface,
+.event-card,
+.calendar-card,
+.calendar-month-event {
+  border-left-color: var(--event-accent);
+  background: var(--event-tint);
+}
+
+.event-card,
+.calendar-card,
+.checkin-single-card,
+.calendar-modal__card .event-card {
+  border-radius: 30px;
+}
+
+.event-card h3,
+.calendar-card h3,
+.checkin-card-heading h2 {
+  color: var(--ui-text);
+  font-weight: 740;
+}
+
+.event-card__type,
+.calendar-card__tag,
+.required-note,
+.status-badge {
+  border-radius: 999px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.required-note {
+  border-left: 0;
+  padding: 0.38rem 0.68rem;
+  background: rgba(239, 111, 108, 0.12);
+  color: #9f3f3c;
+  font-weight: 650;
+}
+
+.calendar-controls {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  background: var(--ui-blue-panel);
+}
+
+.calendar-controls .calendar-chip,
+.calendar-view-toggle button {
+  border-color: var(--ui-border);
+  background: #ffffff;
+  color: var(--ui-text);
+}
+
+.calendar-controls .calendar-chip--active,
+.calendar-view-toggle button.active,
+.calendar-toggle .button--active {
+  background: var(--ui-navy);
+  color: #ffffff;
+}
+
+.calendar-controls .calendar-chip.event-type-chapter.calendar-chip--active,
+.calendar-controls .calendar-chip.event-type-service.calendar-chip--active,
+.calendar-controls .calendar-chip.event-type-professional-development.calendar-chip--active,
+.calendar-controls .calendar-chip.event-type-social.calendar-chip--active,
+.calendar-controls .calendar-chip.event-type-recruitment.calendar-chip--active {
+  color: var(--ui-text);
+}
+
+.leaderboard-spotlight {
+  border-radius: 34px;
+  background: var(--ui-blue-soft);
+}
+
+.leaderboard-spotlight__chips span,
+.leaderboard-spotlight__chips strong,
+.profile-role-value {
+  background: var(--ui-navy);
+  color: #ffffff !important;
+}
+
+.leaderboard-row {
+  border-color: var(--ui-border);
+  background: transparent;
+}
+
+.leaderboard-rank {
+  background: #ffffff;
+  color: var(--ui-navy);
+}
+
+.leaderboard-row--current .leaderboard-rank {
+  background: var(--ui-navy);
+  color: #ffffff;
+}
+
+.profile-page {
+  --profile-blue-1: var(--ui-blue-soft);
+  --profile-blue-2: #e9f8fd;
+  --profile-blue-3: #f5fbff;
+  --profile-blue-accent-1: var(--ui-blue);
+  --profile-blue-accent-2: var(--ui-blue-2);
+  --profile-blue-accent-3: #a9dded;
+}
+
+.profile-photo-preview,
+.profile-photo-upload__icon {
+  background: var(--ui-navy);
+}
+
+.profile-hero-card,
+.profile-section-card,
+.profile-actions-card {
+  background: #ffffff;
+}
+
+.profile-hero-meta__item,
+.profile-member-info-card,
+.profile-stats-grid .stat-card {
+  border: 1px solid var(--ui-border);
+  border-left: 0;
+}
+
+.profile-member-info-card {
+  border-left: 0;
+  border-radius: 28px;
+}
+
+.more-link-card {
+  border-left: 0;
+  background: var(--ui-blue-panel);
+}
+
+.more-link-card span[aria-hidden='true'] {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--ui-navy);
+}
+
+.settings-info-card,
+.leaderboard-admin-card,
+.location-autofill-summary,
+.csv-upload,
+.member-edit-form {
+  border-left: 0;
+  border-radius: 28px;
+}
+
+.form-success,
+.checkin-message--success {
+  border: 1px solid rgba(59, 178, 115, 0.24);
+  background: rgba(59, 178, 115, 0.12);
+}
+
+.form-error,
+.checkin-message--error {
+  border: 1px solid rgba(239, 111, 108, 0.24);
+  background: rgba(239, 111, 108, 0.12);
+}
+
+@media (max-width: 767px) {
+  .page {
+    padding-top: 18px;
+  }
+
+  .page__header h1 {
+    font-size: clamp(2rem, 12vw, 3rem);
+  }
+
+  .card,
+  .event-card,
+  .calendar-card,
+  .checkin-single-card,
+  .excusal-panel,
+  .settings-panel,
+  .event-form,
+  .more-link-card {
+    border-radius: 28px;
+  }
+}
+
+/* Real-estate inspired revamp: airy white surfaces, navy pills, light-blue accents */
+:root {
+  --ui-navy: #0b111c;
+  --ui-navy-soft: #172233;
+  --ui-blue: #91def0;
+  --ui-blue-2: #c7f0f8;
+  --ui-blue-soft: #f2fbfe;
+  --ui-blue-panel: #f7fbfd;
+  --ui-surface: #f8f9fb;
+  --ui-surface-2: #f1f4f7;
+  --ui-border: rgba(11, 17, 28, 0.08);
+  --ui-border-strong: rgba(11, 17, 28, 0.14);
+  --ui-text: #11151c;
+  --ui-muted: #737b86;
+  --planner-text: var(--ui-text);
+  --planner-muted: var(--ui-muted);
+  --planner-card: #ffffff;
+  --app-radius-card: 32px;
+  --app-radius-panel: 38px;
+}
+
+html,
+body,
+#root,
+.app-shell,
+.app-shell__content {
+  background: #ffffff !important;
+}
+
+body {
+  color: var(--ui-text);
+  font-weight: 450;
+}
+
+.page {
+  width: min(100%, 1180px);
+  padding: clamp(18px, 3vw, 34px) clamp(16px, 4vw, 42px) 118px;
+}
+
+.page__header {
+  margin-bottom: clamp(18px, 4vw, 28px);
+  padding: 0;
+}
+
+.page__header h1 {
+  max-width: 14ch;
+  color: var(--ui-text);
+  font-size: clamp(2.15rem, 7.4vw, 3.55rem);
+  font-weight: 720;
+  letter-spacing: -0.02em;
+  line-height: 0.96;
+}
+
+.page__header .muted {
+  max-width: 58ch;
+  margin-top: 12px;
+  color: var(--ui-muted);
+  font-size: clamp(0.98rem, 2vw, 1.05rem);
+  line-height: 1.4;
+}
+
+.eyebrow {
+  color: var(--ui-muted);
+  font-size: 0.78rem;
+  font-weight: 620;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.section-heading h2,
+.section-block h2,
+.card h2,
+.card h3 {
+  color: var(--ui-text);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.section-block {
+  margin-top: clamp(24px, 4vw, 36px);
+}
+
+.grid,
+.grid--cards,
+.grid--stats {
+  gap: 14px;
+}
+
+.card,
+.leaderboard-panel,
+.calendar-controls,
+.calendar-month,
+.calendar-modal__card,
+.checkin-single-card,
+.excusal-panel,
+.settings-panel,
+.event-form,
+.member-management-page .member-management-panel,
+.member-management-page .member-import-card,
+.analytics-page .grid--charts .card,
+.admin-page .card,
+.standards-page .card,
+.more-link-card,
+.profile-hero-card,
+.profile-section-card,
+.profile-actions-card,
+.auth-card {
+  border: 1px solid var(--ui-border);
+  border-radius: var(--app-radius-card);
+  background: #ffffff;
+}
+
+.leaderboard-panel,
+.calendar-controls,
+.calendar-month,
+.calendar-modal__card,
+.profile-hero-card,
+.auth-card {
+  border-radius: var(--app-radius-panel);
+}
+
+.stat-card,
+.settings-info-card,
+.leaderboard-admin-card,
+.profile-hero-meta__item,
+.profile-member-info-card,
+.location-autofill-summary,
+.csv-upload,
+.csv-preview__row,
+.member-edit-form,
+.empty-state,
+.leaderboard-spotlight,
+.leaderboard-row--current,
+.excusal-request-card,
+.request-card,
+.member-card {
+  border: 1px solid var(--ui-border);
+  background: var(--ui-surface);
+}
+
+.stat-card,
+.home-page .stat-card,
+.profile-stats-grid .stat-card {
+  min-height: 150px;
+  padding: 18px;
+  border-left: 0;
+  border-radius: 30px;
+}
+
+.home-page .stat-card:nth-child(1),
+.profile-stats-grid .stat-card:nth-child(1),
+.grid--stats .stat-card:nth-child(1) {
+  background: var(--ui-blue-soft);
+}
+
+.home-page .stat-card:nth-child(2),
+.profile-stats-grid .stat-card:nth-child(2),
+.grid--stats .stat-card:nth-child(2) {
+  background: #edf8fc;
+}
+
+.home-page .stat-card:nth-child(3),
+.profile-stats-grid .stat-card:nth-child(3),
+.grid--stats .stat-card:nth-child(3) {
+  background: #f7fbfd;
+}
+
+.home-page .stat-card:nth-child(4),
+.profile-stats-grid .stat-card:nth-child(4),
+.grid--stats .stat-card:nth-child(4) {
+  background: #f0f5f8;
+}
+
+.stat-card__label,
+.profile-card__label,
+.settings-field span,
+.leaderboard-card__details .label,
+.checkin-single-card .checkin-detail-grid .label,
+.excusal-field > span:first-child,
+.excusal-upload__topline > span:first-child,
+.member-card__role {
+  color: var(--ui-muted);
+  font-size: 0.8rem;
+  font-weight: 560;
+  line-height: 1.1;
+}
+
+.stat-card__value,
+.profile-bubble strong,
+.profile-stats-grid .stat-card__value,
+.home-page .stat-card__value {
+  color: var(--ui-text);
+  font-weight: 760;
+}
+
+.button,
+.calendar-chip,
+.calendar-toggle .button,
+.calendar-view-toggle button,
+.calendar-add-button,
+.calendar-options button,
+.csv-upload__button,
+.excusal-upload__button {
+  min-height: 42px;
+  border-radius: 999px;
+  font-weight: 640;
+  letter-spacing: 0;
+}
+
+.button--primary,
+.button--active,
+.calendar-toggle .button--active,
+.checkin-single-card .button--primary,
+.calendar-add-button,
+.event-form .button--primary,
+.auth-card .button--primary {
+  border: 1px solid var(--ui-navy);
+  background: var(--ui-navy);
+  color: #ffffff;
+}
+
+.button--secondary,
+.calendar-chip,
+.calendar-toggle .button,
+.calendar-options button,
+.csv-upload__button,
+.excusal-upload__button {
+  border: 1px solid var(--ui-border);
+  background: #ffffff;
+  color: var(--ui-navy);
+}
+
+.button:hover,
+.calendar-chip:hover,
+.calendar-toggle .button:hover,
+.calendar-options button:hover,
+.more-link-card:hover {
+  background-color: var(--ui-blue-soft);
+}
+
+input,
+select,
+textarea,
+.settings-field input,
+.settings-field select,
+.event-creation-page .event-form input,
+.event-creation-page .event-form select,
+.event-creation-page .event-form textarea,
+.member-management-page input,
+.member-management-page select,
+.excusal-select-wrap select,
+.excusal-field textarea,
+.excusal-upload,
+.calendar-search input {
+  border: 1px solid var(--ui-border);
+  background-color: #ffffff;
+  color: var(--ui-text);
+}
+
+input,
+select,
+.calendar-search input {
+  min-height: 48px;
+  border-radius: 999px;
+}
+
+textarea {
+  border-radius: 24px;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+.calendar-search input:focus,
+.settings-field select:focus,
+.excusal-select-wrap select:focus,
+.excusal-field textarea:focus,
+.excusal-upload:focus-within {
+  border-color: var(--ui-blue);
+  outline: 4px solid rgba(145, 222, 240, 0.22);
+}
+
+.navbar {
+  min-height: 72px;
+  border-bottom: 1px solid var(--ui-border);
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(18px);
+}
+
+.navbar__logo {
+  width: 46px;
+  height: 46px;
+}
+
+.navbar__nav {
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid var(--ui-border);
+  border-radius: 999px;
+  background: var(--ui-surface);
+}
+
+.navbar__link {
+  padding: 8px 12px;
+  border-radius: 999px;
+  color: var(--ui-muted);
+  font-size: 0.9rem;
+  font-weight: 620;
+}
+
+.navbar__link.active,
+.navbar__link:hover {
+  background: var(--ui-navy);
+  color: #ffffff;
+}
+
+.navbar__meta {
+  color: var(--ui-muted);
+  font-weight: 620;
+}
+
+.mobile-nav {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  min-height: calc(68px + env(safe-area-inset-bottom));
+  padding: 7px 18px calc(7px + env(safe-area-inset-bottom));
+  border: 1px solid var(--ui-border);
+  border-right: 0;
+  border-bottom: 0;
+  border-left: 0;
+  border-radius: 0;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(18px);
+}
+
+.mobile-nav__link {
+  border-radius: 999px;
+  background: transparent;
+  color: #a3abb4;
+}
+
+.mobile-nav__link.active {
+  background: transparent;
+  color: var(--ui-navy);
+}
+
+.mobile-nav__icon {
+  width: 23px;
+  height: 23px;
+}
+
+.event-surface,
+.event-card,
+.calendar-card,
+.calendar-month-event {
+  border-left-color: var(--event-accent);
+  background: var(--event-tint);
+}
+
+.event-card,
+.calendar-card,
+.checkin-single-card {
+  border-radius: 30px;
+}
+
+.event-card h3,
+.calendar-card h3,
+.checkin-card-heading h2 {
+  color: var(--ui-text);
+  font-weight: 740;
+  letter-spacing: -0.01em;
+}
+
+.event-card__meta,
+.event-card__location,
+.calendar-card__meta,
+.calendar-card__date,
+.checkin-card-heading .muted {
+  color: var(--ui-muted);
+}
+
+.event-card__type,
+.calendar-card__tag,
+.required-note,
+.status-badge {
+  border-radius: 999px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.required-note {
+  border-left: 0;
+  padding: 0.36rem 0.68rem;
+  background: rgba(239, 111, 108, 0.12);
+  color: #9f3f3c;
+  font-weight: 650;
+}
+
+.calendar-controls {
+  padding: 16px;
+  border-radius: var(--app-radius-panel);
+  background: var(--ui-surface);
+}
+
+.calendar-toggle {
+  width: fit-content;
+  padding: 5px;
+  border: 1px solid var(--ui-border);
+  border-radius: 999px;
+  background: #ffffff;
+}
+
+.calendar-toggle .button {
+  border: 0;
+  background: transparent;
+}
+
+.calendar-toggle .button--active {
+  background: var(--ui-navy);
+  color: #ffffff;
+}
+
+.calendar-controls .calendar-chip--active,
+.calendar-controls .calendar-chip.event-type-all.calendar-chip--active {
+  background: var(--ui-navy);
+  color: #ffffff;
+}
+
+.calendar-controls .calendar-chip.event-type-chapter.calendar-chip--active,
+.calendar-controls .calendar-chip.event-type-service.calendar-chip--active,
+.calendar-controls .calendar-chip.event-type-professional-development.calendar-chip--active,
+.calendar-controls .calendar-chip.event-type-social.calendar-chip--active,
+.calendar-controls .calendar-chip.event-type-recruitment.calendar-chip--active {
+  color: var(--ui-text);
+}
+
+.leaderboard-spotlight {
+  border-radius: 36px;
+  background: var(--ui-blue-soft);
+}
+
+.leaderboard-spotlight__chips span,
+.leaderboard-spotlight__chips strong,
+.profile-role-value {
+  background: var(--ui-navy);
+  color: #ffffff !important;
+}
+
+.leaderboard-table {
+  border-radius: 28px;
+}
+
+.leaderboard-row {
+  border-color: var(--ui-border);
+  background: transparent;
+}
+
+.leaderboard-rank {
+  background: #ffffff;
+  color: var(--ui-navy);
+}
+
+.leaderboard-row--current .leaderboard-rank {
+  background: var(--ui-navy);
+  color: #ffffff;
+}
+
+.profile-page {
+  --profile-blue-1: var(--ui-blue-soft);
+  --profile-blue-2: #edf8fc;
+  --profile-blue-3: #f7fbfd;
+  --profile-blue-accent-1: var(--ui-blue);
+  --profile-blue-accent-2: var(--ui-blue-2);
+  --profile-blue-accent-3: #a9dded;
+}
+
+.profile-photo-preview,
+.profile-photo-upload__icon {
+  background: var(--ui-navy);
+}
+
+.profile-hero-meta__item,
+.profile-member-info-card,
+.profile-stats-grid .stat-card {
+  border-left: 0;
+}
+
+.profile-member-info-card,
+.settings-info-card,
+.leaderboard-admin-card,
+.location-autofill-summary,
+.csv-upload,
+.member-edit-form {
+  border-left: 0;
+  border-radius: 28px;
+}
+
+.more-link-card {
+  align-items: center;
+  border-left: 0;
+  background: var(--ui-surface);
+}
+
+.more-link-card span[aria-hidden='true'] {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--ui-navy);
+}
+
+.auth-page {
+  min-height: min(720px, calc(100vh - 90px));
+}
+
+.auth-card {
+  width: min(100%, 520px);
+  padding: clamp(24px, 5vw, 36px);
+}
+
+.auth-card h1 {
+  font-size: clamp(2rem, 8vw, 3rem);
+  font-weight: 720;
+  letter-spacing: -0.02em;
+  line-height: 0.98;
+}
+
+.form-success,
+.checkin-message--success {
+  border: 1px solid rgba(59, 178, 115, 0.24);
+  background: rgba(59, 178, 115, 0.12);
+}
+
+.form-error,
+.checkin-message--error {
+  border: 1px solid rgba(239, 111, 108, 0.24);
+  background: rgba(239, 111, 108, 0.12);
+}
+
+@media (min-width: 900px) {
+  .grid--cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .grid--stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .analytics-page .grid--charts {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .page {
+    padding-top: 20px;
+  }
+
+  .page__header h1 {
+    font-size: clamp(2.15rem, 12vw, 3.05rem);
+  }
+
+  .navbar {
+    display: none;
+  }
+
+  .grid--stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .card,
+  .event-card,
+  .calendar-card,
+  .checkin-single-card,
+  .excusal-panel,
+  .settings-panel,
+  .event-form,
+  .more-link-card,
+  .auth-card {
+    border-radius: 30px;
+  }
+}
+
+/* Visible full-app revamp layer */
+:root {
+  --ui-navy: #050b14;
+  --ui-blue: #93dff2;
+  --ui-blue-soft: #edfaff;
+  --ui-panel: #f4f6f8;
+  --ui-panel-2: #eef3f6;
+  --ui-border: rgba(5, 11, 20, 0.09);
+  --ui-border-strong: rgba(5, 11, 20, 0.16);
+  --ui-text: #111318;
+  --ui-muted: #69727d;
+  --app-radius-card: 34px;
+  --app-radius-panel: 40px;
+}
+
+html,
+body,
+#root,
+.app-shell,
+.app-shell__content {
+  background: #ffffff !important;
+}
+
+body {
+  color: var(--ui-text);
+}
+
+.page {
+  width: min(100%, 1120px);
+  padding: 24px clamp(16px, 5vw, 48px) 112px;
+}
+
+.page__header {
+  margin-bottom: 24px;
+  padding: 0;
+  background: transparent !important;
+}
+
+.page__header h1 {
+  max-width: 12ch;
+  color: var(--ui-text);
+  font-size: clamp(2.35rem, 8vw, 4rem);
+  font-weight: 760;
+  letter-spacing: -0.035em;
+  line-height: 0.92;
+}
+
+.page__header .muted {
+  color: var(--ui-muted);
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.eyebrow {
+  color: var(--ui-muted);
+  font-size: 0.76rem;
+  font-weight: 650;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.card,
+.leaderboard-panel,
+.calendar-controls,
+.calendar-month,
+.calendar-modal__card,
+.checkin-single-card,
+.excusal-panel,
+.settings-panel,
+.event-form,
+.member-management-page .member-management-panel,
+.member-management-page .member-import-card,
+.analytics-page .grid--charts .card,
+.admin-page .card,
+.standards-page .card,
+.more-link-card,
+.profile-hero-card,
+.profile-section-card,
+.profile-actions-card,
+.auth-card {
+  border: 1px solid var(--ui-border) !important;
+  border-radius: var(--app-radius-card) !important;
+  background: var(--ui-panel) !important;
+}
+
+.leaderboard-panel,
+.calendar-controls,
+.calendar-month,
+.calendar-modal__card,
+.profile-hero-card,
+.auth-card {
+  border-radius: var(--app-radius-panel) !important;
+}
+
+.stat-card,
+.settings-info-card,
+.leaderboard-admin-card,
+.profile-hero-meta__item,
+.profile-member-info-card,
+.location-autofill-summary,
+.csv-upload,
+.csv-preview__row,
+.member-edit-form,
+.empty-state,
+.leaderboard-spotlight,
+.leaderboard-row--current,
+.excusal-request-card,
+.request-card,
+.member-card,
+.profile-bubble {
+  border: 1px solid var(--ui-border) !important;
+  background: #ffffff !important;
+}
+
+.home-page .stat-card,
+.profile-stats-grid .stat-card,
+.grid--stats .stat-card {
+  min-height: 154px;
+  border-left: 0 !important;
+  border-radius: 32px !important;
+  background: var(--ui-blue-soft) !important;
+}
+
+.home-page .stat-card:nth-child(2),
+.profile-stats-grid .stat-card:nth-child(2),
+.grid--stats .stat-card:nth-child(2) {
+  background: #f7fbfd !important;
+}
+
+.home-page .stat-card:nth-child(3),
+.profile-stats-grid .stat-card:nth-child(3),
+.grid--stats .stat-card:nth-child(3) {
+  background: #f1f5f8 !important;
+}
+
+.home-page .stat-card:nth-child(4),
+.profile-stats-grid .stat-card:nth-child(4),
+.grid--stats .stat-card:nth-child(4) {
+  background: #eaf7fc !important;
+}
+
+.stat-card__label,
+.profile-card__label,
+.settings-field span,
+.leaderboard-card__details .label,
+.checkin-single-card .checkin-detail-grid .label,
+.excusal-field > span:first-child,
+.excusal-upload__topline > span:first-child,
+.member-card__role {
+  color: var(--ui-muted) !important;
+  font-size: 0.78rem;
+  font-weight: 560;
+}
+
+.stat-card__value,
+.profile-stats-grid .stat-card__value,
+.home-page .stat-card__value {
+  color: var(--ui-text) !important;
+  font-weight: 800;
+}
+
+.button,
+.calendar-chip,
+.calendar-toggle .button,
+.calendar-add-button,
+.calendar-options button,
+.csv-upload__button,
+.excusal-upload__button {
+  min-height: 44px;
+  border-radius: 999px !important;
+  font-weight: 650;
+}
+
+.button--primary,
+.button--active,
+.calendar-toggle .button--active,
+.checkin-single-card .button--primary,
+.calendar-add-button,
+.event-form .button--primary,
+.auth-card .button--primary {
+  border: 1px solid var(--ui-navy) !important;
+  background: var(--ui-navy) !important;
+  color: #ffffff !important;
+}
+
+.button--secondary,
+.calendar-chip,
+.calendar-toggle .button,
+.calendar-options button,
+.csv-upload__button,
+.excusal-upload__button {
+  border: 1px solid var(--ui-border) !important;
+  background: #ffffff !important;
+  color: var(--ui-navy) !important;
+}
+
+.button:hover,
+.calendar-chip:hover,
+.calendar-toggle .button:hover,
+.calendar-options button:hover,
+.more-link-card:hover {
+  background: var(--ui-blue-soft) !important;
+}
+
+input,
+select,
+textarea,
+.calendar-search input,
+.settings-field input,
+.settings-field select,
+.event-creation-page .event-form input,
+.event-creation-page .event-form select,
+.event-creation-page .event-form textarea,
+.member-management-page input,
+.member-management-page select,
+.excusal-select-wrap select,
+.excusal-field textarea,
+.excusal-upload {
+  border: 1px solid var(--ui-border) !important;
+  background-color: #ffffff !important;
+  color: var(--ui-text) !important;
+}
+
+input,
+select,
+.calendar-search input {
+  min-height: 50px;
+  border-radius: 999px !important;
+}
+
+textarea {
+  border-radius: 26px !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+.calendar-search input:focus,
+.settings-field select:focus,
+.excusal-select-wrap select:focus,
+.excusal-field textarea:focus,
+.excusal-upload:focus-within {
+  border-color: var(--ui-blue) !important;
+  outline: 4px solid rgba(147, 223, 242, 0.26) !important;
+}
+
+.navbar {
+  width: min(calc(100% - 28px), 1180px);
+  margin: 14px auto 0;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.98) !important;
+  padding: 10px 14px;
+}
+
+.navbar__logo {
+  width: 42px;
+  height: 42px;
+}
+
+.navbar__nav {
+  gap: 4px;
+  padding: 5px;
+  border: 1px solid var(--ui-border);
+  border-radius: 999px;
+  background: var(--ui-panel);
+}
+
+.navbar__link {
+  padding: 8px 12px;
+  border-radius: 999px;
+  color: var(--ui-muted);
+  font-size: 0.88rem;
+  font-weight: 650;
+}
+
+.navbar__link.active,
+.navbar__link:hover {
+  background: var(--ui-navy) !important;
+  color: #ffffff !important;
+}
+
+.mobile-nav {
+  min-height: calc(68px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--ui-border) !important;
+  background: rgba(255, 255, 255, 0.98) !important;
+}
+
+.mobile-nav__link {
+  color: #a5adb7;
+}
+
+.mobile-nav__link.active {
+  color: var(--ui-navy) !important;
+}
+
+.event-surface,
+.event-card,
+.calendar-card,
+.calendar-month-event {
+  border-left-color: var(--event-accent) !important;
+  background: var(--event-tint) !important;
+}
+
+.event-card,
+.calendar-card,
+.checkin-single-card {
+  border-radius: 32px !important;
+}
+
+.event-card h3,
+.calendar-card h3,
+.checkin-card-heading h2 {
+  color: var(--ui-text) !important;
+  font-weight: 760;
+  letter-spacing: -0.02em;
+}
+
+.event-card__meta,
+.event-card__location,
+.calendar-card__meta,
+.calendar-card__date,
+.checkin-card-heading .muted {
+  color: var(--ui-muted) !important;
+}
+
+.event-card__type,
+.calendar-card__tag,
+.required-note,
+.status-badge {
+  border-radius: 999px !important;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.required-note {
+  border-left: 0 !important;
+  padding: 0.36rem 0.68rem;
+  background: rgba(239, 111, 108, 0.12) !important;
+  color: #9f3f3c !important;
+  font-weight: 650;
+}
+
+.calendar-controls {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+
+.calendar-toggle {
+  width: fit-content;
+  padding: 5px;
+  border: 1px solid var(--ui-border);
+  border-radius: 999px;
+  background: #ffffff;
+}
+
+.calendar-toggle .button {
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.calendar-toggle .button--active {
+  background: var(--ui-navy) !important;
+  color: #ffffff !important;
+}
+
+.calendar-controls .calendar-chip--active,
+.calendar-controls .calendar-chip.event-type-all.calendar-chip--active {
+  background: var(--ui-navy) !important;
+  color: #ffffff !important;
+}
+
+.calendar-controls .calendar-chip.event-type-chapter.calendar-chip--active,
+.calendar-controls .calendar-chip.event-type-service.calendar-chip--active,
+.calendar-controls .calendar-chip.event-type-professional-development.calendar-chip--active,
+.calendar-controls .calendar-chip.event-type-social.calendar-chip--active,
+.calendar-controls .calendar-chip.event-type-recruitment.calendar-chip--active {
+  color: var(--ui-text) !important;
+}
+
+.leaderboard-spotlight,
+.profile-hero-card {
+  background: var(--ui-blue-soft) !important;
+}
+
+.leaderboard-spotlight__chips span,
+.leaderboard-spotlight__chips strong,
+.profile-role-value {
+  background: var(--ui-navy) !important;
+  color: #ffffff !important;
+}
+
+.leaderboard-rank,
+.more-link-card span[aria-hidden='true'] {
+  background: #ffffff !important;
+  color: var(--ui-navy) !important;
+}
+
+.leaderboard-row--current .leaderboard-rank {
+  background: var(--ui-navy) !important;
+  color: #ffffff !important;
+}
+
+.profile-page {
+  --profile-blue-1: var(--ui-blue-soft);
+  --profile-blue-2: #f7fbfd;
+  --profile-blue-3: #eef7fb;
+  --profile-blue-accent-1: var(--ui-blue);
+  --profile-blue-accent-2: #c7f0f8;
+  --profile-blue-accent-3: #b3e7f3;
+}
+
+.profile-photo-preview,
+.profile-photo-upload__icon {
+  background: var(--ui-navy) !important;
+}
+
+.profile-hero-meta__item,
+.profile-member-info-card,
+.profile-stats-grid .stat-card,
+.settings-info-card,
+.leaderboard-admin-card,
+.location-autofill-summary,
+.csv-upload,
+.member-edit-form {
+  border-left: 0 !important;
+  border-radius: 28px !important;
+}
+
+.more-link-card {
+  border-left: 0 !important;
+}
+
+.auth-page {
+  display: grid;
+  min-height: min(720px, calc(100vh - 90px));
+  place-items: center;
+}
+
+.auth-card {
+  width: min(100%, 520px);
+  padding: clamp(24px, 5vw, 38px);
+}
+
+.auth-card h1 {
+  font-size: clamp(2.1rem, 8vw, 3.2rem);
+  font-weight: 760;
+  letter-spacing: -0.035em;
+  line-height: 0.94;
+}
+
+.form-success,
+.checkin-message--success {
+  border: 1px solid rgba(59, 178, 115, 0.24) !important;
+  background: rgba(59, 178, 115, 0.12) !important;
+}
+
+.form-error,
+.checkin-message--error {
+  border: 1px solid rgba(239, 111, 108, 0.24) !important;
+  background: rgba(239, 111, 108, 0.12) !important;
+}
+
+@media (max-width: 767px) {
+  .page {
+    padding-top: 22px;
+  }
+
+  .page__header h1 {
+    font-size: clamp(2.35rem, 13vw, 3.25rem);
+  }
+
+  .navbar {
+    display: none;
+  }
+
+  .grid--stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .card,
+  .event-card,
+  .calendar-card,
+  .checkin-single-card,
+  .excusal-panel,
+  .settings-panel,
+  .event-form,
+  .more-link-card,
+  .auth-card {
+    border-radius: 32px !important;
+  }
+}
+
+/* Restore original top header */
+.navbar {
+  position: sticky !important;
+  top: 0;
+  z-index: 20;
+  display: flex !important;
+  width: 100% !important;
+  min-height: 64px;
+  margin: 0 !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--ui-border) !important;
+  border-radius: 0 !important;
+  background: rgba(255, 255, 255, 0.98) !important;
+  backdrop-filter: blur(18px);
+}
+
+.navbar__brand {
+  min-width: 0;
+}
+
+.navbar__logo {
+  width: 54px !important;
+  height: 54px !important;
+}
+
+.navbar__nav {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.navbar__link {
+  padding: 9px 12px;
+}
+
+.navbar__meta {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.navbar__meta span {
+  max-width: 160px;
+  overflow: hidden;
+  color: var(--ui-muted);
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .navbar {
+    display: flex !important;
+  }
+
+  .navbar__nav {
+    display: none !important;
+  }
+
+  .navbar__meta span {
+    max-width: 140px;
+  }
+}
+
+/* Abstract requirement trackers */
+.home-page .stat-card--progress {
+  --blob-accent: var(--ui-blue);
+  --blob-soft: rgba(147, 223, 242, 0.2);
+  isolation: isolate;
+  min-height: 178px !important;
+  padding: 18px 18px 20px !important;
+  overflow: hidden;
+  align-content: start;
+}
+
+.home-page .stat-card--chapter {
+  --blob-accent: var(--event-accent-chapter);
+  --blob-soft: color-mix(in srgb, var(--event-accent-chapter) 20%, white);
+}
+
+.home-page .stat-card--service {
+  --blob-accent: var(--event-accent-service);
+  --blob-soft: color-mix(in srgb, var(--event-accent-service) 24%, white);
+}
+
+.home-page .stat-card--professional-development {
+  --blob-accent: var(--event-accent-pd);
+  --blob-soft: color-mix(in srgb, var(--event-accent-pd) 20%, white);
+}
+
+.home-page .stat-card--progress::before,
+.home-page .stat-card--progress::after {
+  position: absolute;
+  z-index: 0;
+  content: "";
+  pointer-events: none;
+}
+
+.home-page .stat-card--progress::before {
+  right: -34px;
+  bottom: -38px;
+  width: 150px;
+  height: 122px;
+  border-radius: 57% 43% 52% 48% / 46% 55% 45% 54%;
+  background:
+    radial-gradient(circle at 34% 30%, rgba(255, 255, 255, 0.74), transparent 28%),
+    radial-gradient(circle at 70% 64%, color-mix(in srgb, var(--blob-accent) 44%, white), transparent 36%),
+    var(--blob-soft);
+}
+
+.home-page .stat-card--progress::after {
+  right: 90px;
+  bottom: 22px;
+  width: 34px;
+  height: 34px;
+  border-radius: 54% 46% 63% 37% / 44% 58% 42% 56%;
+  background: color-mix(in srgb, var(--blob-accent) 34%, white);
+  opacity: 0.72;
+}
+
+.home-page .stat-card--progress > div {
+  position: relative;
+  z-index: 2;
+  max-width: 100%;
+  padding-right: 10px;
+}
+
+.home-page .stat-card--progress .stat-card__label {
+  display: block;
+  max-width: 12ch;
+  color: #111318 !important;
+  font-size: clamp(0.98rem, 4.4vw, 1.18rem) !important;
+  font-weight: 760 !important;
+  line-height: 1.02 !important;
+}
+
+.home-page .stat-card--professional-development .stat-card__label {
+  max-width: 11ch;
+  font-size: clamp(0.92rem, 4vw, 1.05rem) !important;
+}
+
+.home-page .stat-card--progress .circular-progress {
+  position: absolute !important;
+  z-index: 1;
+  right: 16px !important;
+  bottom: 16px !important;
+  left: auto !important;
+  width: 82px !important;
+  height: 82px !important;
+  padding: 6px !important;
+  border-radius: 52% 48% 60% 40% / 44% 57% 43% 56% !important;
+  background:
+    radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.78), transparent 28%),
+    conic-gradient(var(--progress-color) var(--progress-current), rgba(17, 19, 24, 0.1) 0) !important;
+  transform: none !important;
+}
+
+.home-page .stat-card--progress .circular-progress__inner {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(4px);
+}
+
+.home-page .stat-card--progress .circular-progress__inner span {
+  color: #111318;
+  font-size: 1.12rem !important;
+  font-weight: 820 !important;
+}
+
+.home-page .stat-card--points {
+  isolation: isolate;
+  min-height: 178px !important;
+  padding: 18px 18px 20px !important;
+  overflow: hidden;
+}
+
+.home-page .stat-card--points::before,
+.home-page .stat-card--points::after {
+  position: absolute;
+  z-index: 0;
+  content: "";
+  pointer-events: none;
+}
+
+.home-page .stat-card--points::before {
+  right: -40px;
+  bottom: -42px;
+  width: 158px;
+  height: 130px;
+  border-radius: 52% 48% 58% 42% / 43% 58% 42% 57%;
+  background:
+    radial-gradient(circle at 36% 28%, rgba(255, 255, 255, 0.72), transparent 28%),
+    radial-gradient(circle at 72% 70%, rgba(5, 11, 20, 0.18), transparent 34%),
+    #dfe9ef;
+}
+
+.home-page .stat-card--points::after {
+  right: 28px;
+  bottom: 24px;
+  width: 48px;
+  height: 48px;
+  border-radius: 46% 54% 42% 58% / 52% 38% 62% 48%;
+  background: rgba(5, 11, 20, 0.08);
+}
+
+.home-page .stat-card--points > div {
+  position: relative;
+  z-index: 2;
+  max-width: 100%;
+  padding-right: 10px;
+}
+
+.home-page .stat-card--points .stat-card__label {
+  display: block;
+  max-width: 12ch;
+  color: #111318 !important;
+  font-size: clamp(0.98rem, 4.4vw, 1.18rem) !important;
+  font-weight: 760 !important;
+  line-height: 1.02 !important;
+}
+
+.home-page .stat-card--points .stat-card__value {
+  position: relative;
+  z-index: 2;
+}
+
+.page__header,
+.leaderboard-panel,
+.calendar-controls,
+.calendar-month,
+.profile-hero-card,
+.settings-panel,
+.excusal-panel,
+.event-form,
+.member-management-page .member-management-panel,
+.member-management-page .member-import-card,
+.analytics-page .grid--charts .card,
+.admin-page .card,
+.standards-page .card,
+.more-link-card,
+.auth-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.page__header::after,
+.leaderboard-panel::after,
+.calendar-controls::after,
+.calendar-month::after,
+.profile-hero-card::after,
+.settings-panel::after,
+.excusal-panel::after,
+.event-form::after,
+.member-management-page .member-management-panel::after,
+.member-management-page .member-import-card::after,
+.analytics-page .grid--charts .card::after,
+.admin-page .card::after,
+.standards-page .card::after,
+.more-link-card::after,
+.auth-card::after {
+  position: absolute;
+  right: -44px;
+  top: -46px;
+  z-index: 0;
+  width: 116px;
+  height: 96px;
+  border-radius: 58% 42% 50% 50% / 43% 55% 45% 57%;
+  background:
+    radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.76), transparent 30%),
+    rgba(147, 223, 242, 0.18);
+  content: "";
+  pointer-events: none;
+}
+
+.page__header > *,
+.leaderboard-panel > *,
+.calendar-controls > *,
+.calendar-month > *,
+.profile-hero-card > *,
+.settings-panel > *,
+.excusal-panel > *,
+.event-form > *,
+.member-management-page .member-management-panel > *,
+.member-management-page .member-import-card > *,
+.analytics-page .grid--charts .card > *,
+.admin-page .card > *,
+.standards-page .card > *,
+.more-link-card > *,
+.auth-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.button--primary::before,
+.calendar-add-button::before,
+.checkin-single-card .button--primary::before {
+  width: 12px;
+  height: 12px;
+  margin-right: 8px;
+  border-radius: 46% 54% 52% 48% / 44% 58% 42% 56%;
+  background: var(--ui-blue);
+  content: "";
+}
+
+/* Refined abstract accents */
+.page__header {
+  overflow: visible !important;
+}
+
+.page__header::after {
+  display: none !important;
+  content: none !important;
+}
+
+.page__header h1 {
+  padding-top: 0.04em;
+  line-height: 1 !important;
+}
+
+.calendar-page__header {
+  overflow: visible !important;
+}
+
+.calendar-controls::after,
+.calendar-month::after {
+  display: none !important;
+  content: none !important;
+}
+
+.calendar-controls,
+.calendar-month {
+  isolation: isolate;
+}
+
+.calendar-controls::before,
+.calendar-month::before {
+  position: absolute;
+  z-index: 0;
+  content: "";
+  pointer-events: none;
+}
+
+.calendar-controls::before {
+  right: -34px;
+  bottom: -46px;
+  width: 190px;
+  height: 112px;
+  border-radius: 58% 42% 44% 56% / 48% 50% 50% 52%;
+  background:
+    radial-gradient(circle at 32% 30%, rgba(255, 255, 255, 0.72), transparent 27%),
+    radial-gradient(circle at 70% 68%, rgba(19, 41, 75, 0.08), transparent 34%),
+    rgba(147, 223, 242, 0.16);
+}
+
+.calendar-month::before {
+  left: -36px;
+  bottom: -42px;
+  width: 164px;
+  height: 136px;
+  border-radius: 46% 54% 57% 43% / 56% 38% 62% 44%;
+  background:
+    radial-gradient(circle at 68% 36%, rgba(255, 255, 255, 0.76), transparent 28%),
+    rgba(147, 223, 242, 0.12);
+}
+
+.calendar-controls > *,
+.calendar-month > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Page-specific blob system */
+.page {
+  position: relative;
+  isolation: isolate;
+}
+
+.page::before,
+.page::after {
+  position: absolute;
+  z-index: 0;
+  content: "";
+  pointer-events: none;
+}
+
+.page > :not(.calendar-modal) {
+  position: relative;
+  z-index: 1;
+}
+
+.home-page::before {
+  top: 58px;
+  right: clamp(8px, 5vw, 72px);
+  width: clamp(82px, 17vw, 168px);
+  height: clamp(72px, 13vw, 132px);
+  border-radius: 57% 43% 63% 37% / 42% 55% 45% 58%;
+  background:
+    radial-gradient(circle at 34% 30%, rgba(255, 255, 255, 0.78), transparent 27%),
+    rgba(147, 223, 242, 0.14);
+}
+
+.home-page::after {
+  top: 238px;
+  left: clamp(-34px, -3vw, -16px);
+  width: 92px;
+  height: 126px;
+  border-radius: 47% 53% 43% 57% / 55% 38% 62% 45%;
+  background: rgba(5, 11, 20, 0.045);
+}
+
+.calendar-page::before {
+  top: 128px;
+  right: -26px;
+  width: 138px;
+  height: 216px;
+  border-radius: 46% 54% 40% 60% / 50% 36% 64% 50%;
+  background:
+    radial-gradient(circle at 42% 28%, rgba(255, 255, 255, 0.78), transparent 30%),
+    rgba(147, 223, 242, 0.12);
+}
+
+.calendar-page::after {
+  top: 52%;
+  left: -44px;
+  width: 128px;
+  height: 112px;
+  border-radius: 61% 39% 52% 48% / 40% 54% 46% 60%;
+  background: rgba(19, 41, 75, 0.045);
+}
+
+.checkin-page::before {
+  top: 108px;
+  left: 50%;
+  width: min(64vw, 420px);
+  height: 180px;
+  border-radius: 49% 51% 58% 42% / 42% 56% 44% 58%;
+  background:
+    radial-gradient(circle at 30% 34%, rgba(255, 255, 255, 0.78), transparent 28%),
+    rgba(147, 223, 242, 0.13);
+  transform: translateX(-50%) rotate(-2deg);
+}
+
+.checkin-page::after {
+  right: clamp(8px, 6vw, 78px);
+  bottom: 72px;
+  width: 68px;
+  height: 68px;
+  border-radius: 43% 57% 52% 48% / 58% 42% 58% 42%;
+  background: rgba(5, 11, 20, 0.055);
+}
+
+.leaderboard-page::before {
+  top: 116px;
+  left: clamp(20px, 8vw, 118px);
+  width: 112px;
+  height: 112px;
+  border-radius: 50% 50% 44% 56% / 55% 45% 55% 45%;
+  background: rgba(147, 223, 242, 0.16);
+}
+
+.leaderboard-page::after {
+  right: clamp(0px, 8vw, 92px);
+  bottom: 88px;
+  width: 154px;
+  height: 96px;
+  border-radius: 57% 43% 48% 52% / 44% 55% 45% 56%;
+  background: rgba(5, 11, 20, 0.04);
+}
+
+.profile-page::before {
+  top: 96px;
+  right: clamp(24px, 9vw, 112px);
+  width: 126px;
+  height: 156px;
+  border-radius: 48% 52% 60% 40% / 42% 58% 42% 58%;
+  background:
+    radial-gradient(circle at 64% 26%, rgba(255, 255, 255, 0.72), transparent 30%),
+    rgba(147, 223, 242, 0.15);
+}
+
+.profile-page::after {
+  bottom: 126px;
+  left: -30px;
+  width: 96px;
+  height: 96px;
+  border-radius: 44% 56% 43% 57% / 56% 42% 58% 44%;
+  background: rgba(19, 41, 75, 0.045);
+}
+
+.more-page::before {
+  top: 128px;
+  right: clamp(18px, 8vw, 96px);
+  width: 146px;
+  height: 116px;
+  border-radius: 60% 40% 50% 50% / 42% 58% 42% 58%;
+  background: rgba(147, 223, 242, 0.14);
+}
+
+.more-page::after {
+  bottom: 94px;
+  left: clamp(12px, 8vw, 86px);
+  width: 72px;
+  height: 116px;
+  border-radius: 44% 56% 58% 42% / 58% 42% 58% 42%;
+  background: rgba(5, 11, 20, 0.042);
+}
+
+.settings-page::before {
+  top: 104px;
+  left: clamp(18px, 6vw, 82px);
+  width: 118px;
+  height: 118px;
+  border-radius: 52% 48% 43% 57% / 42% 60% 40% 58%;
+  background: rgba(147, 223, 242, 0.13);
+}
+
+.settings-page::after {
+  right: clamp(-36px, -3vw, -18px);
+  bottom: 122px;
+  width: 124px;
+  height: 178px;
+  border-radius: 48% 52% 58% 42% / 54% 36% 64% 46%;
+  background: rgba(19, 41, 75, 0.045);
+}
+
+.excusals-page::before {
+  top: 128px;
+  right: clamp(18px, 7vw, 96px);
+  width: 128px;
+  height: 128px;
+  border-radius: 56% 44% 44% 56% / 42% 58% 42% 58%;
+  background: rgba(147, 223, 242, 0.15);
+}
+
+.excusals-page::after {
+  top: 362px;
+  left: clamp(-38px, -3vw, -16px);
+  width: 112px;
+  height: 154px;
+  border-radius: 44% 56% 51% 49% / 60% 42% 58% 40%;
+  background: rgba(5, 11, 20, 0.04);
+}
+
+.event-creation-page::before {
+  top: 126px;
+  left: clamp(20px, 9vw, 120px);
+  width: 152px;
+  height: 102px;
+  border-radius: 58% 42% 55% 45% / 44% 58% 42% 56%;
+  background: rgba(147, 223, 242, 0.13);
+}
+
+.event-creation-page::after {
+  right: clamp(10px, 7vw, 80px);
+  bottom: 96px;
+  width: 92px;
+  height: 92px;
+  border-radius: 42% 58% 48% 52% / 52% 38% 62% 48%;
+  background: rgba(5, 11, 20, 0.045);
+}
+
+.member-management-page::before {
+  top: 118px;
+  right: clamp(22px, 8vw, 112px);
+  width: 168px;
+  height: 104px;
+  border-radius: 62% 38% 50% 50% / 42% 60% 40% 58%;
+  background: rgba(147, 223, 242, 0.13);
+}
+
+.member-management-page::after {
+  bottom: 112px;
+  left: clamp(-38px, -3vw, -16px);
+  width: 132px;
+  height: 132px;
+  border-radius: 46% 54% 59% 41% / 58% 42% 58% 42%;
+  background: rgba(19, 41, 75, 0.045);
+}
+
+.admin-page::before {
+  top: 138px;
+  right: clamp(18px, 7vw, 90px);
+  width: 116px;
+  height: 154px;
+  border-radius: 45% 55% 54% 46% / 56% 40% 60% 44%;
+  background: rgba(147, 223, 242, 0.13);
+}
+
+.admin-page::after {
+  top: 310px;
+  left: clamp(18px, 7vw, 92px);
+  width: 92px;
+  height: 92px;
+  border-radius: 60% 40% 45% 55% / 42% 58% 42% 58%;
+  background: rgba(5, 11, 20, 0.045);
+}
+
+.standards-page::before {
+  top: 118px;
+  left: clamp(18px, 8vw, 102px);
+  width: 158px;
+  height: 112px;
+  border-radius: 50% 50% 62% 38% / 44% 56% 44% 56%;
+  background: rgba(147, 223, 242, 0.13);
+}
+
+.standards-page::after {
+  right: clamp(0px, 8vw, 88px);
+  bottom: 84px;
+  width: 98px;
+  height: 142px;
+  border-radius: 43% 57% 50% 50% / 60% 38% 62% 40%;
+  background: rgba(19, 41, 75, 0.045);
+}
+
+.analytics-page::before {
+  top: 118px;
+  right: clamp(18px, 9vw, 116px);
+  width: 134px;
+  height: 134px;
+  border-radius: 50% 50% 44% 56% / 44% 58% 42% 56%;
+  background: rgba(147, 223, 242, 0.13);
+}
+
+.analytics-page::after {
+  bottom: 92px;
+  left: clamp(18px, 7vw, 92px);
+  width: 170px;
+  height: 84px;
+  border-radius: 58% 42% 46% 54% / 44% 56% 44% 56%;
+  background: rgba(5, 11, 20, 0.04);
+}
+
+.auth-page::before {
+  top: 50%;
+  left: 50%;
+  width: min(78vw, 520px);
+  height: min(42vw, 260px);
+  border-radius: 58% 42% 46% 54% / 44% 56% 44% 56%;
+  background:
+    radial-gradient(circle at 32% 32%, rgba(255, 255, 255, 0.78), transparent 28%),
+    rgba(147, 223, 242, 0.14);
+  transform: translate(-50%, -50%) rotate(-5deg);
+}
+
+.auth-page::after {
+  right: 12%;
+  bottom: 18%;
+  width: 72px;
+  height: 72px;
+  border-radius: 44% 56% 52% 48% / 52% 42% 58% 48%;
+  background: rgba(5, 11, 20, 0.055);
+}
+
+.leaderboard-page .leaderboard-panel::after,
+.profile-page .profile-hero-card::after,
+.settings-page .settings-panel::after,
+.excusals-page .excusal-panel::after,
+.event-creation-page .event-form::after,
+.member-management-page .member-management-panel::after,
+.member-management-page .member-import-card::after,
+.analytics-page .grid--charts .card::after,
+.admin-page .card::after,
+.standards-page .card::after,
+.more-page .more-link-card::after,
+.auth-page .auth-card::after {
+  top: auto;
+  right: -34px;
+  bottom: -42px;
+  width: 126px;
+  height: 92px;
+  border-radius: 58% 42% 50% 50% / 42% 58% 42% 58%;
+  background:
+    radial-gradient(circle at 34% 30%, rgba(255, 255, 255, 0.7), transparent 28%),
+    rgba(147, 223, 242, 0.12);
+}
+
+.leaderboard-page .leaderboard-panel::after {
+  right: auto;
+  bottom: auto;
+  left: -38px;
+  top: 72px;
+  width: 104px;
+  height: 146px;
+  border-radius: 45% 55% 55% 45% / 58% 40% 60% 42%;
+}
+
+.profile-page .profile-hero-card::after {
+  right: -46px;
+  bottom: -34px;
+  width: 172px;
+  height: 118px;
+  border-radius: 62% 38% 44% 56% / 42% 58% 42% 58%;
+}
+
+.settings-page .settings-layout .settings-panel:nth-of-type(2)::after {
+  right: auto;
+  left: -38px;
+  border-radius: 46% 54% 58% 42% / 58% 42% 58% 42%;
+}
+
+.settings-page .settings-layout .settings-panel:nth-of-type(3)::after {
+  width: 96px;
+  height: 132px;
+  border-radius: 44% 56% 52% 48% / 58% 40% 60% 42%;
+}
+
+.excusals-page .excusal-panel::after {
+  right: -42px;
+  top: 34px;
+  bottom: auto;
+  width: 102px;
+  height: 142px;
+  border-radius: 44% 56% 54% 46% / 58% 42% 58% 42%;
+}
+
+.event-creation-page .event-form::after {
+  right: -48px;
+  bottom: 18%;
+  width: 138px;
+  height: 138px;
+  border-radius: 52% 48% 60% 40% / 44% 58% 42% 56%;
+}
+
+.member-management-page .member-import-card::after {
+  right: auto;
+  left: -32px;
+  bottom: -28px;
+}
+
+.analytics-page .grid--charts .card:nth-child(2)::after {
+  right: auto;
+  left: -34px;
+  bottom: -36px;
+}
+
+.admin-page .card:nth-child(2)::after,
+.standards-page .card:nth-child(2)::after {
+  right: auto;
+  left: -32px;
+}
+
+.more-page .more-link-card:nth-child(2n)::after {
+  right: auto;
+  left: -34px;
+  border-radius: 43% 57% 58% 42% / 58% 42% 58% 42%;
+}
+
+.more-page .more-link-card:nth-child(3n)::after {
+  width: 88px;
+  height: 116px;
+  border-radius: 44% 56% 52% 48% / 62% 40% 60% 38%;
+}
+
+@media (max-width: 767px) {
+  .page::before {
+    opacity: 0.78;
+  }
+
+  .page::after {
+    opacity: 0.65;
+  }
+
+  .calendar-page::before,
+  .checkin-page::before,
+  .auth-page::before {
+    width: 72vw;
+  }
+
+  .admin-page::after,
+  .standards-page::after,
+  .analytics-page::after {
+    display: none;
+  }
+}
+
+/* Calendar filter polish */
+.calendar-page .calendar-add-button::before {
+  display: none !important;
+  content: none !important;
+}
+
+.calendar-page .calendar-controls .calendar-chip.event-type-chapter.calendar-chip--active {
+  border-color: var(--event-accent-chapter) !important;
+  background: var(--event-accent-chapter) !important;
+  color: var(--ui-text) !important;
+}
+
+.calendar-page .calendar-controls .calendar-chip.event-type-service.calendar-chip--active {
+  border-color: var(--event-accent-service) !important;
+  background: var(--event-accent-service) !important;
+  color: var(--ui-text) !important;
+}
+
+.calendar-page .calendar-controls .calendar-chip.event-type-professional-development.calendar-chip--active {
+  border-color: var(--event-accent-pd) !important;
+  background: var(--event-accent-pd) !important;
+  color: var(--ui-text) !important;
+}
+
+.calendar-page .calendar-controls .calendar-chip.event-type-social.calendar-chip--active {
+  border-color: var(--event-accent-social) !important;
+  background: var(--event-accent-social) !important;
+  color: var(--ui-text) !important;
+}
+
+.calendar-page .calendar-controls .calendar-chip.event-type-recruitment.calendar-chip--active {
+  border-color: var(--event-accent-recruitment) !important;
+  background: var(--event-accent-recruitment) !important;
+  color: var(--ui-text) !important;
+}
+
+.checkin-page .page__header h1 {
+  max-width: none !important;
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .checkin-page .page__header h1 {
+    font-size: clamp(2.1rem, 10vw, 3.25rem);
+  }
 }

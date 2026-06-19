@@ -146,7 +146,7 @@ function EventCalendar() {
   }
 
   return (
-    <section className="page">
+    <section className="page calendar-page">
       <div className="page__header calendar-page__header">
         <div>
           <p className="eyebrow">Calendar</p>

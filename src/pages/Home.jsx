@@ -123,8 +123,8 @@ function Home() {
     <section className="page home-page">
       <div className="page__header">
         <div>
-          <p className="eyebrow">Welcome,</p>
-          <h1>{firstName}</h1>
+          <p className="eyebrow">Home</p>
+          <h1>Welcome, {firstName}</h1>
           <p className="muted">Check in, view events, and track points for AKPsi.</p>
         </div>
       </div>

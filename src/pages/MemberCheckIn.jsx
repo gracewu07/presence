@@ -187,7 +187,7 @@ function MemberCheckIn() {
   }
 
   return (
-    <section className="page">
+    <section className="page checkin-page">
       <div className="page__header">
         <div>
           <p className="eyebrow">Check-In</p>
