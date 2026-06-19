@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Button from '../components/Button'
 import { EVENT_TYPES } from '../constants/eventTypes'
+import { UNC_EVENT_LOCATIONS } from '../constants/locations'
 import { useAuth } from '../context/AuthContext'
 import { createEvent } from '../firebase'
 
@@ -11,6 +12,7 @@ const initialFormState = {
   date: '',
   startTime: '',
   endTime: '',
+  locationId: '',
   locationName: '',
   latitude: '',
   longitude: '',
@@ -33,6 +35,38 @@ function EventCreation() {
   const handleChange = (key) => (event) => {
     const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value
     setForm((current) => ({ ...current, [key]: value }))
+  }
+
+  const handleLocationChange = (event) => {
+    const locationId = event.target.value
+    const selectedLocation = UNC_EVENT_LOCATIONS.find((location) => location.id === locationId)
+
+    setErrors((current) => {
+      const { locationName, latitude, longitude, radiusMeters, ...remainingErrors } = current
+      return remainingErrors
+    })
+
+    setForm((current) => {
+      if (!selectedLocation) {
+        return {
+          ...current,
+          locationId,
+          locationName: locationId === 'custom' ? current.locationName : '',
+          latitude: locationId === 'custom' ? current.latitude : '',
+          longitude: locationId === 'custom' ? current.longitude : '',
+          radiusMeters: locationId === 'custom' ? current.radiusMeters : '',
+        }
+      }
+
+      return {
+        ...current,
+        locationId,
+        locationName: selectedLocation.name,
+        latitude: String(selectedLocation.latitude),
+        longitude: String(selectedLocation.longitude),
+        radiusMeters: String(selectedLocation.radiusMeters),
+      }
+    })
   }
 
   const validate = () => {
@@ -68,11 +102,13 @@ function EventCreation() {
   }
 
   const [loading, setLoading] = useState(false)
-const [errorMessage, setErrorMessage] = useState('')
-const navigate = useNavigate()
-const { currentUser } = useAuth()
+  const [errorMessage, setErrorMessage] = useState('')
+  const navigate = useNavigate()
+  const { currentUser } = useAuth()
+  const selectedLocation = UNC_EVENT_LOCATIONS.find((location) => location.id === form.locationId)
+  const showCustomLocationFields = form.locationId === 'custom'
 
-const handleSubmit = async (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
     setSuccessMessage('')
     setErrorMessage('')
@@ -185,53 +221,93 @@ const handleSubmit = async (event) => {
         </div>
 
         <label>
-          Location name
-          <input
-            type="text"
-            value={form.locationName}
-            onChange={handleChange('locationName')}
-            placeholder="Campus Hall"
-          />
+          Location
+          <select value={form.locationId} onChange={handleLocationChange}>
+            <option value="">Select location</option>
+            {UNC_EVENT_LOCATIONS.map((location) => (
+              <option key={location.id} value={location.id}>
+                {location.name}
+              </option>
+            ))}
+            <option value="custom">Custom location</option>
+          </select>
           {errors.locationName && <span className="field-error">{errors.locationName}</span>}
         </label>
 
-        <div className="form-row">
-          <label>
-            Latitude
-            <input
-              type="number"
-              step="0.000001"
-              value={form.latitude}
-              onChange={handleChange('latitude')}
-              placeholder="35.9086"
-            />
-            {errors.latitude && <span className="field-error">{errors.latitude}</span>}
-          </label>
-          <label>
-            Longitude
-            <input
-              type="number"
-              step="0.000001"
-              value={form.longitude}
-              onChange={handleChange('longitude')}
-              placeholder="-79.0469"
-            />
-            {errors.longitude && <span className="field-error">{errors.longitude}</span>}
-          </label>
-        </div>
+        {selectedLocation && (
+          <div className="location-autofill-summary" aria-live="polite">
+            <div>
+              <span>Latitude</span>
+              <strong>{selectedLocation.latitude}</strong>
+            </div>
+            <div>
+              <span>Longitude</span>
+              <strong>{selectedLocation.longitude}</strong>
+            </div>
+            <div>
+              <span>Radius</span>
+              <strong>{selectedLocation.radiusMeters}m</strong>
+            </div>
+          </div>
+        )}
+
+        {showCustomLocationFields && (
+          <>
+            <label>
+              Location name
+              <input
+                type="text"
+                value={form.locationName}
+                onChange={handleChange('locationName')}
+                placeholder="Campus Hall"
+              />
+              {errors.locationName && <span className="field-error">{errors.locationName}</span>}
+            </label>
+
+            <div className="form-row">
+              <label>
+                Latitude
+                <input
+                  type="number"
+                  step="0.000001"
+                  value={form.latitude}
+                  onChange={handleChange('latitude')}
+                  placeholder="35.9086"
+                />
+                {errors.latitude && <span className="field-error">{errors.latitude}</span>}
+              </label>
+              <label>
+                Longitude
+                <input
+                  type="number"
+                  step="0.000001"
+                  value={form.longitude}
+                  onChange={handleChange('longitude')}
+                  placeholder="-79.0469"
+                />
+                {errors.longitude && <span className="field-error">{errors.longitude}</span>}
+              </label>
+            </div>
+
+            <label>
+              Allowed radius (meters)
+              <input
+                type="number"
+                min="1"
+                value={form.radiusMeters}
+                onChange={handleChange('radiusMeters')}
+                placeholder="100"
+              />
+              {errors.radiusMeters && <span className="field-error">{errors.radiusMeters}</span>}
+            </label>
+          </>
+        )}
+
+        {!showCustomLocationFields && (errors.latitude || errors.longitude || errors.radiusMeters) && (
+          <div className="form-error">Select a location or choose Custom location to enter coordinates manually.</div>
+        )}
 
         <div className="form-row">
-          <label>
-            Allowed radius (meters)
-            <input
-              type="number"
-              min="1"
-              value={form.radiusMeters}
-              onChange={handleChange('radiusMeters')}
-              placeholder="100"
-            />
-            {errors.radiusMeters && <span className="field-error">{errors.radiusMeters}</span>}
-          </label>
           <label>
             Points
             <input

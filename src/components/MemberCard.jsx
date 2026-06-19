@@ -1,12 +1,13 @@
 import StatusBadge from './StatusBadge'
 import { getGroupClassName } from '../constants/memberGroups'
+import { getRoleLabel } from '../utils/permissions'
 
 function MemberCard({ member }) {
   return (
     <article className="card member-card">
       <div>
         <h3>{member.name}</h3>
-        <p className="member-card__role">{member.role}</p>
+        <p className="member-card__role">{getRoleLabel(member.role)}</p>
         <div className="member-group-badges">
           {member.pledgeClass && (
             <span className={`member-group-badge member-group-badge--class-${getGroupClassName(member.pledgeClass)}`}>

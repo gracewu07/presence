@@ -125,7 +125,7 @@ function Home() {
         <div>
           <p className="eyebrow">Welcome,</p>
           <h1>{firstName}</h1>
-          <p className="muted">Check in, view events, and track points for your chapter.</p>
+          <p className="muted">Check in, view events, and track points for AKPsi.</p>
         </div>
       </div>
 

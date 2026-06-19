@@ -106,7 +106,7 @@ function App() {
           <Route
             path="admin/standards"
             element={
-              <AdminRoute user={currentUser}>
+              <AdminRoute user={currentUser} requireStandards>
                 <StandardsDashboard />
               </AdminRoute>
             }
@@ -122,7 +122,7 @@ function App() {
           <Route
             path="admin/analytics"
             element={
-              <AdminRoute user={currentUser}>
+              <AdminRoute user={currentUser} requireAnalytics>
                 <AnalyticsDashboard />
               </AdminRoute>
             }

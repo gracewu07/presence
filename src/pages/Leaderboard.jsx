@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { fetchAppSettings, fetchCheckIns } from '../firebase'
+import Button from '../components/Button'
+import { fetchAppSettings, fetchCheckIns, updateLeaderboardVisibility } from '../firebase'
 import { leaderboardCheckIns } from '../data/mockData'
+import { canEditLeaderboardVisibility, canViewFullLeaderboard } from '../utils/permissions'
 
 function Leaderboard() {
   const { currentUser } = useAuth()
@@ -9,6 +11,8 @@ function Leaderboard() {
   const [settings, setSettings] = useState({ leaderboardVisibility: 'private' })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [savingVisibility, setSavingVisibility] = useState(false)
+  const [visibilityMessage, setVisibilityMessage] = useState(null)
 
   useEffect(() => {
     async function loadLeaderboard() {
@@ -23,7 +27,7 @@ function Leaderboard() {
         const hasLiveCheckIns = checkInsSnapshot.length > 0
 
         setCheckIns(hasLiveCheckIns ? checkInsSnapshot : leaderboardCheckIns)
-        setSettings(hasLiveCheckIns ? settingsSnapshot[0] || { leaderboardVisibility: 'private' } : { leaderboardVisibility: 'public' })
+        setSettings(settingsSnapshot[0] || { leaderboardVisibility: hasLiveCheckIns ? 'private' : 'public' })
       } catch (fetchError) {
         console.error('Failed to load leaderboard data', fetchError)
         setCheckIns(leaderboardCheckIns)
@@ -38,9 +42,32 @@ function Leaderboard() {
   }, [])
 
   const leaderboardVisibility = settings.leaderboardVisibility || 'private'
-  const isAdmin = currentUser?.role === 'admin'
-  const canViewFullBoard = isAdmin || leaderboardVisibility === 'public'
+  const hasFullLeaderboardAccess = canViewFullLeaderboard(currentUser)
+  const canEditVisibility = canEditLeaderboardVisibility(currentUser)
+  const canViewFullBoard = hasFullLeaderboardAccess || leaderboardVisibility === 'public'
   const getMemberInitial = (name) => name?.charAt(0)?.toUpperCase() || 'M'
+
+  const handleVisibilityChange = (event) => {
+    setVisibilityMessage(null)
+    setSettings((current) => ({ ...current, leaderboardVisibility: event.target.value }))
+  }
+
+  const saveLeaderboardVisibility = async () => {
+    if (!canEditVisibility) return
+
+    setSavingVisibility(true)
+    setVisibilityMessage(null)
+
+    try {
+      await updateLeaderboardVisibility(leaderboardVisibility)
+      setVisibilityMessage({ type: 'success', text: 'Leaderboard visibility saved.' })
+    } catch (saveError) {
+      console.error('Failed to save leaderboard visibility', saveError)
+      setVisibilityMessage({ type: 'error', text: 'Unable to save leaderboard visibility.' })
+    } finally {
+      setSavingVisibility(false)
+    }
+  }
 
   const rankedMembers = useMemo(() => {
     const totals = new Map()
@@ -89,6 +116,33 @@ function Leaderboard() {
           <div className="empty-state error-message">{error}</div>
         ) : (
           <>
+            {canEditVisibility && (
+              <div className="leaderboard-admin-card">
+                <div>
+                  <p className="eyebrow">Admin visibility</p>
+                  <h2>Member access</h2>
+                  <p className="muted">Admins can always see the full leaderboard. Choose whether members can see everyone or only their own standing.</p>
+                </div>
+                <div className="leaderboard-admin-controls">
+                  <label className="leaderboard-admin-select">
+                    <span>Leaderboard visibility</span>
+                    <select value={leaderboardVisibility} onChange={handleVisibilityChange}>
+                      <option value="public">Visible to members</option>
+                      <option value="private">Private to admins</option>
+                    </select>
+                  </label>
+                  <Button type="button" variant="secondary" onClick={saveLeaderboardVisibility} disabled={savingVisibility}>
+                    {savingVisibility ? 'Saving...' : 'Save visibility'}
+                  </Button>
+                </div>
+                {visibilityMessage && (
+                  <p className={`leaderboard-visibility-message ${visibilityMessage.type === 'error' ? 'error-message' : 'success-message'}`}>
+                    {visibilityMessage.text}
+                  </p>
+                )}
+              </div>
+            )}
+
             {canViewFullBoard ? (
               <>
                 {currentMemberRank && (

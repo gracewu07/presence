@@ -1,14 +1,9 @@
 import { db, collection, query, where, getDocs, doc, setDoc, getDoc, updateDoc, serverTimestamp } from '../lib/firebase'
 import { isAllowedEmail } from '../config/authConfig'
-
-const VALID_ROLES = new Set(['member', 'admin'])
+import { ROLE_MEMBER, normalizeRole } from '../utils/permissions'
 
 function normalizeEmail(email) {
   return email?.trim().toLowerCase() || ''
-}
-
-function normalizeRole(role) {
-  return VALID_ROLES.has(role) ? role : ''
 }
 
 function normalizeAccessStatus(accessStatus) {
@@ -35,7 +30,7 @@ export async function fetchMemberByEmail(email) {
   const snapshot = await getDocs(q)
   if (snapshot.empty) return null
   const docSnap = snapshot.docs[0]
-  return withMemberDefaults({ id: docSnap.id, ...docSnap.data() })
+    return withMemberDefaults({ id: docSnap.id, ...docSnap.data() })
 }
 
 export async function fetchMemberById(id) {
@@ -62,7 +57,7 @@ export async function createMember(id, data) {
   await setDoc(memberRef, {
     ...data,
     email,
-    role: normalizeRole(data.role) || 'member',
+    role: normalizeRole(data.role) || ROLE_MEMBER,
     accessStatus: data.accessStatus === 'approved' ? 'approved' : 'pending',
     createdAt: serverTimestamp(),
   })
@@ -92,7 +87,7 @@ export async function importApprovedMembers(members) {
         email,
         pledgeClass: member.pledgeClass?.trim() || '',
         family: member.family?.trim() || '',
-        role: normalizeRole(member.role) === 'admin' ? 'admin' : 'member',
+        role: normalizeRole(member.role) || ROLE_MEMBER,
         status: member.status?.trim() || 'active',
         accessStatus: 'approved',
       })
@@ -121,7 +116,7 @@ export async function updateMember(id, updates) {
   if (safeUpdates.role !== undefined) {
     safeUpdates.role = normalizeRole(safeUpdates.role)
     if (!safeUpdates.role) {
-      throw new Error('Member role must be member or admin.')
+      throw new Error('Member role must be member, admin, or super-admin.')
     }
   }
   if (safeUpdates.accessStatus !== undefined) {

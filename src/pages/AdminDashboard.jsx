@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fetchMembers, fetchEvents, fetchCheckIns, fetchUpcomingEvents, fetchExcusalRequests } from '../firebase'
+import { ROLE_ADMIN, ROLE_MEMBER, ROLE_SUB_ADMIN, ROLE_SUPER_ADMIN, normalizeRole } from '../utils/permissions'
 
 function AdminDashboard() {
   const [members, setMembers] = useState([])
@@ -111,11 +112,19 @@ function AdminDashboard() {
               <div className="profile-bubble-grid">
                 <div className="profile-bubble">
                   <p className="profile-card__label">Admins</p>
-                  <strong>{members.filter((member) => member.role === 'admin').length}</strong>
+                  <strong>{members.filter((member) => normalizeRole(member.role) === ROLE_ADMIN).length}</strong>
+                </div>
+                <div className="profile-bubble">
+                  <p className="profile-card__label">Super Admins</p>
+                  <strong>{members.filter((member) => normalizeRole(member.role) === ROLE_SUPER_ADMIN).length}</strong>
+                </div>
+                <div className="profile-bubble">
+                  <p className="profile-card__label">Sub-Admins</p>
+                  <strong>{members.filter((member) => normalizeRole(member.role) === ROLE_SUB_ADMIN).length}</strong>
                 </div>
                 <div className="profile-bubble">
                   <p className="profile-card__label">Members</p>
-                  <strong>{members.filter((member) => member.role === 'member').length}</strong>
+                  <strong>{members.filter((member) => normalizeRole(member.role) === ROLE_MEMBER).length}</strong>
                 </div>
                 <div className="profile-bubble">
                   <p className="profile-card__label">Pending</p>

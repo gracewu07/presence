@@ -29,12 +29,12 @@
   --event-tint-chapter: #ecf9ff;
   --event-accent-service: #ead06b;
   --event-tint-service: #fffae6;
-  --event-accent-pd: #d48f5e;
-  --event-tint-pd: #f8f1eb;
+  --event-accent-pd: #6fb7a3;
+  --event-tint-pd: #eefbf8;
   --event-accent-social: #9297cc;
   --event-tint-social: #eef0ff;
-  --event-accent-recruitment: #6fb7a3;
-  --event-tint-recruitment: #eefbf8;
+  --event-accent-recruitment: #d48f5e;
+  --event-tint-recruitment: #f8f1eb;
 }
 
 * {
@@ -3171,6 +3171,72 @@ body {
   margin: 0;
 }
 
+.leaderboard-admin-card {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 26px;
+  background: #f6fbff;
+}
+
+.leaderboard-admin-card h2,
+.leaderboard-admin-card p {
+  margin: 0;
+}
+
+.leaderboard-admin-card h2 {
+  color: #25252d;
+  font-size: clamp(1.22rem, 5vw, 1.52rem);
+  font-weight: 700;
+  line-height: 1.05;
+}
+
+.leaderboard-admin-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: end;
+}
+
+.leaderboard-admin-select {
+  display: grid;
+  flex: 1 1 220px;
+  gap: 8px;
+  min-width: 0;
+  color: var(--planner-muted);
+  font-size: 0.86rem;
+  font-weight: 500;
+  line-height: 1.1;
+}
+
+.leaderboard-admin-select select {
+  min-height: 46px;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background-color: #ffffff;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #7d8fa0 50%),
+    linear-gradient(135deg, #7d8fa0 50%, transparent 50%);
+  background-position: calc(100% - 18px) calc(50% - 3px), calc(100% - 12px) calc(50% - 3px);
+  background-repeat: no-repeat;
+  background-size: 8px 8px;
+  color: #25252d;
+  font-weight: 500;
+}
+
+.leaderboard-admin-controls .button {
+  min-height: 46px;
+  border-radius: 999px;
+  padding-inline: 1rem;
+}
+
+.leaderboard-visibility-message {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
 .leaderboard-spotlight {
   display: grid;
   justify-items: center;
@@ -3292,6 +3358,95 @@ body {
   white-space: nowrap;
 }
 
+.profile-page {
+  --profile-blue-1: #eef7fc;
+  --profile-blue-2: #e4f2fa;
+  --profile-blue-3: #d7ebf7;
+  --profile-blue-4: #c8e2f2;
+  --profile-blue-accent-1: #72a0c0;
+  --profile-blue-accent-2: #87b8d6;
+  --profile-blue-accent-3: #9bc8e0;
+  --profile-blue-accent-4: #b0d5e9;
+  display: grid;
+  gap: 18px;
+}
+
+.profile-hero-card {
+  display: grid;
+  gap: 20px;
+  padding: 22px;
+  border: 0;
+  border-radius: var(--app-radius-panel);
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.profile-hero-card h2 {
+  margin: 0;
+  color: #25252d;
+  font-size: clamp(1.48rem, 7vw, 2rem);
+  font-weight: 800;
+  line-height: 1.05;
+}
+
+.profile-hero-meta {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.profile-hero-meta__item {
+  --profile-meta-accent: var(--profile-blue-accent-1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(114, 160, 192, 0.2);
+  border-radius: 999px;
+  background: var(--profile-blue-1);
+}
+
+.profile-hero-meta__item:nth-child(2) {
+  --profile-meta-accent: var(--profile-blue-accent-2);
+  background: var(--profile-blue-2);
+}
+
+.profile-hero-meta__item:nth-child(3) {
+  --profile-meta-accent: var(--profile-blue-accent-3);
+  background: var(--profile-blue-3);
+}
+
+.profile-hero-meta span {
+  color: var(--planner-muted);
+  font-size: 0.84rem;
+  font-weight: 500;
+  line-height: 1.1;
+}
+
+.profile-hero-meta strong {
+  overflow-wrap: anywhere;
+  color: #25252d;
+  font-size: 0.98rem;
+  font-weight: 700;
+  line-height: 1.08;
+  text-align: right;
+}
+
+.profile-role-value {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  justify-self: end;
+  padding: 0.4rem 0.72rem;
+  border-radius: 999px;
+  background: #25252d;
+  color: #ffffff !important;
+  font-size: 0.82rem !important;
+  font-weight: 650 !important;
+  line-height: 1;
+}
+
 .profile-photo-card {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -3360,13 +3515,86 @@ body {
   margin-top: 8px;
 }
 
+.profile-stats-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.profile-stats-grid .stat-card {
+  --profile-stat-accent: var(--profile-blue-accent-1);
+  min-height: 130px;
+  padding: 17px 18px;
+  border-left: 7px solid var(--profile-stat-accent);
+  background: var(--profile-blue-1);
+}
+
+.profile-stats-grid .stat-card--points {
+  --profile-stat-accent: #4f7fa6;
+  background: #edf6fb;
+}
+
+.profile-stats-grid .stat-card--chapter {
+  --profile-stat-accent: var(--profile-blue-accent-1);
+  background: var(--profile-blue-1);
+}
+
+.profile-stats-grid .stat-card--service {
+  --profile-stat-accent: var(--profile-blue-accent-2);
+  background: var(--profile-blue-2);
+}
+
+.profile-stats-grid .stat-card--professional-development {
+  --profile-stat-accent: var(--profile-blue-accent-3);
+  background: var(--profile-blue-3);
+}
+
+.profile-stats-grid .stat-card__label,
+.profile-stats-grid .stat-card__value {
+  margin: 0;
+}
+
+.profile-stats-grid .stat-card__value {
+  margin-top: 18px;
+  color: #25252d;
+  font-size: clamp(1.9rem, 8vw, 2.3rem);
+}
+
 .profile-info-layout {
   display: grid;
   gap: 18px;
 }
 
+.profile-info-layout h2,
+.profile-page .section-block h2 {
+  margin: 0 0 10px;
+  color: #25252d;
+  font-size: clamp(1.22rem, 5vw, 1.5rem);
+  font-weight: 800;
+  line-height: 1.05;
+}
+
 .profile-section-card {
+  display: grid;
+  gap: 12px;
   min-height: 220px;
+  padding: 18px;
+  border: 0;
+  border-radius: var(--app-radius-card);
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.profile-history-card {
+  min-height: auto;
+  padding: 18px;
+}
+
+.profile-history-card h3 {
+  margin: 8px 0 0;
+}
+
+.profile-history-card .event-card__meta,
+.profile-history-card .event-card__location,
+.profile-history-card .muted {
+  margin-top: 8px;
 }
 
 .profile-member-info {
@@ -3376,8 +3604,8 @@ body {
 }
 
 .profile-member-info-card {
-  --member-info-accent: var(--event-accent-chapter);
-  --member-info-tint: var(--event-tint-chapter);
+  --member-info-accent: var(--profile-blue-accent-1);
+  --member-info-tint: var(--profile-blue-1);
   display: grid;
   gap: 10px;
   min-height: 92px;
@@ -3389,8 +3617,8 @@ body {
 }
 
 .profile-member-info-card--family {
-  --member-info-accent: var(--event-accent-social);
-  --member-info-tint: var(--event-tint-social);
+  --member-info-accent: var(--profile-blue-accent-3);
+  --member-info-tint: var(--profile-blue-3);
 }
 
 .profile-member-info-card .profile-card__label {
@@ -3421,7 +3649,36 @@ body {
   border-radius: 999px;
 }
 
+.profile-actions-card {
+  padding: 18px 20px;
+  border: 0;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.profile-actions-card ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: #25252d;
+}
+
+.profile-actions-card li + li {
+  margin-top: 8px;
+}
+
 @media (min-width: 768px) {
+  .profile-hero-card {
+    grid-template-columns: minmax(260px, 0.85fr) minmax(0, 1.15fr);
+    align-items: center;
+  }
+
+  .profile-hero-meta {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .profile-stats-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
   .profile-info-layout {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: stretch;
@@ -4268,6 +4525,37 @@ body {
   accent-color: #25252d;
 }
 
+.location-autofill-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: #f6fbff;
+}
+
+.location-autofill-summary div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.location-autofill-summary span {
+  color: var(--planner-muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.1;
+}
+
+.location-autofill-summary strong {
+  overflow-wrap: anywhere;
+  color: #25252d;
+  font-size: 0.96rem;
+  font-weight: 650;
+  line-height: 1.05;
+}
+
 .member-management-page .grid--cards {
   align-items: start;
   gap: 18px;
@@ -4428,4 +4716,12 @@ body {
   border-radius: 16px !important;
   background: rgba(255, 255, 255, 0.96) !important;
   color: #25252d !important;
+}
+
+html,
+body,
+#root,
+.app-shell,
+.app-shell__content {
+  background: #ffffff !important;
 }

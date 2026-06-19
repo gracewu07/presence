@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import Button from '../components/Button'
 import { useAuth } from '../context/AuthContext'
-import { fetchAppSettings, updateLeaderboardVisibility } from '../firebase'
+import { getRoleLabel } from '../utils/permissions'
 
 const defaultPreferences = {
   displayName: '',
@@ -33,47 +33,16 @@ function preferencesForUser(user) {
 function Settings() {
   const { currentUser, updateProfilePreferences } = useAuth()
   const [preferences, setPreferences] = useState(() => preferencesForUser(currentUser))
-  const [adminSettings, setAdminSettings] = useState({ leaderboardVisibility: 'private' })
-  const [loadingAdminSettings, setLoadingAdminSettings] = useState(currentUser?.role === 'admin')
   const [savingPreferences, setSavingPreferences] = useState(false)
-  const [savingAdminSettings, setSavingAdminSettings] = useState(false)
   const [message, setMessage] = useState(null)
-
-  const isAdmin = currentUser?.role === 'admin'
 
   useEffect(() => {
     setPreferences(preferencesForUser(currentUser))
   }, [currentUser])
 
-  useEffect(() => {
-    if (!isAdmin) {
-      setLoadingAdminSettings(false)
-      return
-    }
-
-    async function loadSettings() {
-      setLoadingAdminSettings(true)
-      try {
-        const settingsSnapshot = await fetchAppSettings()
-        setAdminSettings(settingsSnapshot[0] || { leaderboardVisibility: 'private' })
-      } catch (fetchError) {
-        console.error('Failed to load settings', fetchError)
-        setMessage({ type: 'error', text: 'Unable to load admin settings. Please refresh the page.' })
-      } finally {
-        setLoadingAdminSettings(false)
-      }
-    }
-
-    loadSettings()
-  }, [isAdmin])
-
   const updatePreference = (field) => (event) => {
     const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value
     setPreferences((current) => ({ ...current, [field]: value }))
-  }
-
-  const handleAdminVisibilityChange = (event) => {
-    setAdminSettings((current) => ({ ...current, leaderboardVisibility: event.target.value }))
   }
 
   const savePreferences = (event) => {
@@ -97,22 +66,6 @@ function Settings() {
     setMessage({ type: 'success', text: 'Settings reset to your saved preferences.' })
   }
 
-  const saveAdminSettings = async () => {
-    if (!isAdmin) return
-    setSavingAdminSettings(true)
-    setMessage(null)
-
-    try {
-      await updateLeaderboardVisibility(adminSettings.leaderboardVisibility)
-      setMessage({ type: 'success', text: 'Leaderboard access saved successfully.' })
-    } catch (saveError) {
-      console.error('Failed to save leaderboard visibility', saveError)
-      setMessage({ type: 'error', text: 'Unable to save leaderboard access. Please try again.' })
-    } finally {
-      setSavingAdminSettings(false)
-    }
-  }
-
   return (
     <section className="page form-page settings-page">
       <div className="page__header">
@@ -126,7 +79,7 @@ function Settings() {
       <div className="settings-overview-grid">
         <div className="settings-info-card settings-info-card--role">
           <span>Role</span>
-          <strong>{currentUser?.role === 'admin' ? 'Admin' : 'Member'}</strong>
+          <strong>{getRoleLabel(currentUser?.role)}</strong>
         </div>
         <div className="settings-info-card settings-info-card--status">
           <span>Status</span>
@@ -238,31 +191,6 @@ function Settings() {
           </div>
 
         </div>
-
-        {isAdmin && (
-          <div className="card settings-panel settings-panel--admin">
-            <div className="settings-panel__header">
-              <h2>Admin Controls</h2>
-              <p className="muted">Manage app-wide settings for the chapter.</p>
-            </div>
-
-            {loadingAdminSettings ? (
-              <p className="muted">Loading admin settings...</p>
-            ) : (
-              <label className="settings-field settings-field--select">
-                <span>Leaderboard access</span>
-                <select value={adminSettings.leaderboardVisibility} onChange={handleAdminVisibilityChange}>
-                  <option value="private">Private</option>
-                  <option value="public">Public</option>
-                </select>
-              </label>
-            )}
-
-            <Button type="button" variant="secondary" onClick={saveAdminSettings} disabled={savingAdminSettings || loadingAdminSettings}>
-              {savingAdminSettings ? 'Saving...' : 'Save Admin Settings'}
-            </Button>
-          </div>
-        )}
 
         <div className="settings-footer">
           {message && (

@@ -1,13 +1,27 @@
 import { useEffect, useMemo, useState } from 'react'
-import { fetchMembers, fetchEvents, fetchCheckIns, fetchExcusalRequests } from '../firebase'
+import Button from '../components/Button'
+import StatusBadge from '../components/StatusBadge'
+import { useAuth } from '../context/AuthContext'
+import { fetchMembers, fetchEvents, fetchCheckIns, fetchExcusalRequests, updateExcusalStatus } from '../firebase'
 import { computeAttendanceMetricsForMember, computeEngagementScore, engagementCategory, isAtRisk } from '../utils/engagement'
+import { canReviewExcusals } from '../utils/permissions'
+
+const formatDate = (value) => {
+  if (!value) return 'Not submitted yet'
+  const date = value?.toDate ? value.toDate() : new Date(value)
+  return Number.isNaN(date.getTime()) ? 'Not submitted yet' : date.toLocaleString()
+}
 
 function StandardsDashboard() {
+  const { currentUser } = useAuth()
+  const canReview = canReviewExcusals(currentUser)
   const [members, setMembers] = useState([])
   const [events, setEvents] = useState([])
   const [checkIns, setCheckIns] = useState([])
   const [excusals, setExcusals] = useState([])
   const [loading, setLoading] = useState(true)
+  const [reviewingRequestId, setReviewingRequestId] = useState(null)
+  const [reviewMessage, setReviewMessage] = useState(null)
 
   useEffect(() => {
     async function loadStandardsData() {
@@ -32,6 +46,28 @@ function StandardsDashboard() {
 
     loadStandardsData()
   }, [])
+
+  async function reviewExcusal(requestId, status) {
+    if (!canReview) return
+
+    setReviewingRequestId(requestId)
+    setReviewMessage(null)
+
+    try {
+      await updateExcusalStatus(requestId, status, status === 'approved' ? 'Approved by Standards' : 'Denied by Standards')
+      const updatedRequests = await fetchExcusalRequests()
+      setExcusals(updatedRequests)
+      setReviewMessage({
+        type: 'success',
+        text: `Excusal ${status}.`,
+      })
+    } catch (err) {
+      console.error('Failed to update excusal request', err)
+      setReviewMessage({ type: 'error', text: 'Unable to update excusal request.' })
+    } finally {
+      setReviewingRequestId(null)
+    }
+  }
 
   const analytics = useMemo(() => {
     if (members.length === 0) return { memberMetrics: [], atRisk: [], avgAttendance: 0 }
@@ -108,19 +144,47 @@ function StandardsDashboard() {
           </div>
 
           <div className="section-block">
-            <h2>Pending Excusals</h2>
+            <h2>{canReview ? 'Review Excusal Requests' : 'Excusal Requests'}</h2>
+            {reviewMessage && (
+              <p className={reviewMessage.type === 'error' ? 'form-error' : 'form-success'}>{reviewMessage.text}</p>
+            )}
             <div className="grid grid--cards">
               {pendingExcusals.length === 0 ? (
                 <div className="empty-state">No pending excusal requests.</div>
               ) : (
                 pendingExcusals.map((request) => (
-                  <div key={request.id} className="card request-card">
+                  <div key={request.id} className="card request-card excusal-request-card excusal-request-card--pending">
                     <div>
-                      <h3>{request.memberName}</h3>
+                      <div className="excusal-request-card__topline">
+                        <h3>{request.memberName}</h3>
+                        <StatusBadge label={request.status || 'pending'} status={request.status || 'pending'} />
+                      </div>
                       <p className="muted">{request.eventTitle}</p>
-                      <p className="muted">{new Date(request.submittedAt).toLocaleString()}</p>
+                      <div className="excusal-request-card__details">
+                        <p><span>Submitted</span>{formatDate(request.submittedAt)}</p>
+                        <p><span>Reason</span>{request.reason}</p>
+                        {request.attachment?.name && <p><span>Attachment</span>{request.attachment.name}</p>}
+                      </div>
                     </div>
-                    <p className="muted">{request.reason}</p>
+                    {canReview && (
+                      <div className="excusal-actions">
+                        <Button
+                          type="button"
+                          onClick={() => reviewExcusal(request.id, 'approved')}
+                          disabled={reviewingRequestId === request.id}
+                        >
+                          Approve
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          onClick={() => reviewExcusal(request.id, 'denied')}
+                          disabled={reviewingRequestId === request.id}
+                        >
+                          Deny
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 ))
               )}

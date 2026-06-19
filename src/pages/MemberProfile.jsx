@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import StatusBadge from '../components/StatusBadge'
 import Button from '../components/Button'
+import StatCard from '../components/StatCard'
 import { getGroupClassName } from '../constants/memberGroups'
 import {
   fetchMemberCheckIns,
@@ -9,6 +10,7 @@ import {
   fetchCheckIns,
   fetchMemberExcusalRequests,
 } from '../firebase'
+import { getRoleLabel } from '../utils/permissions'
 
 function toLocaleShort(dateString) {
   if (!dateString) return ''
@@ -17,6 +19,10 @@ function toLocaleShort(dateString) {
   } catch (e) {
     return dateString
   }
+}
+
+function typeClassForEvent(eventType = '') {
+  return eventType.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-') || 'other'
 }
 
 function MemberProfile() {
@@ -87,6 +93,12 @@ function MemberProfile() {
   const profileInitial = currentUser?.name?.charAt(0)?.toUpperCase() || 'P'
   const memberClass = currentUser?.pledgeClass || 'Delta'
   const memberFamily = currentUser?.family || 'Fireball'
+  const profileStats = [
+    { label: 'Total Points', value: totalPoints, variant: 'points' },
+    { label: 'Events Attended', value: eventsAttended, variant: 'chapter' },
+    { label: 'Attendance Rate', value: `${Math.round(attendanceRate * 100)}%`, variant: 'service' },
+    { label: 'Excusals Submitted', value: excusalsSubmitted, variant: 'professional-development' },
+  ]
 
   function handlePhotoChange(e) {
     const file = e.target.files?.[0]
@@ -134,8 +146,8 @@ function MemberProfile() {
         </div>
       </div>
 
-      <div className="profile-bubble-grid">
-        <div className="profile-bubble profile-photo-card profile-bubble--wide">
+      <div className="card profile-hero-card">
+        <div className="profile-photo-card">
           <label className="profile-photo-upload" aria-label="Choose profile photo">
             <span className="profile-photo-preview" aria-hidden="true">
               {currentUser.photoUrl ? (
@@ -153,36 +165,33 @@ function MemberProfile() {
             </span>
           </label>
           <div>
-            <strong>{currentUser.name}</strong>
+            <h2>{currentUser.name}</h2>
             <div className="profile-photo-status">
               <StatusBadge label={currentUser.status} status={currentUser.status} />
             </div>
           </div>
         </div>
-        <div className="profile-bubble profile-bubble--wide">
-          <p className="profile-card__label">Email</p>
-          <strong>{currentUser.email}</strong>
+
+        <div className="profile-hero-meta">
+          <div className="profile-hero-meta__item">
+            <span>Email</span>
+            <strong>{currentUser.email}</strong>
+          </div>
+          <div className="profile-hero-meta__item">
+            <span>Role</span>
+            <strong className="profile-role-value">{getRoleLabel(currentUser.role)}</strong>
+          </div>
+          <div className="profile-hero-meta__item">
+            <span>Leaderboard Rank</span>
+            <strong>{leaderboardRank ? `#${leaderboardRank}` : 'Unranked'}</strong>
+          </div>
         </div>
-        <div className="profile-bubble">
-          <p className="profile-card__label">Total Points</p>
-          <strong>{totalPoints}</strong>
-        </div>
-        <div className="profile-bubble">
-          <p className="profile-card__label">Events Attended</p>
-          <strong>{eventsAttended}</strong>
-        </div>
-        <div className="profile-bubble">
-          <p className="profile-card__label">Attendance Rate</p>
-          <strong>{Math.round(attendanceRate * 100)}%</strong>
-        </div>
-        <div className="profile-bubble">
-          <p className="profile-card__label">Excusals Submitted</p>
-          <strong>{excusalsSubmitted}</strong>
-        </div>
-        <div className="profile-bubble profile-bubble--wide">
-          <p className="profile-card__label">Points Leaderboard rank</p>
-          <strong>{leaderboardRank ?? 'Unranked'}</strong>
-        </div>
+      </div>
+
+      <div className="grid grid--stats profile-stats-grid">
+        {profileStats.map((stat) => (
+          <StatCard key={stat.label} {...stat} />
+        ))}
       </div>
 
       <div className="section-block profile-info-layout">
@@ -193,15 +202,23 @@ function MemberProfile() {
               <div className="empty-state">No attendance history available.</div>
             ) : (
               attendanceHistory.map((history) => (
-                <div key={history.id} className="event-card">
+                <div
+                  key={history.id}
+                  className={`event-card event-surface event-surface--${typeClassForEvent(history.eventType)} profile-history-card`}
+                >
                   <div>
-                    <strong>{history.title}</strong>
-                    <p className="muted">{history.eventType} - {toLocaleShort(history.date)}</p>
+                    <div className="event-card__topline">
+                      <div className={`event-card__type event-type-badge event-type-badge--${typeClassForEvent(history.eventType)}`}>
+                        {history.eventType}
+                      </div>
+                      {history.locationVerified && <span className="required-note">Verified</span>}
+                    </div>
+                    <h3>{history.title}</h3>
+                    <p className="event-card__meta">{toLocaleShort(history.date)}</p>
                   </div>
                   <div>
-                    <p className="muted">Points: {history.points}</p>
-                    <p className="muted">Checked at: {toLocaleShort(history.timestamp)}</p>
-                    <p className="muted">Location verified: {history.locationVerified ? 'Yes' : 'No'}</p>
+                    <p className="event-card__location">{history.points} points</p>
+                    <p className="muted">Checked in {toLocaleShort(history.timestamp)}</p>
                   </div>
                 </div>
               ))
@@ -226,7 +243,7 @@ function MemberProfile() {
 
       <div className="section-block">
         <h2>Recommended actions</h2>
-        <div className="card">
+        <div className="card profile-actions-card">
           <ul>
             {missedRequired.length > 0 && <li>Submit an excusal for missed required events.</li>}
             {attendanceRate < 0.5 && <li>Contact the VP of Standards if you are at risk.</li>}

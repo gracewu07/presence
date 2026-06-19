@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import akpsiLogo from '../assets/akpsi-logo.jpg'
+import { canAccessStandards, canViewAnalytics, isAdminRole } from '../utils/permissions'
 
 const memberLinks = [
   { to: '/', label: 'Home', end: true },
@@ -12,11 +13,16 @@ const memberLinks = [
 
 const adminLinks = [
   { to: '/admin', label: 'Admin' },
-  { to: '/admin/standards', label: 'Standards' },
   { to: '/admin/create-event', label: 'Create Event' },
   { to: '/admin/members', label: 'Members' },
+]
+
+const standardsLinks = [
+  { to: '/admin/standards', label: 'Standards' },
+]
+
+const analyticsLinks = [
   { to: '/admin/analytics', label: 'Analytics' },
-  { to: '/admin/settings', label: 'Settings' },
 ]
 
 const mobileIconPaths = {
@@ -80,8 +86,22 @@ function MobileNavIcon({ label }) {
 }
 
 function Navbar({ currentUser }) {
+  const currentAdminLinks = currentUser && isAdminRole(currentUser)
+    ? [
+        ...adminLinks.slice(0, 1),
+        ...(canAccessStandards(currentUser) ? standardsLinks : []),
+        ...adminLinks.slice(1),
+        ...(canViewAnalytics(currentUser) ? analyticsLinks : []),
+      ]
+    : currentUser && canViewAnalytics(currentUser)
+      ? [
+          ...(canAccessStandards(currentUser) ? standardsLinks : []),
+          ...analyticsLinks,
+        ]
+    : []
+
   const links = currentUser
-    ? [...memberLinks, ...(currentUser.role === 'admin' ? adminLinks : [])]
+    ? [...memberLinks, ...currentAdminLinks]
     : [{ to: '/', label: 'Home', end: true }]
 
   const mobileLinks = currentUser
@@ -90,7 +110,7 @@ function Navbar({ currentUser }) {
         { to: '/check-in', label: 'Check-In' },
         { to: '/calendar', label: 'Calendar' },
         { to: '/profile', label: 'Profile' },
-        { to: currentUser.role === 'admin' ? '/admin' : '/more', label: currentUser.role === 'admin' ? 'Admin' : 'More' },
+        { to: '/more', label: 'More' },
       ]
     : [{ to: '/login', label: 'Sign In' }]
 

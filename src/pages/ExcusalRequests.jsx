@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import StatusBadge from '../components/StatusBadge'
 import Button from '../components/Button'
-import { fetchExcusalRequests, fetchEvents, submitExcusalRequest, updateExcusalStatus } from '../firebase'
+import { fetchExcusalRequests, fetchEvents, submitExcusalRequest } from '../firebase'
 import { events as mockEvents } from '../data/events'
 
 const mergeEventsById = (...eventLists) => {
@@ -58,7 +58,6 @@ function ExcusalRequests() {
   }, [])
 
   const memberRequests = useMemo(() => requests.filter((request) => request.memberId === currentUser?.uid), [requests, currentUser])
-  const adminView = currentUser?.role === 'admin'
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -96,16 +95,6 @@ function ExcusalRequests() {
       setFormMessage({ type: 'error', text: 'Unable to submit excusal. Please try again.' })
     } finally {
       setSaving(false)
-    }
-  }
-
-  async function reviewRequest(id, status, notes) {
-    try {
-      await updateExcusalStatus(id, status, notes || '')
-      const allRequests = await fetchExcusalRequests()
-      setRequests(allRequests)
-    } catch (err) {
-      console.error('Failed to update excusal status', err)
     }
   }
 
@@ -199,38 +188,6 @@ function ExcusalRequests() {
           )}
         </div>
 
-        {adminView && (
-          <div className="card excusal-panel">
-            <div className="excusal-panel__header">
-              <h3>All requests</h3>
-              <p className="muted">Review member submissions and update their status.</p>
-            </div>
-            {requests.length === 0 ? <div className="empty-state">No excusal requests.</div> : (
-              <div className="excusal-request-list">
-                {requests.map((request) => (
-                  <article key={request.id} className={`card request-card excusal-request-card excusal-request-card--${request.status || 'pending'}`}>
-                    <div className="excusal-request-card__content">
-                      <div className="excusal-request-card__topline">
-                        <h4>{request.memberName} - {request.eventTitle}</h4>
-                        <StatusBadge label={request.status || 'pending'} status={request.status || 'pending'} />
-                      </div>
-                      <div className="excusal-request-card__details">
-                        <p><span>Submitted</span>{formatDate(request.submittedAt)}</p>
-                        <p><span>Reason</span>{request.reason}</p>
-                        {request.attachment?.name && <p><span>Attachment</span>{request.attachment.name}</p>}
-                        {request.reviewNotes && <p><span>Notes</span>{request.reviewNotes}</p>}
-                      </div>
-                    </div>
-                    <div className="excusal-actions">
-                      <Button type="button" onClick={() => reviewRequest(request.id, 'approved', 'Approved by admin')}>Approve</Button>
-                      <Button type="button" variant="secondary" onClick={() => reviewRequest(request.id, 'denied', 'Denied by admin')}>Deny</Button>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </section>
   )

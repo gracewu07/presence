@@ -1,0 +1,58 @@
+export const UNC_EVENT_LOCATIONS = [
+  {
+    id: 'gardner-hall-101',
+    name: 'Gardner Hall, Room 101',
+    latitude: 35.9086,
+    longitude: -79.0469,
+    radiusMeters: 120,
+  },
+  {
+    id: 'carolina-union',
+    name: 'Carolina Union',
+    latitude: 35.9059,
+    longitude: -79.0511,
+    radiusMeters: 100,
+  },
+  {
+    id: 'student-union',
+    name: 'Student Union',
+    latitude: 35.9059,
+    longitude: -79.0511,
+    radiusMeters: 100,
+  },
+  {
+    id: 'campus-kitchen',
+    name: 'Campus Kitchen',
+    latitude: 35.9073,
+    longitude: -79.0398,
+    radiusMeters: 150,
+  },
+  {
+    id: 'lenoir-hall',
+    name: 'Lenoir Hall',
+    latitude: 35.9125,
+    longitude: -79.0488,
+    radiusMeters: 80,
+  },
+  {
+    id: 'the-quad',
+    name: 'The Quad',
+    latitude: 35.9059,
+    longitude: -79.0511,
+    radiusMeters: 100,
+  },
+  {
+    id: 'alumni-hall',
+    name: 'Alumni Hall',
+    latitude: 35.9102,
+    longitude: -79.0455,
+    radiusMeters: 90,
+  },
+  {
+    id: 'kenan-stadium',
+    name: 'Kenan Stadium',
+    latitude: 35.9123,
+    longitude: -79.0551,
+    radiusMeters: 200,
+  },
+]

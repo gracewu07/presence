@@ -5,8 +5,23 @@ import Button from '../components/Button'
 import * as memberService from '../services/memberService'
 import { isAllowedEmail } from '../config/authConfig'
 import { FAMILIES, PLEDGE_CLASSES } from '../constants/memberGroups'
+import {
+  ROLE_ADMIN,
+  ROLE_MEMBER,
+  ROLE_SUPER_ADMIN,
+  ROLE_SUB_ADMIN,
+  canManageMembers,
+  canViewApprovedMembers,
+  normalizeRole,
+} from '../utils/permissions'
 
 const REQUIRED_CSV_COLUMNS = ['name', 'email', 'pledgeClass', 'family', 'role', 'status']
+const MEMBER_ROLE_OPTIONS = [
+  { value: ROLE_MEMBER, label: 'Member' },
+  { value: ROLE_ADMIN, label: 'Admin' },
+  { value: ROLE_SUB_ADMIN, label: 'Sub-Admin / Standards Chair' },
+  { value: ROLE_SUPER_ADMIN, label: 'Super Admin / VP Standards' },
+]
 
 function parseCsvLine(line) {
   const values = []
@@ -56,7 +71,7 @@ function parseMemberCsv(text) {
       record[header] = values[headerIndex] || ''
       return record
     }, {})
-    const role = row.role?.trim().toLowerCase() === 'admin' ? 'admin' : 'member'
+    const role = normalizeRole(row.role) || ROLE_MEMBER
     const email = row.email?.trim().toLowerCase() || ''
     const errors = []
 
@@ -79,10 +94,12 @@ function parseMemberCsv(text) {
 
 function MemberManagement() {
   const { currentUser } = useAuth()
+  const canViewMembers = canViewApprovedMembers(currentUser)
+  const canManage = canManageMembers(currentUser)
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(null)
-  const [form, setForm] = useState({ name: '', email: '', pledgeClass: '', family: '', role: 'member' })
+  const [form, setForm] = useState({ name: '', email: '', pledgeClass: '', family: '', role: ROLE_MEMBER })
   const [message, setMessage] = useState(null)
   const [csvRows, setCsvRows] = useState([])
   const [csvFileName, setCsvFileName] = useState('')
@@ -105,7 +122,7 @@ function MemberManagement() {
   }, [])
 
   async function handleSave(memberId, updates) {
-    if (currentUser?.role !== 'admin') return
+    if (!canManage) return
 
     try {
       await memberService.updateMember(memberId, updates)
@@ -122,7 +139,7 @@ function MemberManagement() {
   async function handleCreate(e) {
     e.preventDefault()
     if (!form.email || !form.name) return
-    if (currentUser?.role !== 'admin') return alert('Only admins can add members')
+    if (!canManage) return alert('Only super admins can add members')
     if (!isAllowedEmail(form.email)) {
       setMessage({ type: 'error', text: 'Members must use a UNC email ending in @unc.edu.' })
       return
@@ -140,7 +157,7 @@ function MemberManagement() {
       })
       const m = await memberService.fetchMembers()
       setMembers(m)
-      setForm({ name: '', email: '', pledgeClass: '', family: '', role: 'member' })
+      setForm({ name: '', email: '', pledgeClass: '', family: '', role: ROLE_MEMBER })
       setMessage({ type: 'success', text: 'Approved member added.' })
     } catch (err) {
       console.error('Failed to create member', err)
@@ -155,8 +172,8 @@ function MemberManagement() {
     setCsvFileName(file?.name || '')
 
     if (!file) return
-    if (currentUser?.role !== 'admin') {
-      setMessage({ type: 'error', text: 'Only admins can import members.' })
+    if (!canManage) {
+      setMessage({ type: 'error', text: 'Only super admins can import members.' })
       return
     }
 
@@ -181,8 +198,8 @@ function MemberManagement() {
   }
 
   async function handleImportCsv() {
-    if (currentUser?.role !== 'admin') {
-      setMessage({ type: 'error', text: 'Only admins can import members.' })
+    if (!canManage) {
+      setMessage({ type: 'error', text: 'Only super admins can import members.' })
       return
     }
 
@@ -214,7 +231,7 @@ function MemberManagement() {
 
   if (loading) return <div className="page page--loading">Loading members…</div>
 
-  if (currentUser?.role !== 'admin') {
+  if (!canViewMembers) {
     return (
       <section className="page">
         <div className="empty-state">Only admins can access Member Management.</div>
@@ -224,6 +241,7 @@ function MemberManagement() {
 
   const invalidCsvRows = csvRows.filter((row) => row.errors.length > 0)
   const validCsvRows = csvRows.filter((row) => row.errors.length === 0)
+  const visibleMembers = canManage ? members : members.filter((member) => member.accessStatus === 'approved')
 
   return (
     <section className="page member-management-page">
@@ -231,109 +249,116 @@ function MemberManagement() {
         <div>
           <p className="eyebrow">Member Management</p>
           <h1>Chapter Members</h1>
-          <p className="muted">Add approved UNC members and manage admin access.</p>
+          <p className="muted">
+            {canManage ? 'Add approved UNC members and manage admin access.' : 'View approved UNC members.'}
+          </p>
         </div>
       </div>
 
       {message && <div className={`checkin-message checkin-message--${message.type}`}>{message.text}</div>}
 
       <div className="grid grid--cards">
-        <div className="card member-management-panel">
-          <h3>Add approved member</h3>
-          <form onSubmit={handleCreate} className="auth-form member-management-form">
-            <label>Name<input value={form.name} onChange={(e) => setForm((s) => ({ ...s, name: e.target.value }))} /></label>
-            <label>UNC email<input type="email" value={form.email} onChange={(e) => setForm((s) => ({ ...s, email: e.target.value }))} /></label>
-            <label>Pledge class
-              <select value={form.pledgeClass} onChange={(e) => setForm((s) => ({ ...s, pledgeClass: e.target.value }))}>
-                <option value="">Select class</option>
-                {PLEDGE_CLASSES.map((pledgeClass) => (
-                  <option key={pledgeClass} value={pledgeClass}>{pledgeClass}</option>
-                ))}
-              </select>
-            </label>
-            <label>Family
-              <select value={form.family} onChange={(e) => setForm((s) => ({ ...s, family: e.target.value }))}>
-                <option value="">Select family</option>
-                {FAMILIES.map((family) => (
-                  <option key={family} value={family}>{family}</option>
-                ))}
-              </select>
-            </label>
-            <label>Role
-              <select value={form.role} onChange={(e) => setForm((s) => ({ ...s, role: e.target.value }))}>
-                <option value="member">Member</option>
-                <option value="admin">Admin</option>
-              </select>
-            </label>
-            <Button type="submit">Add approved member</Button>
-          </form>
-        </div>
-
-        <div className="card member-import-card">
-          <h3>Import approved members</h3>
-          <p className="muted">Upload a CSV with columns: name, email, pledgeClass, family, role, status.</p>
-          <label className="csv-upload">
-            <span className="csv-upload__topline">
-              <span>CSV file</span>
-              <span className="csv-upload__button">Choose file</span>
-            </span>
-            <input type="file" accept=".csv,text/csv" onChange={handleCsvChange} />
-          </label>
-          {csvFileName && <p className="muted csv-upload__file">Selected: {csvFileName}</p>}
-          {csvRows.length > 0 && (
-            <div className="csv-preview">
-              <div className="csv-preview__summary">
-                <strong>{validCsvRows.length} valid</strong>
-                <span>{invalidCsvRows.length} need fixes</span>
-              </div>
-              <div className="csv-preview__table" aria-label="CSV member preview">
-                <div className="csv-preview__row csv-preview__row--header">
-                  <span>Name</span>
-                  <span>Email</span>
-                  <span>Pledge Class</span>
-                  <span>Family</span>
-                  <span>Role</span>
-                  <span>Status</span>
-                </div>
-                {csvRows.slice(0, 8).map((row) => (
-                  <div key={`${row.rowNumber}-${row.email}`} className={`csv-preview__row ${row.errors.length > 0 ? 'csv-preview__row--error' : ''}`}>
-                    <span>{row.name || 'Missing name'}</span>
-                    <span>{row.email || 'Missing email'}</span>
-                    <span>{row.pledgeClass || '-'}</span>
-                    <span>{row.family || '-'}</span>
-                    <span>{row.role}</span>
-                    <span>{row.errors.length > 0 ? row.errors.join(' ') : row.status}</span>
-                  </div>
-                ))}
-              </div>
-              {csvRows.length > 8 && <p className="muted">Showing first 8 of {csvRows.length} rows.</p>}
-              <Button type="button" onClick={handleImportCsv} disabled={importing || validCsvRows.length === 0}>
-                {importing ? 'Importing...' : `Import ${validCsvRows.length} approved members`}
-              </Button>
-            </div>
-          )}
-          {importResult && (
-            <div className="csv-import-result">
-              <p><strong>{importResult.successCount}</strong> imported successfully.</p>
-              <p><strong>{importResult.errorCount}</strong> failed.</p>
-              {importResult.errors.length > 0 && (
-                <ul>
-                  {importResult.errors.slice(0, 5).map((error) => (
-                    <li key={`${error.email}-${error.message}`}>{error.email}: {error.message}</li>
+        {canManage && (
+          <div className="card member-management-panel">
+            <h3>Add approved member</h3>
+            <form onSubmit={handleCreate} className="auth-form member-management-form">
+              <label>Name<input value={form.name} onChange={(e) => setForm((s) => ({ ...s, name: e.target.value }))} /></label>
+              <label>UNC email<input type="email" value={form.email} onChange={(e) => setForm((s) => ({ ...s, email: e.target.value }))} /></label>
+              <label>Pledge class
+                <select value={form.pledgeClass} onChange={(e) => setForm((s) => ({ ...s, pledgeClass: e.target.value }))}>
+                  <option value="">Select class</option>
+                  {PLEDGE_CLASSES.map((pledgeClass) => (
+                    <option key={pledgeClass} value={pledgeClass}>{pledgeClass}</option>
                   ))}
-                </ul>
-              )}
-            </div>
-          )}
-        </div>
+                </select>
+              </label>
+              <label>Family
+                <select value={form.family} onChange={(e) => setForm((s) => ({ ...s, family: e.target.value }))}>
+                  <option value="">Select family</option>
+                  {FAMILIES.map((family) => (
+                    <option key={family} value={family}>{family}</option>
+                  ))}
+                </select>
+              </label>
+              <label>Role
+                <select value={form.role} onChange={(e) => setForm((s) => ({ ...s, role: e.target.value }))}>
+                  {MEMBER_ROLE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </label>
+              <Button type="submit">Add approved member</Button>
+            </form>
+          </div>
+        )}
+
+        {canManage && (
+          <div className="card member-import-card">
+            <h3>Import approved members</h3>
+            <p className="muted">Upload a CSV with columns: name, email, pledgeClass, family, role, status.</p>
+            <label className="csv-upload">
+              <span className="csv-upload__topline">
+                <span>CSV file</span>
+                <span className="csv-upload__button">Choose file</span>
+              </span>
+              <input type="file" accept=".csv,text/csv" onChange={handleCsvChange} />
+            </label>
+            {csvFileName && <p className="muted csv-upload__file">Selected: {csvFileName}</p>}
+            {csvRows.length > 0 && (
+              <div className="csv-preview">
+                <div className="csv-preview__summary">
+                  <strong>{validCsvRows.length} valid</strong>
+                  <span>{invalidCsvRows.length} need fixes</span>
+                </div>
+                <div className="csv-preview__table" aria-label="CSV member preview">
+                  <div className="csv-preview__row csv-preview__row--header">
+                    <span>Name</span>
+                    <span>Email</span>
+                    <span>Pledge Class</span>
+                    <span>Family</span>
+                    <span>Role</span>
+                    <span>Status</span>
+                  </div>
+                  {csvRows.slice(0, 8).map((row) => (
+                    <div key={`${row.rowNumber}-${row.email}`} className={`csv-preview__row ${row.errors.length > 0 ? 'csv-preview__row--error' : ''}`}>
+                      <span>{row.name || 'Missing name'}</span>
+                      <span>{row.email || 'Missing email'}</span>
+                      <span>{row.pledgeClass || '-'}</span>
+                      <span>{row.family || '-'}</span>
+                      <span>{row.role}</span>
+                      <span>{row.errors.length > 0 ? row.errors.join(' ') : row.status}</span>
+                    </div>
+                  ))}
+                </div>
+                {csvRows.length > 8 && <p className="muted">Showing first 8 of {csvRows.length} rows.</p>}
+                <Button type="button" onClick={handleImportCsv} disabled={importing || validCsvRows.length === 0}>
+                  {importing ? 'Importing...' : `Import ${validCsvRows.length} approved members`}
+                </Button>
+              </div>
+            )}
+            {importResult && (
+              <div className="csv-import-result">
+                <p><strong>{importResult.successCount}</strong> imported successfully.</p>
+                <p><strong>{importResult.errorCount}</strong> failed.</p>
+                {importResult.errors.length > 0 && (
+                  <ul>
+                    {importResult.errors.slice(0, 5).map((error) => (
+                      <li key={`${error.email}-${error.message}`}>{error.email}: {error.message}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="card member-management-panel">
           <h3>Members</h3>
-          {members.length === 0 ? <div className="empty-state">No members found.</div> : (
-            members.map((m) => (
+          {visibleMembers.length === 0 ? <div className="empty-state">No approved members found.</div> : (
+            visibleMembers.map((m) => (
               <div key={m.id} className="member-management-member">
                 <MemberCard member={m} />
-                {editing === m.id ? (
+                {canManage && editing === m.id ? (
                   <form className="member-edit-form" onSubmit={(e) => { e.preventDefault(); handleSave(m.id, { name: m.name, pledgeClass: e.target.pledgeClass.value, family: e.target.family.value, role: e.target.role.value, accessStatus: e.target.accessStatus.value }) }}>
                     <label>Pledge class
                       <select name="pledgeClass" defaultValue={m.pledgeClass || ''}>
@@ -353,8 +378,9 @@ function MemberManagement() {
                     </label>
                     <label>Role
                       <select name="role" defaultValue={m.role}>
-                        <option value="member">Member</option>
-                        <option value="admin">Admin</option>
+                        {MEMBER_ROLE_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
                       </select>
                     </label>
                     <label>Access status
@@ -369,7 +395,7 @@ function MemberManagement() {
                   </form>
                 ) : (
                   <div className="member-management-actions">
-                    {currentUser?.role === 'admin' && <Button onClick={() => setEditing(m.id)}>Edit</Button>}
+                    {canManage && <Button onClick={() => setEditing(m.id)}>Edit</Button>}
                   </div>
                 )}
               </div>
