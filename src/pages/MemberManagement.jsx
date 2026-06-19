@@ -226,7 +226,7 @@ function MemberManagement() {
   const validCsvRows = csvRows.filter((row) => row.errors.length === 0)
 
   return (
-    <section className="page">
+    <section className="page member-management-page">
       <div className="page__header">
         <div>
           <p className="eyebrow">Member Management</p>
@@ -238,9 +238,9 @@ function MemberManagement() {
       {message && <div className={`checkin-message checkin-message--${message.type}`}>{message.text}</div>}
 
       <div className="grid grid--cards">
-        <div className="card">
+        <div className="card member-management-panel">
           <h3>Add approved member</h3>
-          <form onSubmit={handleCreate} className="auth-form">
+          <form onSubmit={handleCreate} className="auth-form member-management-form">
             <label>Name<input value={form.name} onChange={(e) => setForm((s) => ({ ...s, name: e.target.value }))} /></label>
             <label>UNC email<input type="email" value={form.email} onChange={(e) => setForm((s) => ({ ...s, email: e.target.value }))} /></label>
             <label>Pledge class
@@ -273,10 +273,13 @@ function MemberManagement() {
           <h3>Import approved members</h3>
           <p className="muted">Upload a CSV with columns: name, email, pledgeClass, family, role, status.</p>
           <label className="csv-upload">
-            CSV file
+            <span className="csv-upload__topline">
+              <span>CSV file</span>
+              <span className="csv-upload__button">Choose file</span>
+            </span>
             <input type="file" accept=".csv,text/csv" onChange={handleCsvChange} />
           </label>
-          {csvFileName && <p className="muted">Selected: {csvFileName}</p>}
+          {csvFileName && <p className="muted csv-upload__file">Selected: {csvFileName}</p>}
           {csvRows.length > 0 && (
             <div className="csv-preview">
               <div className="csv-preview__summary">
@@ -324,14 +327,14 @@ function MemberManagement() {
           )}
         </div>
 
-        <div className="card">
+        <div className="card member-management-panel">
           <h3>Members</h3>
           {members.length === 0 ? <div className="empty-state">No members found.</div> : (
             members.map((m) => (
-              <div key={m.id} style={{ marginBottom: 12 }}>
+              <div key={m.id} className="member-management-member">
                 <MemberCard member={m} />
                 {editing === m.id ? (
-                  <form onSubmit={(e) => { e.preventDefault(); handleSave(m.id, { name: m.name, pledgeClass: e.target.pledgeClass.value, family: e.target.family.value, role: e.target.role.value, accessStatus: e.target.accessStatus.value }) }}>
+                  <form className="member-edit-form" onSubmit={(e) => { e.preventDefault(); handleSave(m.id, { name: m.name, pledgeClass: e.target.pledgeClass.value, family: e.target.family.value, role: e.target.role.value, accessStatus: e.target.accessStatus.value }) }}>
                     <label>Pledge class
                       <select name="pledgeClass" defaultValue={m.pledgeClass || ''}>
                         <option value="">Select class</option>
@@ -365,7 +368,7 @@ function MemberManagement() {
                     <Button type="button" onClick={() => setEditing(null)}>Cancel</Button>
                   </form>
                 ) : (
-                  <div style={{ display: 'flex', gap: 8 }}>
+                  <div className="member-management-actions">
                     {currentUser?.role === 'admin' && <Button onClick={() => setEditing(m.id)}>Edit</Button>}
                   </div>
                 )}

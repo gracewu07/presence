@@ -17,7 +17,6 @@ import MemberManagement from './pages/MemberManagement'
 import AnalyticsDashboard from './pages/AnalyticsDashboard'
 import Settings from './pages/Settings'
 import More from './pages/More'
-import RequirementsProgress from './pages/RequirementsProgress'
 
 function App() {
   const { currentUser, loading } = useAuth()
@@ -69,14 +68,6 @@ function App() {
             element={
               <PrivateRoute user={currentUser}>
                 <ExcusalRequests />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="progress"
-            element={
-              <PrivateRoute user={currentUser}>
-                <RequirementsProgress />
               </PrivateRoute>
             }
           />

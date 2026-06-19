@@ -2,7 +2,6 @@ import { NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 const memberMoreLinks = [
-  { to: '/progress', label: 'Requirements Progress', description: 'Track chapter, service, and professional development requirements.' },
   { to: '/leaderboard', label: 'Leaderboard', description: 'See your points and placement.' },
   { to: '/excusals', label: 'Excusals', description: 'Submit or review your excusal requests.' },
   { to: '/settings', label: 'Settings', description: 'Update app and profile preferences.' },

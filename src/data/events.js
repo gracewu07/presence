@@ -3,7 +3,7 @@ export const events = [
     id: 'test-ai-workshop',
     title: 'AI Workshop',
     eventType: 'Professional Development',
-    date: 'Jun 18',
+    date: 'Jun 19',
     startTime: '6:30 PM',
     endTime: '8:00 PM',
     locationName: 'Gardner Hall, Room 101',

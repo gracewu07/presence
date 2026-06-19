@@ -3,12 +3,13 @@ import { createContext, useContext, useState } from 'react'
 const AuthContext = createContext(null)
 const AUTH_BYPASS_ENABLED = true
 const PROFILE_PHOTO_STORAGE_KEY = 'presenceProfilePhoto'
+const MEMBER_SETTINGS_STORAGE_KEY = 'presenceMemberSettings'
 const TEST_MEMBER_USER = {
   id: 'local-test-member',
   uid: 'local-test-member',
   name: 'Grace Wu',
   email: 'gracewu@unc.edu',
-  role: 'member',
+  role: 'admin',
   accessStatus: 'approved',
   status: 'active',
   pledgeClass: 'Delta',
@@ -20,8 +21,28 @@ const TEST_MEMBER_USER = {
   photoUrl: localStorage.getItem(PROFILE_PHOTO_STORAGE_KEY) || '',
 }
 
+const getMemberSettingsKey = (email) => `${MEMBER_SETTINGS_STORAGE_KEY}:${email?.toLowerCase() || 'local'}`
+
+const getStoredMemberSettings = (email) => {
+  try {
+    return JSON.parse(localStorage.getItem(getMemberSettingsKey(email))) || {}
+  } catch {
+    return {}
+  }
+}
+
 const getTestMemberUser = () => ({
   ...TEST_MEMBER_USER,
+  ...(() => {
+    const savedSettings = getStoredMemberSettings(TEST_MEMBER_USER.email)
+    return {
+      name: savedSettings.displayName || TEST_MEMBER_USER.name,
+      preferredName: savedSettings.preferredName || '',
+      contactEmail: savedSettings.contactEmail || TEST_MEMBER_USER.email,
+      phoneNumber: savedSettings.phoneNumber || '',
+      preferences: savedSettings,
+    }
+  })(),
   photoUrl: localStorage.getItem(PROFILE_PHOTO_STORAGE_KEY) || '',
 })
 
@@ -46,8 +67,25 @@ export function AuthProvider({ children }) {
     setCurrentUser((user) => user ? { ...user, photoUrl } : user)
   }
 
+  function updateProfilePreferences(preferences) {
+    setCurrentUser((user) => {
+      if (!user) return user
+
+      localStorage.setItem(getMemberSettingsKey(user.email), JSON.stringify(preferences))
+
+      return {
+        ...user,
+        name: preferences.displayName?.trim() || user.name,
+        preferredName: preferences.preferredName?.trim() || '',
+        contactEmail: preferences.contactEmail?.trim() || user.email,
+        phoneNumber: preferences.phoneNumber?.trim() || '',
+        preferences,
+      }
+    })
+  }
+
   return (
-    <AuthContext.Provider value={{ currentUser, loading, error, signIn, signOut, updateProfilePhoto }}>
+    <AuthContext.Provider value={{ currentUser, loading, error, signIn, signOut, updateProfilePhoto, updateProfilePreferences }}>
       {children}
     </AuthContext.Provider>
   )

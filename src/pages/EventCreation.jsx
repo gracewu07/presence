@@ -116,7 +116,7 @@ const handleSubmit = async (event) => {
   }
 
   return (
-    <section className="page form-page">
+    <section className="page form-page event-creation-page">
       <div className="page__header">
         <div>
           <p className="eyebrow">Event Creation</p>

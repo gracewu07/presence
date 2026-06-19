@@ -5,7 +5,6 @@ const memberLinks = [
   { to: '/', label: 'Home', end: true },
   { to: '/check-in', label: 'Check-In' },
   { to: '/calendar', label: 'Calendar' },
-  { to: '/progress', label: 'Progress' },
   { to: '/leaderboard', label: 'Leaderboard' },
   { to: '/profile', label: 'Profile' },
   { to: '/excusals', label: 'Excusals' },

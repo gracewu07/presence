@@ -16,7 +16,7 @@ import {
 import { fetchMembers, fetchEvents, fetchCheckIns } from '../firebase'
 import { computeAttendanceMetricsForMember, computeEngagementScore } from '../utils/engagement'
 
-const COLORS = ['#4f46e5', '#06b6d4', '#10b981', '#f59e0b', '#ef4444']
+const COLORS = ['#72a0c0', '#ead06b', '#d48f5e', '#9297cc', '#6fb7a3']
 
 export default function AnalyticsDashboard() {
   const [members, setMembers] = useState([])
@@ -92,7 +92,7 @@ export default function AnalyticsDashboard() {
   if (loading) return <div className="page page--loading">Loading analytics…</div>
 
   return (
-    <section className="page">
+    <section className="page analytics-page">
       <div className="page__header">
         <div>
           <p className="eyebrow">Analytics</p>
@@ -113,7 +113,7 @@ export default function AnalyticsDashboard() {
                 <XAxis dataKey="date" />
                 <YAxis />
                 <Tooltip />
-                <Line type="monotone" dataKey="checkIns" stroke="#4f46e5" strokeWidth={2} />
+                <Line type="monotone" dataKey="checkIns" stroke="#72a0c0" strokeWidth={2} />
               </LineChart>
             </ResponsiveContainer>
           )}
@@ -148,7 +148,7 @@ export default function AnalyticsDashboard() {
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="value" fill="#06b6d4">
+                <Bar dataKey="value" fill="#72a0c0">
                   {bins.map((entry, idx) => (
                     <Cell key={`cell-${idx}`} fill={entry.color} />
                   ))}

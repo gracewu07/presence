@@ -7,7 +7,6 @@ function Leaderboard() {
   const { currentUser } = useAuth()
   const [checkIns, setCheckIns] = useState([])
   const [settings, setSettings] = useState({ leaderboardVisibility: 'private' })
-  const [usingMockData, setUsingMockData] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -25,12 +24,10 @@ function Leaderboard() {
 
         setCheckIns(hasLiveCheckIns ? checkInsSnapshot : leaderboardCheckIns)
         setSettings(hasLiveCheckIns ? settingsSnapshot[0] || { leaderboardVisibility: 'private' } : { leaderboardVisibility: 'public' })
-        setUsingMockData(!hasLiveCheckIns)
       } catch (fetchError) {
         console.error('Failed to load leaderboard data', fetchError)
         setCheckIns(leaderboardCheckIns)
         setSettings({ leaderboardVisibility: 'public' })
-        setUsingMockData(true)
         setError(null)
       } finally {
         setLoading(false)
@@ -86,13 +83,6 @@ function Leaderboard() {
       </div>
 
       <div className="leaderboard-panel">
-        <div className="leaderboard-toolbar">
-          <div className="leaderboard-summary">
-            <p className="label">Visibility</p>
-            <p>{usingMockData ? 'Preview data' : isAdmin ? 'Admin view' : leaderboardVisibility === 'public' ? 'Public' : 'Private'}</p>
-          </div>
-        </div>
-
         {loading ? (
           <div className="empty-state">Loading leaderboard…</div>
         ) : error ? (

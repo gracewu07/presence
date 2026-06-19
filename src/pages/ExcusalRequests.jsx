@@ -117,14 +117,18 @@ function ExcusalRequests() {
         <div>
           <p className="eyebrow">Excusal Requests</p>
           <h1>Manage Excusals</h1>
-          <p className="muted">Submit or review excusal requests.</p>
+          <p className="muted">Submit a request for missed events and track review status.</p>
         </div>
       </div>
 
       <div className="grid grid--cards excusals-grid">
         <div className="card excusal-panel">
-          <h3>Submit an excusal</h3>
-          <form onSubmit={handleSubmit} className="auth-form excusal-form">
+          <div className="excusal-panel__header">
+            <h3>Submit an excusal</h3>
+            <p className="muted">Choose the event, add a short reason, and attach proof if needed.</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="excusal-form">
             <label className="excusal-field">
               <span>Event</span>
               <span className="excusal-select-wrap">
@@ -149,7 +153,10 @@ function ExcusalRequests() {
             </label>
 
             <label className="excusal-upload">
-              <span>Attach photo or file</span>
+              <span className="excusal-upload__topline">
+                <span>Attach photo or file</span>
+                <span className="excusal-upload__button">Choose file</span>
+              </span>
               <input
                 type="file"
                 accept="image/*,.pdf,.doc,.docx"
@@ -167,20 +174,25 @@ function ExcusalRequests() {
             <Button type="submit" disabled={saving}>{saving ? 'Submitting...' : 'Submit excusal'}</Button>
           </form>
 
-          <div className="section-heading excusal-section-heading">
+          <div className="excusal-section-heading">
             <h4>Your requests</h4>
+            <p className="muted">Recent requests and review status.</p>
           </div>
           {memberRequests.length === 0 ? <div className="empty-state">You have no excusal requests.</div> : (
             <div className="excusal-request-list">
               {memberRequests.map((request) => (
-                <article key={request.id} className="card request-card excusal-request-card">
-                  <div>
-                    <h4>{request.eventTitle}</h4>
-                    <p className="muted">{formatDate(request.submittedAt)}</p>
-                    <p className="muted">Reason: {request.reason}</p>
-                    {request.attachment?.name && <p className="muted">Attachment: {request.attachment.name}</p>}
+                <article key={request.id} className={`card request-card excusal-request-card excusal-request-card--${request.status || 'pending'}`}>
+                  <div className="excusal-request-card__content">
+                    <div className="excusal-request-card__topline">
+                      <h4>{request.eventTitle}</h4>
+                      <StatusBadge label={request.status || 'pending'} status={request.status || 'pending'} />
+                    </div>
+                    <div className="excusal-request-card__details">
+                      <p><span>Submitted</span>{formatDate(request.submittedAt)}</p>
+                      <p><span>Reason</span>{request.reason}</p>
+                      {request.attachment?.name && <p><span>Attachment</span>{request.attachment.name}</p>}
+                    </div>
                   </div>
-                  <StatusBadge label={request.status} status={request.status} />
                 </article>
               ))}
             </div>
@@ -189,17 +201,25 @@ function ExcusalRequests() {
 
         {adminView && (
           <div className="card excusal-panel">
-            <h3>All requests</h3>
+            <div className="excusal-panel__header">
+              <h3>All requests</h3>
+              <p className="muted">Review member submissions and update their status.</p>
+            </div>
             {requests.length === 0 ? <div className="empty-state">No excusal requests.</div> : (
               <div className="excusal-request-list">
                 {requests.map((request) => (
-                  <article key={request.id} className="card request-card excusal-request-card">
-                    <div>
-                      <h4>{request.memberName} - {request.eventTitle}</h4>
-                      <p className="muted">Submitted: {formatDate(request.submittedAt)}</p>
-                      <p className="muted">Reason: {request.reason}</p>
-                      {request.attachment?.name && <p className="muted">Attachment: {request.attachment.name}</p>}
-                      {request.reviewNotes && <p className="muted">Notes: {request.reviewNotes}</p>}
+                  <article key={request.id} className={`card request-card excusal-request-card excusal-request-card--${request.status || 'pending'}`}>
+                    <div className="excusal-request-card__content">
+                      <div className="excusal-request-card__topline">
+                        <h4>{request.memberName} - {request.eventTitle}</h4>
+                        <StatusBadge label={request.status || 'pending'} status={request.status || 'pending'} />
+                      </div>
+                      <div className="excusal-request-card__details">
+                        <p><span>Submitted</span>{formatDate(request.submittedAt)}</p>
+                        <p><span>Reason</span>{request.reason}</p>
+                        {request.attachment?.name && <p><span>Attachment</span>{request.attachment.name}</p>}
+                        {request.reviewNotes && <p><span>Notes</span>{request.reviewNotes}</p>}
+                      </div>
                     </div>
                     <div className="excusal-actions">
                       <Button type="button" onClick={() => reviewRequest(request.id, 'approved', 'Approved by admin')}>Approve</Button>
