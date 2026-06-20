@@ -7026,12 +7026,6 @@ textarea:focus,
   border-radius: 46% 54% 58% 42% / 58% 42% 58% 42%;
 }
 
-.settings-page .settings-layout .settings-panel:nth-of-type(3)::after {
-  width: 96px;
-  height: 132px;
-  border-radius: 44% 56% 52% 48% / 58% 40% 60% 42%;
-}
-
 .excusals-page .excusal-panel::after {
   right: -42px;
   top: 34px;

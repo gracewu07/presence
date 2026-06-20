@@ -1,25 +1,11 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { completeSignInWithEmailLink, onAuthStateChanged, sendSignInLink, signOutUser } from '../services/authService'
+import { fetchMemberByEmail } from '../services/memberService'
 
 const AuthContext = createContext(null)
-const AUTH_BYPASS_ENABLED = true
 const PROFILE_PHOTO_STORAGE_KEY = 'presenceProfilePhoto'
 const MEMBER_SETTINGS_STORAGE_KEY = 'presenceMemberSettings'
-const TEST_MEMBER_USER = {
-  id: 'local-test-member',
-  uid: 'local-test-member',
-  name: 'Grace Wu',
-  email: 'gracewu@unc.edu',
-  role: 'admin',
-  accessStatus: 'approved',
-  status: 'active',
-  pledgeClass: 'Delta',
-  family: 'Fireball',
-  totalPoints: 0,
-  attendanceRate: 1,
-  absences: 0,
-  excusalsSubmitted: 0,
-  photoUrl: localStorage.getItem(PROFILE_PHOTO_STORAGE_KEY) || '',
-}
+const NOT_APPROVED_MESSAGE = 'Your account is not approved for Presence. Please contact the VP of Standards.'
 
 const getMemberSettingsKey = (email) => `${MEMBER_SETTINGS_STORAGE_KEY}:${email?.toLowerCase() || 'local'}`
 
@@ -31,36 +17,108 @@ const getStoredMemberSettings = (email) => {
   }
 }
 
-const getTestMemberUser = () => ({
-  ...TEST_MEMBER_USER,
-  ...(() => {
-    const savedSettings = getStoredMemberSettings(TEST_MEMBER_USER.email)
-    return {
-      name: savedSettings.displayName || TEST_MEMBER_USER.name,
-      preferredName: savedSettings.preferredName || '',
-      contactEmail: savedSettings.contactEmail || TEST_MEMBER_USER.email,
-      phoneNumber: savedSettings.phoneNumber || '',
-      preferences: savedSettings,
-    }
-  })(),
-  photoUrl: localStorage.getItem(PROFILE_PHOTO_STORAGE_KEY) || '',
-})
+const getProfilePhoto = () => localStorage.getItem(PROFILE_PHOTO_STORAGE_KEY) || ''
+
+function applyLocalProfileState(member, firebaseUser) {
+  const savedSettings = getStoredMemberSettings(member.email)
+
+  return {
+    ...member,
+    authUid: firebaseUser.uid,
+    name: savedSettings.displayName || member.name,
+    preferredName: savedSettings.preferredName || '',
+    contactEmail: savedSettings.contactEmail || member.email,
+    phoneNumber: savedSettings.phoneNumber || '',
+    preferences: savedSettings,
+    photoUrl: getProfilePhoto(),
+  }
+}
 
 export function AuthProvider({ children }) {
-  const [currentUser, setCurrentUser] = useState(AUTH_BYPASS_ENABLED ? getTestMemberUser() : null)
-  const [loading, setLoading] = useState(false)
+  const [currentUser, setCurrentUser] = useState(null)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  async function signIn() {
-    setError(null)
-    setCurrentUser(getTestMemberUser())
-    return { signedIn: true }
-  }
+  const loadApprovedMember = useCallback(async (firebaseUser) => {
+    if (!firebaseUser?.email) {
+      setCurrentUser(null)
+      return null
+    }
 
-  async function signOut() {
+    const member = await fetchMemberByEmail(firebaseUser.email)
+
+    if (!member || member.accessStatus !== 'approved') {
+      setCurrentUser(null)
+      setError(NOT_APPROVED_MESSAGE)
+      await signOutUser()
+      return null
+    }
+
+    const approvedMember = applyLocalProfileState(member, firebaseUser)
+    setCurrentUser(approvedMember)
     setError(null)
-    setCurrentUser(getTestMemberUser())
-  }
+    return approvedMember
+  }, [])
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(async (firebaseUser) => {
+      setLoading(true)
+
+      try {
+        if (!firebaseUser) {
+          setCurrentUser(null)
+          return
+        }
+
+        await loadApprovedMember(firebaseUser)
+      } catch (err) {
+        setCurrentUser(null)
+        setError(err.message || 'Unable to verify your Presence account.')
+        await signOutUser()
+      } finally {
+        setLoading(false)
+      }
+    })
+
+    return unsubscribe
+  }, [loadApprovedMember])
+
+  const signIn = useCallback(async (email) => {
+    setError(null)
+    setLoading(true)
+
+    try {
+      await sendSignInLink(email)
+      return { sent: true }
+    } catch (err) {
+      setError(err.message || 'Unable to send sign-in link.')
+      return { sent: false }
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  const completeEmailLinkSignIn = useCallback(async (url, email) => {
+    setError(null)
+    setLoading(true)
+
+    try {
+      const firebaseUser = await completeSignInWithEmailLink(url, email)
+      const approvedMember = await loadApprovedMember(firebaseUser)
+      return { signedIn: Boolean(approvedMember) }
+    } catch (err) {
+      setError(err.message || 'Unable to complete sign-in.')
+      return { signedIn: false }
+    } finally {
+      setLoading(false)
+    }
+  }, [loadApprovedMember])
+
+  const signOut = useCallback(async () => {
+    setError(null)
+    await signOutUser()
+    setCurrentUser(null)
+  }, [])
 
   function updateProfilePhoto(photoUrl) {
     localStorage.setItem(PROFILE_PHOTO_STORAGE_KEY, photoUrl)
@@ -85,7 +143,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ currentUser, loading, error, signIn, signOut, updateProfilePhoto, updateProfilePreferences }}>
+    <AuthContext.Provider value={{ currentUser, loading, error, signIn, completeEmailLinkSignIn, signOut, updateProfilePhoto, updateProfilePreferences }}>
       {children}
     </AuthContext.Provider>
   )

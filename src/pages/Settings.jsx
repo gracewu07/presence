@@ -10,7 +10,6 @@ const defaultPreferences = {
   phoneNumber: '',
   notificationChannel: 'off',
   eventReminder: '30',
-  defaultCalendar: 'google',
 }
 
 function preferencesForUser(user) {
@@ -162,25 +161,6 @@ function Settings() {
               </select>
             </label>
           </div>
-        </div>
-
-        <div className="card settings-panel">
-          <div className="settings-panel__header">
-            <h2>App Preferences</h2>
-            <p className="muted">Set the defaults that make checking in feel faster.</p>
-          </div>
-
-          <div className="settings-field-grid">
-            <label className="settings-field settings-field--select">
-              <span>Default calendar</span>
-              <select value={preferences.defaultCalendar} onChange={updatePreference('defaultCalendar')}>
-                <option value="google">Google Calendar</option>
-                <option value="outlook">Outlook Calendar</option>
-                <option value="apple">Apple Calendar</option>
-              </select>
-            </label>
-          </div>
-
         </div>
 
         <div className="settings-footer">
