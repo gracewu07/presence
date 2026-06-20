@@ -18,7 +18,7 @@ const initialFormState = {
   longitude: '',
   radiusMeters: '',
   points: '',
-  required: true,
+  required: false,
   description: '',
 }
 

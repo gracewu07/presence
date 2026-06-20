@@ -262,11 +262,11 @@ function EventCalendar() {
             onClick={closeCalendarEvent}
           />
           <article className={`calendar-modal__card event-surface event-surface--${selectedCalendarEvent.eventType.replace(/\s+/g, '-').toLowerCase()}`}>
+            {selectedCalendarEvent.required && <span className="required-note">Required</span>}
             <div className="event-card__topline">
               <span className={`calendar-card__tag event-type-${selectedCalendarEvent.eventType.replace(/\s+/g, '-').toLowerCase()}`}>
                 {selectedCalendarEvent.eventType}
               </span>
-              {selectedCalendarEvent.required && <span className="required-note">Required</span>}
             </div>
             <button
               type="button"

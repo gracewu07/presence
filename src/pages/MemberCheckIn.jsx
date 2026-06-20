@@ -210,11 +210,11 @@ function MemberCheckIn() {
           </section>
 
           <article className={`card checkin-single-card event-surface event-surface--${selectedEvent.eventType.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}>
+            {selectedEvent.required && <span className="required-note">Required</span>}
             <div className="event-card__topline">
               <div className={`event-card__type event-type-badge event-type-badge--${selectedEvent.eventType.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}>
                 {selectedEvent.eventType}
               </div>
-              {selectedEvent.required && <span className="required-note">Required</span>}
             </div>
 
             <div className="checkin-card-heading">

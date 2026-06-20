@@ -8,11 +8,11 @@ function CalendarEventCard({ event }) {
 
   return (
     <article className={`card calendar-card event-surface event-surface--${typeClass}`}>
+      {event.required && <span className="required-note">Required</span>}
       <div className="event-card__topline">
         <div className={`calendar-card__tag event-type-${typeClass}`}>
           {event.eventType}
         </div>
-        {event.required && <span className="required-note">Required</span>}
       </div>
       <div className="calendar-card__top">
         <div>

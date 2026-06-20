@@ -8,10 +8,9 @@ const defaultPreferences = {
   preferredName: '',
   contactEmail: '',
   phoneNumber: '',
-  notificationChannel: 'email',
+  notificationChannel: 'off',
   eventReminder: '30',
   defaultCalendar: 'google',
-  eventOrder: 'soonest',
 }
 
 function preferencesForUser(user) {
@@ -178,14 +177,6 @@ function Settings() {
                 <option value="google">Google Calendar</option>
                 <option value="outlook">Outlook Calendar</option>
                 <option value="apple">Apple Calendar</option>
-              </select>
-            </label>
-            <label className="settings-field settings-field--select">
-              <span>Event order</span>
-              <select value={preferences.eventOrder} onChange={updatePreference('eventOrder')}>
-                <option value="soonest">Soonest first</option>
-                <option value="required">Required first</option>
-                <option value="type">Grouped by type</option>
               </select>
             </label>
           </div>
