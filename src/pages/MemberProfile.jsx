@@ -16,7 +16,7 @@ function toLocaleShort(dateString) {
   if (!dateString) return ''
   try {
     return new Date(dateString).toLocaleString()
-  } catch (e) {
+  } catch {
     return dateString
   }
 }
@@ -27,6 +27,7 @@ function typeClassForEvent(eventType = '') {
 
 function MemberProfile() {
   const { currentUser, signOut, updateProfilePhoto } = useAuth()
+  const memberId = currentUser?.email?.trim().toLowerCase() || currentUser?.uid
   const [loading, setLoading] = useState(true)
   const [memberCheckIns, setMemberCheckIns] = useState([])
   const [events, setEvents] = useState([])
@@ -40,10 +41,10 @@ function MemberProfile() {
       setLoading(true)
       try {
         const [memberChecks, allChecks, allEvents, memberExcusals] = await Promise.all([
-          fetchMemberCheckIns(currentUser.uid),
+          fetchMemberCheckIns(memberId),
           fetchCheckIns(),
           fetchEvents(),
-          fetchMemberExcusalRequests(currentUser.uid),
+          fetchMemberExcusalRequests(memberId),
         ])
 
         setMemberCheckIns(memberChecks)
@@ -58,7 +59,7 @@ function MemberProfile() {
     }
 
     loadProfileData()
-  }, [currentUser])
+  }, [currentUser, memberId])
 
   const attendanceHistory = useMemo(() => {
     const byEvent = new Map(events.map((e) => [e.id, e]))
@@ -120,9 +121,9 @@ function MemberProfile() {
       totals.set(id, current)
     })
     const ranked = Array.from(totals.values()).sort((a, b) => b.totalPoints - a.totalPoints)
-    const index = ranked.findIndex((rank) => rank.memberId === currentUser.uid)
+    const index = ranked.findIndex((rank) => rank.memberId === memberId)
     return index === -1 ? null : index + 1
-  }, [allCheckIns, currentUser])
+  }, [allCheckIns, memberId])
 
   if (!currentUser || loading) {
     return <div className="page page--loading">Loading profile...</div>

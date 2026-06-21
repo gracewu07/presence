@@ -7504,3 +7504,47 @@ textarea:focus,
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
+
+/* Auth password controls */
+.auth-mode-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem;
+  padding: 0.35rem;
+  margin: 1.1rem 0;
+  border: 1px solid var(--ui-border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.auth-mode-toggle button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ui-muted);
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.auth-mode-toggle button.active {
+  background: var(--ui-navy);
+  color: #ffffff;
+}
+
+.link-button.auth-reset-link {
+  align-self: center;
+  border: 0;
+  background: transparent;
+  color: var(--ui-navy);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.link-button.auth-reset-link:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}

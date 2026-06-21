@@ -3,7 +3,6 @@ import { useAuth } from '../context/AuthContext'
 import StatusBadge from '../components/StatusBadge'
 import Button from '../components/Button'
 import { fetchExcusalRequests, fetchEvents, submitExcusalRequest } from '../firebase'
-import { events as mockEvents } from '../data/events'
 
 const mergeEventsById = (...eventLists) => {
   const eventsById = new Map()
@@ -32,6 +31,7 @@ const formatFileSize = (size) => {
 
 function ExcusalRequests() {
   const { currentUser } = useAuth()
+  const memberId = currentUser?.email?.trim().toLowerCase() || currentUser?.uid
   const [loading, setLoading] = useState(true)
   const [requests, setRequests] = useState([])
   const [events, setEvents] = useState([])
@@ -45,10 +45,10 @@ function ExcusalRequests() {
       try {
         const [allRequests, allEvents] = await Promise.all([fetchExcusalRequests(), fetchEvents()])
         setRequests(allRequests)
-        setEvents(mergeEventsById(allEvents, mockEvents))
+        setEvents(mergeEventsById(allEvents))
       } catch (err) {
         console.error('Failed to load excusal data', err)
-        setEvents(mergeEventsById(mockEvents))
+        setEvents([])
       } finally {
         setLoading(false)
       }
@@ -57,7 +57,13 @@ function ExcusalRequests() {
     load()
   }, [])
 
-  const memberRequests = useMemo(() => requests.filter((request) => request.memberId === currentUser?.uid), [requests, currentUser])
+  const memberRequests = useMemo(() => {
+    const memberEmail = currentUser?.email?.trim().toLowerCase()
+    return requests.filter((request) => {
+      const requestEmail = request.memberEmail?.trim().toLowerCase()
+      return request.memberId === memberId || requestEmail === memberEmail
+    })
+  }, [requests, currentUser, memberId])
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -76,9 +82,9 @@ function ExcusalRequests() {
         : null
 
       await submitExcusalRequest({
-        memberId: currentUser.uid,
+        memberId,
         memberName: currentUser.name,
-        memberEmail: currentUser.email,
+        memberEmail: memberId,
         eventId: form.eventId,
         eventTitle: selectedEvent?.title || '',
         reason: form.reason,

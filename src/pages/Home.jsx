@@ -3,7 +3,6 @@ import EventCard from '../components/EventCard'
 import StatCard from '../components/StatCard'
 import { fetchCheckIns, fetchEvents } from '../firebase'
 import { useAuth } from '../context/AuthContext'
-import { events as staticEvents } from '../data/events'
 import { leaderboardCheckIns } from '../data/mockData'
 
 const SERVICE_REQUIREMENT = 2
@@ -93,10 +92,10 @@ function Home() {
       setError(null)
       try {
         const [eventSnapshot, checkInSnapshot] = await Promise.all([
-          fetchEvents().catch(() => staticEvents),
+          fetchEvents().catch(() => []),
           fetchCheckIns().catch(() => leaderboardCheckIns),
         ])
-        const allEvents = eventSnapshot?.length ? eventSnapshot : staticEvents
+        const allEvents = eventSnapshot || []
         const allCheckIns = checkInSnapshot?.length ? checkInSnapshot : leaderboardCheckIns
         const now = new Date()
         const sevenDaysFromNow = new Date(now)

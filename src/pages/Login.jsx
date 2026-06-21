@@ -2,19 +2,18 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import Button from '../components/Button'
 import { useAuth } from '../context/AuthContext'
-import { getStoredSignInEmail, isEmailSignInLink } from '../services/authService'
 
 function Login() {
-  const { currentUser, loading, error, signIn, completeEmailLinkSignIn } = useAuth()
+  const { currentUser, loading, error, signIn, createAccount, resetPassword } = useAuth()
+  const [mode, setMode] = useState('sign-in')
   const [email, setEmail] = useState('')
-  const [sent, setSent] = useState(false)
-  const [isCompletingLink, setIsCompletingLink] = useState(false)
+  const [password, setPassword] = useState('')
+  const [message, setMessage] = useState('')
   const navigate = useNavigate()
   const location = useLocation()
   const from = location.state?.from?.pathname || '/'
 
-  const signInUrl = typeof window !== 'undefined' ? window.location.href : ''
-  const hasEmailLink = isEmailSignInLink(signInUrl)
+  const isCreatingAccount = mode === 'create-account'
 
   useEffect(() => {
     if (!loading && currentUser) {
@@ -22,31 +21,28 @@ function Login() {
     }
   }, [currentUser, from, loading, navigate])
 
-  useEffect(() => {
-    if (!hasEmailLink || currentUser) return
-
-    const storedEmail = getStoredSignInEmail()
-    if (!storedEmail) return
-
-    setEmail(storedEmail)
-    setIsCompletingLink(true)
-    completeEmailLinkSignIn(signInUrl, storedEmail).finally(() => {
-      setIsCompletingLink(false)
-    })
-  }, [completeEmailLinkSignIn, currentUser, hasEmailLink, signInUrl])
-
   async function handleSubmit(e) {
     e.preventDefault()
+    setMessage('')
 
-    if (hasEmailLink) {
-      setIsCompletingLink(true)
-      await completeEmailLinkSignIn(signInUrl, email)
-      setIsCompletingLink(false)
-      return
+    const result = isCreatingAccount
+      ? await createAccount(email, password)
+      : await signIn(email, password)
+
+    if (result?.created) {
+      setMessage('Account created. Welcome to Presence.')
+    } else if (result?.signedIn) {
+      setMessage('Signed in. Welcome back.')
     }
+  }
 
-    const res = await signIn(email)
-    if (res?.sent) setSent(true)
+  async function handlePasswordReset() {
+    setMessage('')
+    const result = await resetPassword(email)
+
+    if (result?.sent) {
+      setMessage('Password reset email sent. Check your UNC inbox.')
+    }
   }
 
   return (
@@ -54,10 +50,34 @@ function Login() {
       <div className="auth-card card">
         <h1>Member Login</h1>
         <p>
-          {hasEmailLink
-            ? 'Confirm the UNC email you used to request this sign-in link.'
-            : 'Enter your UNC email. Presence will send a passwordless sign-in link and check your email against the approved AKPsi member list.'}
+          {isCreatingAccount
+            ? 'Create your account with your approved UNC email and a password you will use for Presence.'
+            : 'Sign in with your approved UNC email and Presence password.'}
         </p>
+
+        <div className="auth-mode-toggle" role="tablist" aria-label="Login mode">
+          <button
+            type="button"
+            className={mode === 'sign-in' ? 'active' : ''}
+            onClick={() => {
+              setMode('sign-in')
+              setMessage('')
+            }}
+          >
+            Sign in
+          </button>
+          <button
+            type="button"
+            className={mode === 'create-account' ? 'active' : ''}
+            onClick={() => {
+              setMode('create-account')
+              setMessage('')
+            }}
+          >
+            Create account
+          </button>
+        </div>
+
         <form className="auth-form" onSubmit={handleSubmit}>
           <label>
             UNC email
@@ -66,18 +86,37 @@ function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="onyen@unc.edu"
+              autoComplete="email"
               required
             />
           </label>
+
+          <label>
+            Password
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder={isCreatingAccount ? 'Create a password' : 'Enter your password'}
+              autoComplete={isCreatingAccount ? 'new-password' : 'current-password'}
+              minLength={6}
+              required
+            />
+          </label>
+
           <Button type="submit" variant="primary" disabled={loading}>
-            {hasEmailLink
-              ? isCompletingLink || loading ? 'Signing in...' : 'Complete sign-in'
-              : loading ? 'Sending...' : 'Send sign-in link'}
+            {loading
+              ? isCreatingAccount ? 'Creating...' : 'Signing in...'
+              : isCreatingAccount ? 'Create account' : 'Sign in'}
           </Button>
-          {sent && <p className="muted">Sign-in link sent. Check your UNC email and open the link to finish signing in.</p>}
-          {hasEmailLink && !getStoredSignInEmail() && (
-            <p className="muted">For security, enter the same UNC email address that received the link.</p>
+
+          {!isCreatingAccount && (
+            <button type="button" className="link-button auth-reset-link" onClick={handlePasswordReset} disabled={loading || !email}>
+              Forgot password?
+            </button>
           )}
+
+          {message && <p className="muted">{message}</p>}
           {error && <p className="form-error">{error}</p>}
         </form>
       </div>

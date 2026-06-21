@@ -7,6 +7,7 @@ import { canEditLeaderboardVisibility, canViewFullLeaderboard } from '../utils/p
 
 function Leaderboard() {
   const { currentUser } = useAuth()
+  const currentMemberId = currentUser?.email?.trim().toLowerCase() || currentUser?.uid
   const [checkIns, setCheckIns] = useState([])
   const [settings, setSettings] = useState({ leaderboardVisibility: 'private' })
   const [loading, setLoading] = useState(true)
@@ -78,11 +79,11 @@ function Leaderboard() {
         memberId,
         memberName: checkIn.memberName || checkIn.memberEmail || 'Member',
         memberEmail: checkIn.memberEmail,
-        memberPhotoUrl: checkIn.memberPhotoUrl || (memberId === currentUser?.uid ? currentUser?.photoUrl : ''),
+        memberPhotoUrl: checkIn.memberPhotoUrl || (memberId === currentMemberId ? currentUser?.photoUrl : ''),
         totalPoints: 0,
       }
 
-      if (memberId === currentUser?.uid && currentUser?.photoUrl) {
+      if (memberId === currentMemberId && currentUser?.photoUrl) {
         existing.memberPhotoUrl = currentUser.photoUrl
       }
       existing.totalPoints += Number(checkIn.pointsAwarded ?? 0)
@@ -92,9 +93,9 @@ function Leaderboard() {
     return Array.from(totals.values())
       .sort((a, b) => b.totalPoints - a.totalPoints || a.memberName.localeCompare(b.memberName))
       .map((member, index) => ({ ...member, rank: index + 1 }))
-  }, [checkIns, currentUser])
+  }, [checkIns, currentMemberId, currentUser])
 
-  const currentMemberRank = rankedMembers.find((entry) => entry.memberId === currentUser?.uid)
+  const currentMemberRank = rankedMembers.find((entry) => entry.memberId === currentMemberId)
   const totalRankedMembers = rankedMembers.length
 
   const displayRows = canViewFullBoard ? rankedMembers : currentMemberRank ? [currentMemberRank] : []
@@ -171,7 +172,7 @@ function Leaderboard() {
                     displayRows.map((member) => (
                       <div
                         key={member.memberId}
-                        className={`leaderboard-row ${member.memberId === currentUser?.uid ? 'leaderboard-row--current' : ''}`}
+                        className={`leaderboard-row ${member.memberId === currentMemberId ? 'leaderboard-row--current' : ''}`}
                       >
                       <div className="leaderboard-rank-cell"><span className="leaderboard-rank">#{member.rank}</span></div>
                       <div className="leaderboard-person-cell">

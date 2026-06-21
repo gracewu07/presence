@@ -1,5 +1,12 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
-import { completeSignInWithEmailLink, onAuthStateChanged, sendSignInLink, signOutUser } from '../services/authService'
+import {
+  createAccountWithPassword,
+  deleteCurrentAuthUser,
+  onAuthStateChanged,
+  sendPasswordReset,
+  signInWithPassword,
+  signOutUser,
+} from '../services/authService'
 import { fetchMemberByEmail } from '../services/memberService'
 
 const AuthContext = createContext(null)
@@ -21,13 +28,16 @@ const getProfilePhoto = () => localStorage.getItem(PROFILE_PHOTO_STORAGE_KEY) ||
 
 function applyLocalProfileState(member, firebaseUser) {
   const savedSettings = getStoredMemberSettings(member.email)
+  const memberEmail = member.email?.trim().toLowerCase() || firebaseUser.email?.trim().toLowerCase() || ''
 
   return {
     ...member,
     authUid: firebaseUser.uid,
+    email: memberEmail,
+    uid: memberEmail,
     name: savedSettings.displayName || member.name,
     preferredName: savedSettings.preferredName || '',
-    contactEmail: savedSettings.contactEmail || member.email,
+    contactEmail: savedSettings.contactEmail || memberEmail,
     phoneNumber: savedSettings.phoneNumber || '',
     preferences: savedSettings,
     photoUrl: getProfilePhoto(),
@@ -60,6 +70,16 @@ export function AuthProvider({ children }) {
     return approvedMember
   }, [])
 
+  const fetchApprovedMemberForEmail = useCallback(async (email) => {
+    const member = await fetchMemberByEmail(email)
+
+    if (!member || member.accessStatus !== 'approved') {
+      throw new Error(NOT_APPROVED_MESSAGE)
+    }
+
+    return member
+  }, [])
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(async (firebaseUser) => {
       setLoading(true)
@@ -83,36 +103,59 @@ export function AuthProvider({ children }) {
     return unsubscribe
   }, [loadApprovedMember])
 
-  const signIn = useCallback(async (email) => {
+  const signIn = useCallback(async (email, password) => {
     setError(null)
     setLoading(true)
 
     try {
-      await sendSignInLink(email)
-      return { sent: true }
-    } catch (err) {
-      setError(err.message || 'Unable to send sign-in link.')
-      return { sent: false }
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  const completeEmailLinkSignIn = useCallback(async (url, email) => {
-    setError(null)
-    setLoading(true)
-
-    try {
-      const firebaseUser = await completeSignInWithEmailLink(url, email)
+      const firebaseUser = await signInWithPassword(email, password)
       const approvedMember = await loadApprovedMember(firebaseUser)
       return { signedIn: Boolean(approvedMember) }
     } catch (err) {
-      setError(err.message || 'Unable to complete sign-in.')
+      setError(err.message || 'Unable to sign in.')
+      await signOutUser()
       return { signedIn: false }
     } finally {
       setLoading(false)
     }
   }, [loadApprovedMember])
+
+  const createAccount = useCallback(async (email, password) => {
+    setError(null)
+    setLoading(true)
+
+    try {
+      const firebaseUser = await createAccountWithPassword(email, password)
+      const member = await fetchApprovedMemberForEmail(firebaseUser.email)
+      const approvedMember = applyLocalProfileState(member, firebaseUser)
+      setCurrentUser(approvedMember)
+      setError(null)
+      return { created: Boolean(approvedMember) }
+    } catch (err) {
+      setError(err.message || 'Unable to create your account.')
+      await deleteCurrentAuthUser().catch(() => signOutUser())
+      setCurrentUser(null)
+      return { created: false }
+    } finally {
+      setLoading(false)
+    }
+  }, [fetchApprovedMemberForEmail])
+
+  const resetPassword = useCallback(async (email) => {
+    setError(null)
+    setLoading(true)
+
+    try {
+      await fetchApprovedMemberForEmail(email)
+      await sendPasswordReset(email)
+      return { sent: true }
+    } catch (err) {
+      setError(err.message || 'Unable to send password reset email.')
+      return { sent: false }
+    } finally {
+      setLoading(false)
+    }
+  }, [fetchApprovedMemberForEmail])
 
   const signOut = useCallback(async () => {
     setError(null)
@@ -143,7 +186,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ currentUser, loading, error, signIn, completeEmailLinkSignIn, signOut, updateProfilePhoto, updateProfilePreferences }}>
+    <AuthContext.Provider value={{ currentUser, loading, error, signIn, createAccount, resetPassword, signOut, updateProfilePhoto, updateProfilePreferences }}>
       {children}
     </AuthContext.Provider>
   )

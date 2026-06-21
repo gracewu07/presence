@@ -14,19 +14,10 @@ import {
   Bar,
 } from 'recharts'
 import { fetchMembers, fetchEvents, fetchCheckIns } from '../firebase'
-import { events as staticEvents } from '../data/events'
-import { members as mockMembers, events as mockEvents, leaderboardCheckIns } from '../data/mockData'
+import { members as mockMembers, leaderboardCheckIns } from '../data/mockData'
 import { computeAttendanceMetricsForMember, computeEngagementScore } from '../utils/engagement'
 
 const COLORS = ['#72a0c0', '#ead06b', '#d48f5e', '#9297cc', '#6fb7a3']
-
-const mergeById = (...lists) => {
-  const items = new Map()
-  lists.flat().forEach((item) => {
-    if (item?.id) items.set(item.id, item)
-  })
-  return Array.from(items.values())
-}
 
 const getEventDate = (event) => {
   const value = event?.eventDate || event?.date
@@ -79,12 +70,12 @@ export default function AnalyticsDashboard() {
       try {
         const [m, e, c] = await Promise.all([fetchMembers(), fetchEvents(), fetchCheckIns()])
         setMembers(m.length ? m : mockMembers)
-        setEvents(e.length ? e : mergeById(staticEvents, mockEvents))
+        setEvents(e)
         setCheckIns(c.length ? c : leaderboardCheckIns)
       } catch (err) {
         console.error('Failed to load analytics data', err)
         setMembers(mockMembers)
-        setEvents(mergeById(staticEvents, mockEvents))
+        setEvents([])
         setCheckIns(leaderboardCheckIns)
       } finally {
         setLoading(false)

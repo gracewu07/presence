@@ -1,7 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
 import Button from '../components/Button'
 import { useAuth } from '../context/AuthContext'
-import { events as staticEvents } from '../data/events'
 import { fetchEvents, fetchMemberCheckIns, findCheckInByEventAndMember, recordCheckIn } from '../firebase'
 import { haversineDistance } from '../utils/haversine'
 
@@ -46,6 +45,7 @@ const getCheckInState = (event) => {
 
 function MemberCheckIn() {
   const { currentUser } = useAuth()
+  const memberId = currentUser?.email?.trim().toLowerCase() || currentUser?.uid
   const [events, setEvents] = useState([])
   const [memberCheckIns, setMemberCheckIns] = useState([])
   const [message, setMessage] = useState(null)
@@ -60,18 +60,18 @@ function MemberCheckIn() {
       try {
         const eventsPromise = fetchEvents()
         const checkInsPromise = currentUser
-          ? fetchMemberCheckIns(currentUser.uid).catch((err) => {
+          ? fetchMemberCheckIns(memberId).catch((err) => {
               console.error('Unable to load member check-ins:', err)
               return []
             })
           : Promise.resolve([])
 
         const [eventsSnapshot, checkInsSnapshot] = await Promise.all([eventsPromise, checkInsPromise])
-        setEvents(eventsSnapshot.length > 0 ? eventsSnapshot : staticEvents)
+        setEvents(eventsSnapshot)
         setMemberCheckIns(checkInsSnapshot)
       } catch (error) {
         console.error('Unable to load check-in events:', error)
-        setEvents(staticEvents)
+        setEvents([])
         setMemberCheckIns([])
       } finally {
         setLoading(false)
@@ -79,7 +79,7 @@ function MemberCheckIn() {
     }
 
     loadCheckInData()
-  }, [currentUser])
+  }, [currentUser, memberId])
 
   const enhancedEvents = useMemo(() => {
     const now = new Date()
@@ -131,7 +131,7 @@ function MemberCheckIn() {
     setMessage(null)
 
     try {
-      const existingCheckIn = await findCheckInByEventAndMember(selectedEvent.id, currentUser.uid)
+      const existingCheckIn = await findCheckInByEventAndMember(selectedEvent.id, memberId)
       if (existingCheckIn) {
         setMemberCheckIns((current) => [...current, existingCheckIn])
         setMessage({ type: 'error', text: 'Already checked in for this event.' })
@@ -158,8 +158,8 @@ function MemberCheckIn() {
       const timestamp = new Date().toISOString()
       const newCheckIn = {
         eventId: selectedEvent.id,
-        memberId: currentUser.uid,
-        memberEmail: currentUser.email,
+        memberId,
+        memberEmail: memberId,
         memberName: currentUser.name,
         timestamp,
         distanceMeters: Math.round(distance),

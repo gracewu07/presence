@@ -145,11 +145,11 @@ function MemberManagement() {
       return
     }
 
-    const id = `${form.email.replace(/[^a-z0-9]/gi, '_')}_${Date.now()}`
+    const email = form.email.trim().toLowerCase()
     try {
-      await memberService.createMember(id, {
+      await memberService.createMember(email, {
         name: form.name.trim(),
-        email: form.email.toLowerCase(),
+        email,
         pledgeClass: form.pledgeClass.trim(),
         family: form.family.trim(),
         role: form.role,

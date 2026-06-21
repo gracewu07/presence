@@ -13,54 +13,51 @@ import {
   limit,
   serverTimestamp,
 } from './lib/firebase'
-import { events as staticEvents } from './data/events'
-
-const parseEventDate = (date) => {
-  if (!date) return new Date().toISOString()
-  if (date.includes('-')) {
-    return new Date(`${date}T00:00:00`).toISOString()
-  }
-  const [monthName, day] = date.split(' ')
-  return new Date(`${monthName} ${day}, ${new Date().getFullYear()} 00:00:00`).toISOString()
-}
-
-const normalizeEvent = (event) => ({
-  ...event,
-  eventDate: event.eventDate || parseEventDate(event.date),
-})
-
-const mergeEventLists = (...lists) => {
-  const eventsMap = new Map()
-  lists.flat().forEach((event) => {
-    const normalized = normalizeEvent(event)
-    eventsMap.set(normalized.id, normalized)
-  })
-  return Array.from(eventsMap.values())
-}
+import { getMemberDocumentId, normalizeMemberEmail } from './services/memberService'
 
 export async function fetchMemberProfile(memberId) {
-  const memberRef = doc(db, 'members', memberId)
+  const memberRef = doc(db, 'members', getMemberDocumentId(memberId))
   const document = await getDoc(memberRef)
   if (!document.exists()) {
     return null
   }
-  return { id: document.id, ...document.data() }
+  const data = document.data()
+  const email = normalizeMemberEmail(data.email || document.id)
+  return { id: document.id, ...data, email, uid: email }
 }
 
 export async function findApprovedMemberByEmail(email) {
-  if (!email) return null
+  const normalizedEmail = normalizeMemberEmail(email)
+  if (!normalizedEmail) return null
+
+  const directRef = doc(db, 'members', getMemberDocumentId(normalizedEmail))
+  const directSnap = await getDoc(directRef)
+  if (directSnap.exists()) {
+    const data = directSnap.data()
+    if (data.accessStatus === 'approved') {
+      return { id: directSnap.id, ...data, email: normalizeMemberEmail(data.email || normalizedEmail), uid: normalizedEmail }
+    }
+  }
+
   const membersRef = collection(db, 'members')
-  const q = query(membersRef, where('email', '==', email.toLowerCase()), where('accessStatus', '==', 'approved'), limit(1))
+  const q = query(membersRef, where('email', '==', normalizedEmail), where('accessStatus', '==', 'approved'), limit(1))
   const snapshot = await getDocs(q)
-  if (!snapshot.empty) return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() }
+  if (!snapshot.empty) {
+    const docSnap = snapshot.docs[0]
+    const data = docSnap.data()
+    const memberEmail = normalizeMemberEmail(data.email || normalizedEmail)
+    return { id: docSnap.id, ...data, email: memberEmail, uid: memberEmail }
+  }
 
   return null
 }
 
 export async function createOrUpdateMemberProfile(memberId, profileData) {
-  const memberRef = doc(db, 'members', memberId)
+  const email = normalizeMemberEmail(profileData.email || memberId)
+  const memberRef = doc(db, 'members', getMemberDocumentId(email))
   await setDoc(memberRef, {
     ...profileData,
+    email,
     updatedAt: serverTimestamp(),
   }, { merge: true })
 }
@@ -79,11 +76,10 @@ export async function fetchEvents() {
 
   try {
     const snapshot = await getDocs(q)
-    const firestoreEvents = snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
-    return mergeEventLists(firestoreEvents, staticEvents)
+    return snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
   } catch (error) {
-    console.error('Unable to load firestore events, falling back to static events:', error)
-    return staticEvents.map(normalizeEvent)
+    console.error('Unable to load firestore events:', error)
+    return []
   }
 }
 
@@ -94,18 +90,20 @@ export async function fetchUpcomingEvents() {
 
   try {
     const snapshot = await getDocs(q)
-    const firestoreEvents = snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
-    return mergeEventLists(firestoreEvents, staticEvents).filter((event) => event.eventDate >= now)
+    return snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
   } catch (error) {
-    console.error('Unable to load upcoming firestore events, falling back to static events:', error)
-    return staticEvents.map(normalizeEvent).filter((event) => event.eventDate >= now)
+    console.error('Unable to load upcoming firestore events:', error)
+    return []
   }
 }
 
 export async function recordCheckIn(checkInData) {
   const checkInsRef = collection(db, 'checkIns')
+  const memberEmail = normalizeMemberEmail(checkInData.memberEmail || checkInData.memberId)
   await addDoc(checkInsRef, {
     ...checkInData,
+    memberId: memberEmail,
+    memberEmail,
     createdAt: serverTimestamp(),
   })
 }
@@ -118,16 +116,28 @@ export async function fetchCheckIns() {
 
 export async function fetchMemberCheckIns(memberId) {
   const checkInsRef = collection(db, 'checkIns')
-  const q = query(checkInsRef, where('memberId', '==', memberId), orderBy('createdAt', 'desc'))
-  const snapshot = await getDocs(q)
-  return snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
+  const normalizedMemberId = normalizeMemberEmail(memberId)
+  const byMemberIdQuery = query(checkInsRef, where('memberId', '==', normalizedMemberId), orderBy('createdAt', 'desc'))
+  const byEmailQuery = query(checkInsRef, where('memberEmail', '==', normalizedMemberId), orderBy('createdAt', 'desc'))
+  const [byMemberIdSnapshot, byEmailSnapshot] = await Promise.all([getDocs(byMemberIdQuery), getDocs(byEmailQuery)])
+  const docsById = new Map()
+  ;[byMemberIdSnapshot, byEmailSnapshot].forEach((snapshot) => {
+    snapshot.docs.forEach((docSnap) => docsById.set(docSnap.id, { id: docSnap.id, ...docSnap.data() }))
+  })
+  return Array.from(docsById.values())
 }
 
 export async function fetchMemberExcusalRequests(memberId) {
   const requestsRef = collection(db, 'excusalRequests')
-  const q = query(requestsRef, where('memberId', '==', memberId), orderBy('submittedAt', 'desc'))
-  const snapshot = await getDocs(q)
-  return snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
+  const normalizedMemberId = normalizeMemberEmail(memberId)
+  const byMemberIdQuery = query(requestsRef, where('memberId', '==', normalizedMemberId), orderBy('submittedAt', 'desc'))
+  const byEmailQuery = query(requestsRef, where('memberEmail', '==', normalizedMemberId), orderBy('submittedAt', 'desc'))
+  const [byMemberIdSnapshot, byEmailSnapshot] = await Promise.all([getDocs(byMemberIdQuery), getDocs(byEmailQuery)])
+  const docsById = new Map()
+  ;[byMemberIdSnapshot, byEmailSnapshot].forEach((snapshot) => {
+    snapshot.docs.forEach((docSnap) => docsById.set(docSnap.id, { id: docSnap.id, ...docSnap.data() }))
+  })
+  return Array.from(docsById.values())
 }
 
 export async function fetchExcusalRequests() {
@@ -148,18 +158,25 @@ export async function fetchEventById(eventId) {
 
 export async function findCheckInByEventAndMember(eventId, memberId) {
   const checkInsRef = collection(db, 'checkIns')
-  const q = query(
+  const normalizedMemberId = normalizeMemberEmail(memberId)
+  const byMemberIdQuery = query(
     checkInsRef,
     where('eventId', '==', eventId),
-    where('memberId', '==', memberId),
+    where('memberId', '==', normalizedMemberId),
     limit(1)
   )
-  const snapshot = await getDocs(q)
-  if (snapshot.empty) {
+  const byEmailQuery = query(
+    checkInsRef,
+    where('eventId', '==', eventId),
+    where('memberEmail', '==', normalizedMemberId),
+    limit(1)
+  )
+  const [byMemberIdSnapshot, byEmailSnapshot] = await Promise.all([getDocs(byMemberIdQuery), getDocs(byEmailQuery)])
+  const firstMatch = byMemberIdSnapshot.docs[0] || byEmailSnapshot.docs[0]
+  if (!firstMatch) {
     return null
   }
-  const docSnap = snapshot.docs[0]
-  return { id: docSnap.id, ...docSnap.data() }
+  return { id: firstMatch.id, ...firstMatch.data() }
 }
 
 export async function fetchMembers() {
@@ -177,8 +194,11 @@ export async function fetchLeaderboard(limitCount = 10) {
 
 export async function submitExcusalRequest(requestData) {
   const requestsRef = collection(db, 'excusalRequests')
+  const memberEmail = normalizeMemberEmail(requestData.memberEmail || requestData.memberId)
   await addDoc(requestsRef, {
     ...requestData,
+    memberId: memberEmail,
+    memberEmail,
     status: 'pending',
     submittedAt: serverTimestamp(),
   })

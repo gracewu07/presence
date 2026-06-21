@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import CalendarEventCard from '../components/CalendarEventCard'
 import { EVENT_TYPE_FILTERS } from '../constants/eventTypes'
-import { events as staticEvents } from '../data/events'
 import { fetchEvents } from '../firebase'
 import { buildCalendarUrls, downloadIcs } from '../utils/calendarLinks'
 
@@ -76,10 +75,10 @@ function EventCalendar() {
 
       try {
         const firestoreEvents = await fetchEvents()
-        setEvents(firestoreEvents.length > 0 ? firestoreEvents : staticEvents)
+        setEvents(firestoreEvents)
       } catch (err) {
         console.error('Failed to load events:', err)
-        setEvents(staticEvents)
+        setEvents([])
         setError('Unable to load events. Please try again later.')
       } finally {
         setLoading(false)

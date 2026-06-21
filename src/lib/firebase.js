@@ -1,9 +1,10 @@
 import { initializeApp } from 'firebase/app'
 import {
   getAuth,
-  sendSignInLinkToEmail,
-  isSignInWithEmailLink,
-  signInWithEmailLink,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
+  deleteUser,
   signOut,
   onAuthStateChanged as firebaseOnAuthStateChanged,
 } from 'firebase/auth'
@@ -40,9 +41,10 @@ export {
   app,
   auth,
   db,
-  sendSignInLinkToEmail,
-  isSignInWithEmailLink,
-  signInWithEmailLink,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
+  deleteUser,
   signOut,
   firebaseOnAuthStateChanged,
   doc,

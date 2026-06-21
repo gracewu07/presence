@@ -2,8 +2,12 @@ import { db, collection, query, where, getDocs, doc, setDoc, getDoc, updateDoc, 
 import { isAllowedEmail } from '../config/authConfig'
 import { ROLE_MEMBER, normalizeRole } from '../utils/permissions'
 
-function normalizeEmail(email) {
+export function normalizeMemberEmail(email) {
   return email?.trim().toLowerCase() || ''
+}
+
+export function getMemberDocumentId(email) {
+  return normalizeMemberEmail(email)
 }
 
 function normalizeAccessStatus(accessStatus) {
@@ -13,24 +17,32 @@ function normalizeAccessStatus(accessStatus) {
 
 function withMemberDefaults(member) {
   if (!member) return null
+  const email = normalizeMemberEmail(member.email || member.id)
   return {
     ...member,
-    uid: member.id,
-    email: normalizeEmail(member.email),
+    email,
+    uid: email,
     role: normalizeRole(member.role),
     accessStatus: normalizeAccessStatus(member.accessStatus),
   }
 }
 
 export async function fetchMemberByEmail(email) {
-  const normalizedEmail = normalizeEmail(email)
+  const normalizedEmail = normalizeMemberEmail(email)
   if (!normalizedEmail) return null
+
+  const directRef = doc(db, 'members', getMemberDocumentId(normalizedEmail))
+  const directSnap = await getDoc(directRef)
+  if (directSnap.exists()) {
+    return withMemberDefaults({ id: directSnap.id, ...directSnap.data(), email: directSnap.data().email || normalizedEmail })
+  }
+
   const membersRef = collection(db, 'members')
   const q = query(membersRef, where('email', '==', normalizedEmail))
   const snapshot = await getDocs(q)
   if (snapshot.empty) return null
   const docSnap = snapshot.docs[0]
-    return withMemberDefaults({ id: docSnap.id, ...docSnap.data() })
+  return withMemberDefaults({ id: docSnap.id, ...docSnap.data() })
 }
 
 export async function fetchMemberById(id) {
@@ -48,19 +60,32 @@ export async function fetchMembers() {
 }
 
 export async function createMember(id, data) {
-  const email = normalizeEmail(data.email)
+  const email = normalizeMemberEmail(data.email || id)
   if (!isAllowedEmail(email)) {
     throw new Error('Members must use a UNC email ending in @unc.edu.')
   }
 
-  const memberRef = doc(db, 'members', id)
-  await setDoc(memberRef, {
+  const memberRef = doc(db, 'members', getMemberDocumentId(email))
+  const existingSnap = await getDoc(memberRef)
+  const memberData = {
     ...data,
     email,
     role: normalizeRole(data.role) || ROLE_MEMBER,
     accessStatus: data.accessStatus === 'approved' ? 'approved' : 'pending',
-    createdAt: serverTimestamp(),
-  })
+    status: data.status?.trim?.() || data.status || 'active',
+    updatedAt: serverTimestamp(),
+  }
+
+  if (!existingSnap.exists()) {
+    memberData.createdAt = serverTimestamp()
+    memberData.totalPoints = Number(data.totalPoints ?? 0)
+    memberData.eventsAttended = Number(data.eventsAttended ?? 0)
+  } else {
+    if (data.totalPoints !== undefined) memberData.totalPoints = Number(data.totalPoints)
+    if (data.eventsAttended !== undefined) memberData.eventsAttended = Number(data.eventsAttended)
+  }
+
+  await setDoc(memberRef, memberData, { merge: true })
 }
 
 export async function importApprovedMembers(members) {
@@ -71,8 +96,7 @@ export async function importApprovedMembers(members) {
   }
 
   for (const member of members) {
-    const email = normalizeEmail(member.email)
-    const id = email.replace(/[^a-z0-9]/gi, '_')
+    const email = normalizeMemberEmail(member.email)
 
     try {
       if (!member.name?.trim()) {
@@ -82,7 +106,7 @@ export async function importApprovedMembers(members) {
         throw new Error('Email must end in @unc.edu.')
       }
 
-      await createMember(id, {
+      await createMember(email, {
         name: member.name.trim(),
         email,
         pledgeClass: member.pledgeClass?.trim() || '',
@@ -108,7 +132,7 @@ export async function importApprovedMembers(members) {
 export async function updateMember(id, updates) {
   const safeUpdates = { ...updates }
   if (safeUpdates.email !== undefined) {
-    safeUpdates.email = normalizeEmail(safeUpdates.email)
+    safeUpdates.email = normalizeMemberEmail(safeUpdates.email)
     if (!isAllowedEmail(safeUpdates.email)) {
       throw new Error('Members must use a UNC email ending in @unc.edu.')
     }
