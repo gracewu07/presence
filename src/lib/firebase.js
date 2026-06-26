@@ -26,6 +26,7 @@ import {
   orderBy,
   limit,
   serverTimestamp,
+  onSnapshot,
 } from 'firebase/firestore'
 
 const firebaseConfig = {
@@ -67,4 +68,5 @@ export {
   orderBy,
   limit,
   serverTimestamp,
+  onSnapshot,
 }

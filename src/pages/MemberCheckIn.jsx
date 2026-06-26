@@ -3,6 +3,7 @@ import Button from '../components/Button'
 import { useAuth } from '../context/AuthContext'
 import { fetchEvents, fetchMemberCheckIns, findCheckInByEventAndMember, recordCheckIn } from '../firebase'
 import { formatDisplayDate, formatDisplayTime } from '../utils/eventDateTime'
+import { formatEventLocation } from '../utils/eventLocation'
 import { haversineDistance } from '../utils/haversine'
 
 const parseDateTime = (date, time) => {
@@ -28,6 +29,16 @@ const parseDateTime = (date, time) => {
   return new Date(`${monthName} ${day}, ${new Date().getFullYear()} ${hourString}:${minuteString}:00`)
 }
 
+const getEventDateRange = (event) => {
+  const startDate = event.eventDate ? new Date(event.eventDate) : parseDateTime(event.date, event.startTime)
+  const endDate = event.endDate ? new Date(event.endDate) : parseDateTime(event.date, event.endTime)
+
+  return {
+    startDate: Number.isNaN(startDate.getTime()) ? parseDateTime(event.date, event.startTime) : startDate,
+    endDate: Number.isNaN(endDate.getTime()) ? parseDateTime(event.date, event.endTime) : endDate,
+  }
+}
+
 const canCheckIn = (event) => {
   if (!event || !requiresCheckIn(event)) return false
 
@@ -43,7 +54,9 @@ const formatTime = (dateString) => new Date(dateString).toLocaleTimeString([], {
 
 const normalizeEventType = (eventType = '') => eventType.toLowerCase().replace(/[^a-z0-9]+/g, '-')
 
-const requiresCheckIn = (event) => !['social', 'recruitment'].includes(normalizeEventType(event?.eventType))
+const CHECK_IN_EVENT_TYPES = ['chapter', 'service', 'professional-development']
+
+const requiresCheckIn = (event) => CHECK_IN_EVENT_TYPES.includes(normalizeEventType(event?.eventType))
 
 const getCheckInState = (event) => {
   if (!event) return null
@@ -93,8 +106,7 @@ function MemberCheckIn() {
     const now = new Date()
     return events
       .map((event) => {
-        const startDate = parseDateTime(event.date, event.startTime)
-        const endDate = parseDateTime(event.date, event.endTime)
+        const { startDate, endDate } = getEventDateRange(event)
         const status = startDate <= now && now <= endDate ? 'Active' : startDate > now ? 'Upcoming' : 'Past'
         return { ...event, startDate, endDate, status }
       })
@@ -105,6 +117,7 @@ function MemberCheckIn() {
   const selectedEvent = enhancedEvents[0] || null
   const checkedIn = selectedEvent && memberCheckIns.some((checkIn) => checkIn.eventId === selectedEvent.id)
   const checkInState = getCheckInState(selectedEvent)
+  const selectedEventLocation = formatEventLocation(selectedEvent)
 
   const handleCheckIn = async () => {
     if (!currentUser) {
@@ -234,7 +247,10 @@ function MemberCheckIn() {
 
             <div className="checkin-card-heading">
               <h2>{selectedEvent.title}</h2>
-              <p className="muted">{selectedEvent.locationName}</p>
+              <p className="muted">{selectedEventLocation}</p>
+              {selectedEvent.formattedAddress && (
+                <p className="muted checkin-address">{selectedEvent.formattedAddress}</p>
+              )}
             </div>
 
             <div className="checkin-detail-grid">

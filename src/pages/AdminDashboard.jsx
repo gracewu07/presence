@@ -2,9 +2,30 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { deleteEvent, fetchMembers, fetchEvents, fetchCheckIns, fetchUpcomingEvents, fetchExcusalRequests } from '../firebase'
 import { formatDisplayDate } from '../utils/eventDateTime'
-import { ROLE_ADMIN, ROLE_MEMBER, ROLE_SUB_ADMIN, ROLE_SUPER_ADMIN, normalizeRole } from '../utils/permissions'
+import { useAuth } from '../context/AuthContext'
+import { ROLE_ADMIN, ROLE_MEMBER, ROLE_SUB_ADMIN, ROLE_SUPER_ADMIN, canManageEvents, normalizeRole } from '../utils/permissions'
+
+const checkInTimeValue = (checkIn) => {
+  const value = checkIn.createdAt || checkIn.timestamp
+  if (!value) return 0
+  if (value.toDate) return value.toDate().getTime()
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? 0 : date.getTime()
+}
+
+const formatCheckInTime = (checkIn) => {
+  const value = checkIn.createdAt || checkIn.timestamp
+  const date = value?.toDate ? value.toDate() : new Date(value)
+  if (Number.isNaN(date.getTime())) return 'Time unavailable'
+
+  return `${date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} at ${date.toLocaleTimeString(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+  })}`
+}
 
 function AdminDashboard() {
+  const { currentUser } = useAuth()
   const [members, setMembers] = useState([])
   const [events, setEvents] = useState([])
   const [checkIns, setCheckIns] = useState([])
@@ -39,12 +60,16 @@ function AdminDashboard() {
   }, [])
 
   const recentCheckIns = useMemo(
-    () => checkIns.slice().sort((a, b) => new Date(b.createdAt || b.timestamp) - new Date(a.createdAt || a.timestamp)).slice(0, 8),
+    () => checkIns.slice().sort((a, b) => checkInTimeValue(b) - checkInTimeValue(a)).slice(0, 5),
     [checkIns]
   )
+  const eventsById = useMemo(() => new Map(events.map((event) => [event.id, event])), [events])
   const pendingExcusals = excusals.filter((request) => request.status === 'pending')
+  const canEditEvents = canManageEvents(currentUser)
 
   const handleDeleteEvent = async (event) => {
+    if (!canEditEvents) return
+
     const confirmed = window.confirm(`Delete "${event.title}"? This cannot be undone.`)
     if (!confirmed) return
 
@@ -105,13 +130,15 @@ function AdminDashboard() {
                       <Link className="button button--secondary button--compact" to={`/admin/events/${event.id}/edit`}>
                         Edit
                       </Link>
-                      <button
-                        type="button"
-                        className="button button--secondary button--danger button--compact"
-                        onClick={() => handleDeleteEvent(event)}
-                      >
-                        Delete
-                      </button>
+                      {canEditEvents && (
+                        <button
+                          type="button"
+                          className="button button--secondary button--danger button--compact"
+                          onClick={() => handleDeleteEvent(event)}
+                        >
+                          Delete
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))
@@ -121,16 +148,24 @@ function AdminDashboard() {
             <div className="card">
               <h3>Recent check-ins</h3>
               {recentCheckIns.length === 0 ? <div className="empty-state">No recent check-ins.</div> : (
-                recentCheckIns.map((checkIn) => (
-                  <div key={checkIn.id} className="request-card">
-                    <div>
-                      <p><strong>{checkIn.memberName || checkIn.memberEmail}</strong></p>
-                      <p className="muted">Event: {checkIn.eventId}</p>
-                      <p className="muted">{new Date(checkIn.createdAt || checkIn.timestamp).toLocaleString()}</p>
-                    </div>
-                    <div className="muted">{checkIn.pointsAwarded || 0} pts</div>
-                  </div>
-                ))
+                <div className="recent-checkins-list">
+                  {recentCheckIns.map((checkIn) => {
+                    const event = eventsById.get(checkIn.eventId)
+                    return (
+                      <div key={checkIn.id} className="recent-checkin-card">
+                        <div className="recent-checkin-card__main">
+                          <strong>{checkIn.memberName || checkIn.memberEmail || 'Member'}</strong>
+                          <p>{event?.title || checkIn.eventTitle || 'Event unavailable'}</p>
+                          <span>{formatCheckInTime(checkIn)}</span>
+                        </div>
+                        <div className="recent-checkin-card__points">
+                          <strong>{checkIn.pointsAwarded || 0}</strong>
+                          <span>pts</span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
               )}
             </div>
 

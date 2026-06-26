@@ -1,23 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar,
-} from 'recharts'
-import { fetchMembers, fetchEvents, fetchCheckIns } from '../firebase'
-import { members as mockMembers, leaderboardCheckIns } from '../data/mockData'
+import { fetchMembers, fetchEvents, fetchCheckIns, subscribeToCheckIns } from '../firebase'
 import { computeAttendanceMetricsForMember, computeEngagementScore } from '../utils/engagement'
 
 const COLORS = ['#72a0c0', '#ead06b', '#d48f5e', '#9297cc', '#6fb7a3']
+const EMPTY_CHART_DATA = [{ name: 'No data', shortName: 'No data', value: 0, checkIns: 0, attendees: 0, attendanceRate: 0, points: 0 }]
 
 const getEventDate = (event) => {
   const value = event?.eventDate || event?.date
@@ -46,6 +32,8 @@ const memberForCheckIn = (checkIn, lookups) =>
 
 const shortName = (value = '') => (value.length > 16 ? `${value.slice(0, 15)}...` : value)
 
+const normalizeEventType = (eventType = '') => eventType.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-')
+
 const weekdayName = (value) => {
   const date = value ? new Date(value) : null
   if (!date || Number.isNaN(date.getTime())) return 'Unknown'
@@ -58,6 +46,131 @@ const formatEventLabel = (event) => {
   return `${event.title} · ${dateLabel}`
 }
 
+function SimpleBarChart({ data, labelKey = 'name', valueKey, valueSuffix = '', valueFormatter }) {
+  const chartData = data.length ? data : EMPTY_CHART_DATA
+  const maxValue = Math.max(...chartData.map((item) => Number(item[valueKey] || 0)), 1)
+
+  return (
+    <div className="analytics-simple-chart">
+      {chartData.map((item, index) => {
+        const value = Number(item[valueKey] || 0)
+        const width = value > 0 ? Math.max((value / maxValue) * 100, 6) : 0
+        const displayValue = valueFormatter ? valueFormatter(value, item) : `${value}${valueSuffix}`
+
+        return (
+          <div key={`${item[labelKey] || item.name}-${index}`} className="analytics-simple-chart__row">
+            <div className="analytics-simple-chart__topline">
+              <span>{item[labelKey] || item.name}</span>
+              <strong>{displayValue}</strong>
+            </div>
+            <div className="analytics-simple-chart__track" aria-hidden="true">
+              <div className="analytics-simple-chart__bar" style={{ width: `${width}%` }} />
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function VerticalBarChart({ data, labelKey = 'name', valueKey, valueSuffix = '', valueFormatter }) {
+  const chartData = data.length ? data : EMPTY_CHART_DATA
+  const maxValue = Math.max(...chartData.map((item) => Number(item[valueKey] || 0)), 1)
+
+  return (
+    <div className="analytics-column-chart">
+      {chartData.map((item, index) => {
+        const value = Number(item[valueKey] || 0)
+        const height = value > 0 ? Math.max((value / maxValue) * 100, 10) : 3
+        const displayValue = valueFormatter ? valueFormatter(value, item) : `${value}${valueSuffix}`
+
+        return (
+          <div key={`${item[labelKey] || item.name}-${index}`} className="analytics-column-chart__item">
+            <strong className="analytics-column-chart__value">{displayValue}</strong>
+            <div className="analytics-column-chart__track" aria-hidden="true">
+              <div
+                className="analytics-column-chart__bar"
+                style={{
+                  height: `${height}%`,
+                  background: item.color || COLORS[index % COLORS.length],
+                }}
+              />
+            </div>
+            <span className="analytics-column-chart__label">{item[labelKey] || item.name}</span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function DonutChart({ data, labelKey = 'name', valueKey = 'value' }) {
+  const chartData = data.length ? data : EMPTY_CHART_DATA
+  const total = chartData.reduce((sum, item) => sum + Number(item[valueKey] || 0), 0)
+  let start = 0
+  const gradient = total
+    ? chartData
+        .map((item, index) => {
+          const value = Number(item[valueKey] || 0)
+          const end = start + (value / total) * 360
+          const segment = `${item.color || COLORS[index % COLORS.length]} ${start}deg ${end}deg`
+          start = end
+          return segment
+        })
+        .join(', ')
+    : '#e6eef5 0deg 360deg'
+
+  return (
+    <div className="analytics-donut-chart">
+      <div className="analytics-donut-chart__ring" style={{ background: `conic-gradient(${gradient})` }}>
+        <div className="analytics-donut-chart__center">
+          <strong>{total}</strong>
+          <span>total</span>
+        </div>
+      </div>
+      <div className="analytics-donut-chart__legend">
+        {chartData.map((item, index) => (
+          <div key={`${item[labelKey] || item.name}-${index}`} className="analytics-donut-chart__legend-item">
+            <span style={{ background: item.color || COLORS[index % COLORS.length] }} />
+            <p>{item[labelKey] || item.name}</p>
+            <strong>{Number(item[valueKey] || 0)}</strong>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function LineTrendChart({ data, labelKey = 'date', valueKey = 'checkIns' }) {
+  const chartData = data.length ? data : EMPTY_CHART_DATA
+  const maxValue = Math.max(...chartData.map((item) => Number(item[valueKey] || 0)), 1)
+  const points = chartData.map((item, index) => {
+    const x = chartData.length === 1 ? 50 : (index / (chartData.length - 1)) * 100
+    const y = 88 - (Number(item[valueKey] || 0) / maxValue) * 72
+    return { x, y, item }
+  })
+  const pointString = points.map((point) => `${point.x},${point.y}`).join(' ')
+
+  return (
+    <div className="analytics-line-chart">
+      <svg className="analytics-line-chart__svg" viewBox="0 0 100 100" preserveAspectRatio="none" role="img">
+        <polyline points={pointString} fill="none" stroke="#72a0c0" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+        {points.map((point, index) => (
+          <circle key={`${point.item[labelKey] || index}-${index}`} cx={point.x} cy={point.y} r="2.6" fill="#13294b" />
+        ))}
+      </svg>
+      <div className="analytics-line-chart__labels">
+        {chartData.map((item, index) => (
+          <span key={`${item[labelKey] || index}-${index}`}>
+            {item[labelKey] || item.name}
+            <strong>{Number(item[valueKey] || 0)}</strong>
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function AnalyticsDashboard() {
   const [members, setMembers] = useState([])
   const [events, setEvents] = useState([])
@@ -65,24 +178,40 @@ export default function AnalyticsDashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let isMounted = true
+    let unsubscribeCheckIns = null
+
     async function load() {
       setLoading(true)
       try {
         const [m, e, c] = await Promise.all([fetchMembers(), fetchEvents(), fetchCheckIns()])
-        setMembers(m.length ? m : mockMembers)
+        if (!isMounted) return
+        setMembers(m)
         setEvents(e)
-        setCheckIns(c.length ? c : leaderboardCheckIns)
+        setCheckIns(c)
+        unsubscribeCheckIns = subscribeToCheckIns(
+          (liveCheckIns) => {
+            if (isMounted) setCheckIns(liveCheckIns)
+          },
+          (snapshotError) => console.error('Failed to subscribe to analytics check-ins', snapshotError)
+        )
       } catch (err) {
         console.error('Failed to load analytics data', err)
-        setMembers(mockMembers)
+        if (!isMounted) return
+        setMembers([])
         setEvents([])
-        setCheckIns(leaderboardCheckIns)
+        setCheckIns([])
       } finally {
-        setLoading(false)
+        if (isMounted) setLoading(false)
       }
     }
 
     load()
+
+    return () => {
+      isMounted = false
+      if (unsubscribeCheckIns) unsubscribeCheckIns()
+    }
   }, [])
 
   // Attendance over time (per event date)
@@ -274,21 +403,27 @@ export default function AnalyticsDashboard() {
   const analyticsSummary = useMemo(() => {
     const totalCheckIns = checkIns.length
     const averageAttendance = events.length ? Math.round((totalCheckIns / events.length) * 10) / 10 : 0
-    const topEvent = attendanceByEvent.reduce(
+    const topEvents = attendanceByEvent
+      .filter((event) => normalizeEventType(event.type) !== 'chapter')
+      .sort((first, second) => second.attendees - first.attendees || first.shortName.localeCompare(second.shortName))
+      .slice(0, 3)
+    const topEventFallback = topEvents.reduce(
       (best, event) => (event.attendees > best.attendees ? event : best),
-      { shortName: 'No events yet', attendees: 0 }
+      { shortName: 'No non-chapter events yet', attendees: 0 }
     )
     const activeMembers = members.filter((member) => (member.status || 'active').toLowerCase() === 'active').length
 
     return [
       { label: 'Total check-ins', value: totalCheckIns },
-      { label: 'Average per event', value: averageAttendance },
-      { label: 'Top event', value: topEvent.shortName, textValue: true },
+      { label: 'Avg check-ins per event', value: averageAttendance },
+      { label: 'Top events', value: topEvents.length ? topEvents.map((event) => event.shortName).join(', ') : topEventFallback.shortName, textValue: true },
       { label: 'Active members', value: activeMembers },
     ]
   }, [attendanceByEvent, checkIns, events, members])
 
   if (loading) return <div className="page page--loading">Loading analytics…</div>
+
+  const renderEmptyChartNote = (message) => <p className="analytics-empty-chart-note">{message}</p>
 
   return (
     <section className="page analytics-page">
@@ -315,186 +450,63 @@ export default function AnalyticsDashboard() {
       <div className="grid grid--charts">
         <div className="card analytics-card--wide">
           <h3>Attendance by Event</h3>
-          {attendanceByEvent.length === 0 ? (
-            <div className="empty-state">No event attendance data yet.</div>
-          ) : (
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={attendanceByEvent}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="shortName" interval={0} tick={{ fontSize: 11 }} />
-                <YAxis allowDecimals={false} />
-                <Tooltip />
-                <Bar dataKey="attendees" name="Attendees" fill="#72a0c0" radius={[12, 12, 0, 0]}>
-                  {attendanceByEvent.map((entry, idx) => (
-                    <Cell key={`event-attendance-${entry.name}`} fill={COLORS[idx % COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          )}
+          {attendanceByEvent.length === 0 && renderEmptyChartNote('No event attendance data yet.')}
+          <VerticalBarChart data={attendanceByEvent} labelKey="shortName" valueKey="attendees" />
         </div>
 
         <div className="card">
           <h3>Attendance Rate by Type</h3>
-          {attendanceRateByType.length === 0 ? (
-            <div className="empty-state">No event type attendance yet.</div>
-          ) : (
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={attendanceRateByType}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                <YAxis unit="%" />
-                <Tooltip />
-                <Bar dataKey="attendanceRate" name="Attendance rate" fill="#72a0c0" radius={[12, 12, 0, 0]}>
-                  {attendanceRateByType.map((entry, idx) => (
-                    <Cell key={`type-rate-${entry.name}`} fill={COLORS[idx % COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          )}
+          {attendanceRateByType.length === 0 && renderEmptyChartNote('No event type attendance yet.')}
+          <VerticalBarChart data={attendanceRateByType} valueKey="attendanceRate" valueSuffix="%" />
         </div>
 
         <div className="card">
           <h3>Required vs Optional</h3>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={requiredOptionalData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis unit="%" />
-              <Tooltip />
-              <Bar dataKey="attendanceRate" name="Attendance rate" fill="#72a0c0" radius={[12, 12, 0, 0]}>
-                {requiredOptionalData.map((entry, idx) => (
-                  <Cell key={`required-optional-${entry.name}`} fill={idx === 0 ? '#72a0c0' : '#93dff2'} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          <VerticalBarChart data={requiredOptionalData} valueKey="attendanceRate" valueSuffix="%" />
         </div>
 
         <div className="card analytics-card--wide">
           <h3>Top Member Engagement</h3>
-          {topMembersByEngagement.length === 0 ? (
-            <div className="empty-state">No member engagement data yet.</div>
-          ) : (
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={topMembersByEngagement} layout="vertical" margin={{ left: 18 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis type="category" dataKey="shortName" width={92} tick={{ fontSize: 11 }} />
-                <Tooltip />
-                <Bar dataKey="points" name="Points" fill="#72a0c0" radius={[0, 12, 12, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          )}
+          {topMembersByEngagement.length === 0 && renderEmptyChartNote('No member engagement data yet.')}
+          <SimpleBarChart data={topMembersByEngagement} labelKey="shortName" valueKey="points" />
         </div>
 
         <div className="card">
           <h3>Class Participation</h3>
-          {classParticipationData.length === 0 ? (
-            <div className="empty-state">No class participation data yet.</div>
-          ) : (
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={classParticipationData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis allowDecimals={false} />
-                <Tooltip />
-                <Bar dataKey="checkIns" name="Check-ins" fill="#72a0c0" radius={[12, 12, 0, 0]}>
-                  {classParticipationData.map((entry, idx) => (
-                    <Cell key={`class-${entry.name}`} fill={COLORS[idx % COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          )}
+          {classParticipationData.length === 0 && renderEmptyChartNote('No class participation data yet.')}
+          <VerticalBarChart data={classParticipationData} valueKey="checkIns" />
         </div>
 
         <div className="card">
           <h3>Family Participation</h3>
-          {familyParticipationData.length === 0 ? (
-            <div className="empty-state">No family participation data yet.</div>
-          ) : (
-            <ResponsiveContainer width="100%" height={220}>
-              <PieChart>
-                <Pie data={familyParticipationData} dataKey="checkIns" nameKey="name" cx="50%" cy="50%" outerRadius={72} label>
-                  {familyParticipationData.map((entry, idx) => (
-                    <Cell key={`family-${entry.name}`} fill={COLORS[idx % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          )}
+          {familyParticipationData.length === 0 && renderEmptyChartNote('No family participation data yet.')}
+          <DonutChart data={familyParticipationData} valueKey="checkIns" />
         </div>
 
         <div className="card">
           <h3>Check-ins by Weekday</h3>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={weekdayCheckInData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis allowDecimals={false} />
-              <Tooltip />
-              <Bar dataKey="checkIns" name="Check-ins" fill="#72a0c0" radius={[12, 12, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <VerticalBarChart data={weekdayCheckInData} valueKey="checkIns" />
         </div>
 
         <div className="card">
           <h3>Attendance Over Time</h3>
-          {attendanceByDate.length === 0 ? (
-            <div className="empty-state">No attendance data yet.</div>
-          ) : (
-            <ResponsiveContainer width="100%" height={220}>
-              <LineChart data={attendanceByDate}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="checkIns" stroke="#72a0c0" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
-          )}
+          {attendanceByDate.length === 0 && renderEmptyChartNote('No attendance data yet.')}
+          <LineTrendChart data={attendanceByDate} labelKey="date" valueKey="checkIns" />
         </div>
 
         <div className="card">
           <h3>Event Type Breakdown</h3>
-          {eventTypeData.length === 0 ? (
-            <div className="empty-state">No events yet.</div>
-          ) : (
-            <ResponsiveContainer width="100%" height={220}>
-              <PieChart>
-                <Pie data={eventTypeData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70} label>
-                  {eventTypeData.map((entry, idx) => (
-                    <Cell key={`cell-${idx}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          )}
+          {eventTypeData.length === 0 && renderEmptyChartNote('No check-in types yet.')}
+          <DonutChart data={eventTypeData} valueKey="value" />
         </div>
 
         <div className="card">
           <h3>Engagement Distribution</h3>
-          {bins.length === 0 ? (
-            <div className="empty-state">No member data.</div>
-          ) : (
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={bins}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="value" fill="#72a0c0">
-                  {bins.map((entry, idx) => (
-                    <Cell key={`cell-${idx}`} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          )}
+          <p className="analytics-chart-description">
+            Members grouped by engagement score, based on attendance, required events, recent activity, and event variety.
+          </p>
+          {bins.every((bucket) => bucket.value === 0) && renderEmptyChartNote('No member engagement data yet.')}
+          <VerticalBarChart data={bins} valueKey="value" />
         </div>
       </div>
     </section>

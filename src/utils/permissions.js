@@ -72,6 +72,10 @@ export function canManageMembers(user) {
   return isSuperAdminRole(user)
 }
 
+export function canManageEvents(user) {
+  return isAdminRole(user)
+}
+
 export function canAccessStandards(user) {
   const role = normalizeRole(user?.role)
   return isApprovedUser(user) && [ROLE_SUPER_ADMIN, ROLE_SUB_ADMIN].includes(role)

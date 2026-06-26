@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import Button from '../components/Button'
 import { fetchAppSettings, fetchCheckIns, updateLeaderboardVisibility } from '../firebase'
-import { leaderboardCheckIns } from '../data/mockData'
+import { getMemberDisplayName } from '../utils/memberDisplay'
 import { canEditLeaderboardVisibility, canViewFullLeaderboard } from '../utils/permissions'
 
 function Leaderboard() {
@@ -25,15 +25,14 @@ function Leaderboard() {
           fetchCheckIns(),
           fetchAppSettings(),
         ])
-        const hasLiveCheckIns = checkInsSnapshot.length > 0
 
-        setCheckIns(hasLiveCheckIns ? checkInsSnapshot : leaderboardCheckIns)
-        setSettings(settingsSnapshot[0] || { leaderboardVisibility: hasLiveCheckIns ? 'private' : 'public' })
+        setCheckIns(checkInsSnapshot)
+        setSettings(settingsSnapshot[0] || { leaderboardVisibility: 'private' })
       } catch (fetchError) {
         console.error('Failed to load leaderboard data', fetchError)
-        setCheckIns(leaderboardCheckIns)
-        setSettings({ leaderboardVisibility: 'public' })
-        setError(null)
+        setCheckIns([])
+        setSettings({ leaderboardVisibility: 'private' })
+        setError('Unable to load leaderboard data. Please refresh the page.')
       } finally {
         setLoading(false)
       }
@@ -46,6 +45,7 @@ function Leaderboard() {
   const hasFullLeaderboardAccess = canViewFullLeaderboard(currentUser)
   const canEditVisibility = canEditLeaderboardVisibility(currentUser)
   const canViewFullBoard = hasFullLeaderboardAccess || leaderboardVisibility === 'public'
+  const currentMemberDisplayName = getMemberDisplayName(currentUser)
   const getMemberInitial = (name) => name?.charAt(0)?.toUpperCase() || 'M'
 
   const handleVisibilityChange = (event) => {
@@ -75,15 +75,19 @@ function Leaderboard() {
 
     checkIns.forEach((checkIn) => {
       const memberId = checkIn.memberId
+      const isCurrentMember = memberId === currentMemberId
       const existing = totals.get(memberId) || {
         memberId,
-        memberName: checkIn.memberName || checkIn.memberEmail || 'Member',
+        memberName: isCurrentMember ? currentMemberDisplayName : checkIn.memberName || checkIn.memberEmail || 'Member',
         memberEmail: checkIn.memberEmail,
         memberPhotoUrl: checkIn.memberPhotoUrl || (memberId === currentMemberId ? currentUser?.photoUrl : ''),
         totalPoints: 0,
       }
 
-      if (memberId === currentMemberId && currentUser?.photoUrl) {
+      if (isCurrentMember) {
+        existing.memberName = currentMemberDisplayName
+      }
+      if (isCurrentMember && currentUser?.photoUrl) {
         existing.memberPhotoUrl = currentUser.photoUrl
       }
       existing.totalPoints += Number(checkIn.pointsAwarded ?? 0)
@@ -93,7 +97,7 @@ function Leaderboard() {
     return Array.from(totals.values())
       .sort((a, b) => b.totalPoints - a.totalPoints || a.memberName.localeCompare(b.memberName))
       .map((member, index) => ({ ...member, rank: index + 1 }))
-  }, [checkIns, currentMemberId, currentUser])
+  }, [checkIns, currentMemberDisplayName, currentMemberId, currentUser])
 
   const currentMemberRank = rankedMembers.find((entry) => entry.memberId === currentMemberId)
   const totalRankedMembers = rankedMembers.length
@@ -117,25 +121,38 @@ function Leaderboard() {
           <div className="empty-state error-message">{error}</div>
         ) : (
           <>
-            {canEditVisibility && (
+            {hasFullLeaderboardAccess && (
               <div className="leaderboard-admin-card">
                 <div>
                   <p className="eyebrow">Admin visibility</p>
                   <h2>Member access</h2>
-                  <p className="muted">Admins can always see the full leaderboard. Choose whether members can see everyone or only their own standing.</p>
+                  <p className="muted">
+                    {canEditVisibility
+                      ? 'Admins can always see the full leaderboard. Choose whether members can see everyone or only their own standing.'
+                      : 'Admins can always see the full leaderboard.'}
+                  </p>
                 </div>
-                <div className="leaderboard-admin-controls">
-                  <label className="leaderboard-admin-select">
-                    <span>Leaderboard visibility</span>
-                    <select value={leaderboardVisibility} onChange={handleVisibilityChange}>
-                      <option value="public">Visible to members</option>
-                      <option value="private">Private to admins</option>
-                    </select>
-                  </label>
-                  <Button type="button" variant="secondary" onClick={saveLeaderboardVisibility} disabled={savingVisibility}>
-                    {savingVisibility ? 'Saving...' : 'Save visibility'}
-                  </Button>
-                </div>
+                {canEditVisibility ? (
+                  <div className="leaderboard-admin-controls">
+                    <label className="leaderboard-admin-select">
+                      <span>Leaderboard visibility</span>
+                      <select value={leaderboardVisibility} onChange={handleVisibilityChange}>
+                        <option value="public">Visible to members</option>
+                        <option value="private">Private to admins</option>
+                      </select>
+                    </label>
+                    <Button type="button" variant="secondary" onClick={saveLeaderboardVisibility} disabled={savingVisibility}>
+                      {savingVisibility ? 'Saving...' : 'Save visibility'}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="leaderboard-admin-controls">
+                    <div className="leaderboard-admin-select leaderboard-admin-select--readonly">
+                      <span>Leaderboard visibility</span>
+                      <strong>{leaderboardVisibility === 'public' ? 'Visible to members' : 'Private to admins'}</strong>
+                    </div>
+                  </div>
+                )}
                 {visibilityMessage && (
                   <p className={`leaderboard-visibility-message ${visibilityMessage.type === 'error' ? 'error-message' : 'success-message'}`}>
                     {visibilityMessage.text}

@@ -3,7 +3,7 @@ import EventCard from '../components/EventCard'
 import StatCard from '../components/StatCard'
 import { fetchCheckIns, fetchEvents } from '../firebase'
 import { useAuth } from '../context/AuthContext'
-import { leaderboardCheckIns } from '../data/mockData'
+import { getMemberFirstName } from '../utils/memberDisplay'
 
 const SERVICE_REQUIREMENT = 2
 const PD_REQUIREMENT = 3
@@ -94,10 +94,10 @@ function Home() {
       try {
         const [eventSnapshot, checkInSnapshot] = await Promise.all([
           fetchEvents().catch(() => []),
-          fetchCheckIns().catch(() => leaderboardCheckIns),
+          fetchCheckIns().catch(() => []),
         ])
         const allEvents = eventSnapshot || []
-        const allCheckIns = checkInSnapshot?.length ? checkInSnapshot : leaderboardCheckIns
+        const allCheckIns = checkInSnapshot || []
         const now = new Date()
         const sevenDaysFromNow = new Date(now)
         sevenDaysFromNow.setDate(now.getDate() + 7)
@@ -117,7 +117,7 @@ function Home() {
 
     loadHomeData()
   }, [currentUser])
-  const firstName = currentUser?.name?.trim().split(/\s+/)[0] || 'Presence Member'
+  const firstName = currentUser ? getMemberFirstName(currentUser) : 'Presence Member'
 
   return (
     <section className="page home-page">

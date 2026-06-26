@@ -8,10 +8,38 @@ const WEIGHTS = {
   diversity: 10,
 }
 
+const SERVICE_REQUIREMENT = 2
+const PD_REQUIREMENT = 3
+
 // Helper: percent safe division
 function percent(num, denom) {
   if (!denom || denom === 0) return 0
   return (num / denom) * 100
+}
+
+function normalizeEventType(eventType = '') {
+  return eventType.toLowerCase().trim().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-')
+}
+
+function getEventEndDate(event) {
+  const value = event.endDate || event.eventDate || event.date
+  const date = value?.toDate ? value.toDate() : new Date(value)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+function getMemberIdValues(member) {
+  return new Set(
+    [member?.id, member?.email, member?.uid]
+      .filter(Boolean)
+      .map((value) => String(value).trim().toLowerCase())
+  )
+}
+
+function checkInBelongsToMember(checkIn, memberIds) {
+  const checkInIds = [checkIn.memberId, checkIn.memberEmail]
+    .filter(Boolean)
+    .map((value) => String(value).trim().toLowerCase())
+  return checkInIds.some((id) => memberIds.has(id))
 }
 
 // eventTypesAttended: Set or array of event type strings the member attended
@@ -106,4 +134,59 @@ export function isAtRisk(metrics, score) {
   if ((score || 0) < 50) reasons.push('Engagement score below 50')
 
   return { flagged: reasons.length > 0, reasons }
+}
+
+export function computeRequirementRiskForMember(member, events = [], checkIns = [], now = new Date()) {
+  const memberIds = getMemberIdValues(member)
+  const memberCheckIns = checkIns.filter((checkIn) => checkInBelongsToMember(checkIn, memberIds))
+  const attendedEventIds = new Set(memberCheckIns.map((checkIn) => checkIn.eventId).filter(Boolean))
+  const pastEvents = events.filter((event) => {
+    const endDate = getEventEndDate(event)
+    return endDate && endDate <= now
+  })
+
+  const pastRequiredChapterEvents = pastEvents.filter(
+    (event) => event.required && normalizeEventType(event.eventType) === 'chapter'
+  )
+  const attendedRequiredChapterEvents = pastRequiredChapterEvents.filter((event) => attendedEventIds.has(event.id))
+  const missedRequiredChapterEvents = pastRequiredChapterEvents.filter((event) => !attendedEventIds.has(event.id))
+
+  const pastServiceEvents = pastEvents.filter((event) => normalizeEventType(event.eventType) === 'service')
+  const attendedServiceEvents = pastServiceEvents.filter((event) => attendedEventIds.has(event.id))
+  const pastPdEvents = pastEvents.filter((event) => normalizeEventType(event.eventType) === 'professional-development')
+  const attendedPdEvents = pastPdEvents.filter((event) => attendedEventIds.has(event.id))
+
+  const expectedServiceCount = Math.min(SERVICE_REQUIREMENT, pastServiceEvents.length)
+  const expectedPdCount = Math.min(PD_REQUIREMENT, pastPdEvents.length)
+
+  const reasons = []
+  if (missedRequiredChapterEvents.length > 0) {
+    reasons.push(`Missed ${missedRequiredChapterEvents.length} required chapter event${missedRequiredChapterEvents.length === 1 ? '' : 's'}`)
+  }
+  if (attendedServiceEvents.length < expectedServiceCount) {
+    reasons.push(`Service attendance ${attendedServiceEvents.length}/${SERVICE_REQUIREMENT}`)
+  }
+  if (attendedPdEvents.length < expectedPdCount) {
+    reasons.push(`Professional development attendance ${attendedPdEvents.length}/${PD_REQUIREMENT}`)
+  }
+
+  return {
+    flagged: reasons.length > 0,
+    reasons,
+    requiredChapter: {
+      attended: attendedRequiredChapterEvents.length,
+      expected: pastRequiredChapterEvents.length,
+      missed: missedRequiredChapterEvents.length,
+    },
+    service: {
+      attended: attendedServiceEvents.length,
+      expected: expectedServiceCount,
+      required: SERVICE_REQUIREMENT,
+    },
+    professionalDevelopment: {
+      attended: attendedPdEvents.length,
+      expected: expectedPdCount,
+      required: PD_REQUIREMENT,
+    },
+  }
 }

@@ -9,7 +9,7 @@ const defaultPreferences = {
   contactEmail: '',
   phoneNumber: '',
   notificationChannel: 'off',
-  eventReminder: '30',
+  eventReminder: 'none',
 }
 
 function preferencesForUser(user) {

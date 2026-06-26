@@ -17,6 +17,11 @@ export const TIME_OPTIONS = Array.from({ length: 24 * 4 }, (_, index) => {
 })
 
 export function formatDisplayDate(value) {
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [year, month, day] = value.split('-').map(Number)
+    return DATE_DISPLAY_FORMATTER.format(new Date(year, month - 1, day))
+  }
+
   const date = value?.toDate ? value.toDate() : new Date(value)
   if (Number.isNaN(date.getTime())) return ''
   return DATE_DISPLAY_FORMATTER.format(date)

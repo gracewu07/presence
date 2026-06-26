@@ -6,7 +6,8 @@ import { useAuth } from '../context/AuthContext'
 import { deleteEvent, fetchEvents } from '../firebase'
 import { buildCalendarUrls, downloadIcs } from '../utils/calendarLinks'
 import { formatDisplayDate, formatDisplayTime } from '../utils/eventDateTime'
-import { isAdminRole } from '../utils/permissions'
+import { formatEventLocation } from '../utils/eventLocation'
+import { canManageEvents } from '../utils/permissions'
 
 const parseEventTime = (time) => {
   if (!time) return '00:00'
@@ -138,7 +139,7 @@ function EventCalendar() {
 
   const searchPlaceholder = 'Search by title or type...'
   const selectedCalendarUrls = selectedCalendarEvent ? buildCalendarUrls(selectedCalendarEvent) : null
-  const canEditEvents = isAdminRole(currentUser)
+  const canEditEvents = canManageEvents(currentUser)
 
   const openCalendarEvent = (event) => {
     setShowModalCalendarOptions(false)
@@ -151,6 +152,8 @@ function EventCalendar() {
   }
 
   const handleDeleteEvent = async (event) => {
+    if (!canEditEvents) return
+
     const confirmed = window.confirm(`Delete "${event.title}"? This cannot be undone.`)
     if (!confirmed) return
 
@@ -314,7 +317,7 @@ function EventCalendar() {
               </div>
               <div>
                 <p className="label">Location</p>
-                <p>{selectedCalendarEvent.locationName}</p>
+                <p>{formatEventLocation(selectedCalendarEvent)}</p>
               </div>
               <div>
                 <p className="label">Points</p>

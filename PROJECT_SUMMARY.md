@@ -1,25 +1,31 @@
-# PROJECT SUMMARY — Presence (UNC AKPsi)
+# Project Summary: Presence
 
-Purpose
+Presence helps UNC AKPsi manage chapter attendance and member engagement.
 
-Presence is designed to streamline chapter operations: track member attendance, simplify check-ins, surface engagement analytics, and provide admins tools for member management and excusal handling.
+## Core Features
 
-Core features
+- Firebase Email/Password authentication
+- Approved-member access through Firestore `members`
+- Role-based access for member, admin, sub-admin, and super-admin users
+- Event creation and editing with Google Places location lookup
+- Location-verified check-ins for Chapter, Service, and Professional Development events
+- Excusal request submission and standards review
+- Leaderboard visibility controls
+- Member management with CSV import
+- Operations, standards, and analytics dashboards
 
-- Secure Google Sign-In with UNC domain enforcement and admin allowlist
-- Firestore data model with `members`, `events`, `checkIns`, `excusalRequests`, and `appSettings`
-- Member check-in flow with duplicate prevention and location verification
-- Admin dashboard with computed engagement scores and at-risk member identification
-- Analytics dashboard with charts for attendance trends, event-type breakdown, and engagement distribution
-- Admin tools for member CRUD, event management, and excusal approvals
+## Current Data Model
 
-Next steps (priority)
+- `members`: approved roster, roles, profile details, class/family, status
+- `events`: event details, type, time, points, required status, location metadata
+- `checkIns`: member attendance records and points awarded
+- `excusalRequests`: submitted and reviewed excusals
+- `appSettings`: app-level settings such as leaderboard visibility
 
-1. Polish Analytics charts and add filtering (date ranges, pledge class)
-2. Add CSV export and scheduled reports for officers
-3. Harden security rules for Firestore (enforce role-based access)
-4. Add unit/integration tests and CI pipeline
+## Production Notes
 
-Contact
-
-For questions about design decisions or to request new features, open an issue or contact the project owner in the repo.
+- Production behavior should use real Firebase/Firestore data.
+- Mock/demo data should not appear in production.
+- Firebase config is loaded from Vite environment variables in `src/lib/firebase.js`.
+- Google Places uses `VITE_GOOGLE_MAPS_API_KEY` when configured.
+- Firestore security rules should be reviewed before public deployment.

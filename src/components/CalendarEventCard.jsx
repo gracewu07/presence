@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { formatDisplayDate, formatDisplayTime } from '../utils/eventDateTime'
 import { buildCalendarUrls, downloadIcs } from '../utils/calendarLinks'
+import { formatEventLocation } from '../utils/eventLocation'
 
 function CalendarEventCard({ event, canEdit = false, onDelete }) {
   const [showCalendarOptions, setShowCalendarOptions] = useState(false)
@@ -10,6 +11,7 @@ function CalendarEventCard({ event, canEdit = false, onDelete }) {
   const displayDate = formatDisplayDate(event.eventDate || event.date) || event.date
   const startTime = formatDisplayTime(event.startTime)
   const endTime = formatDisplayTime(event.endTime)
+  const location = formatEventLocation(event)
 
   return (
     <article className={`card calendar-card event-surface event-surface--${typeClass}`}>
@@ -24,7 +26,7 @@ function CalendarEventCard({ event, canEdit = false, onDelete }) {
           <span className="calendar-card__date">{displayDate}</span>
           <h3>{event.title}</h3>
           <p className="calendar-card__meta">{startTime} - {endTime}</p>
-          <p className="calendar-card__meta">{event.locationName}</p>
+          <p className="calendar-card__meta">{location}</p>
           <p className="calendar-card__meta">{event.points} points</p>
         </div>
       </div>

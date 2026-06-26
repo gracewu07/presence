@@ -13,6 +13,7 @@ import {
   orderBy,
   limit,
   serverTimestamp,
+  onSnapshot,
 } from './lib/firebase'
 import { getMemberDocumentId, normalizeMemberEmail } from './services/memberService'
 
@@ -126,6 +127,17 @@ export async function fetchCheckIns() {
   const checkInsRef = collection(db, 'checkIns')
   const snapshot = await getDocs(checkInsRef)
   return snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
+}
+
+export function subscribeToCheckIns(onNext, onError) {
+  const checkInsRef = collection(db, 'checkIns')
+  return onSnapshot(
+    checkInsRef,
+    (snapshot) => {
+      onNext(snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })))
+    },
+    onError
+  )
 }
 
 export async function fetchMemberCheckIns(memberId) {

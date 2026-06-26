@@ -1,10 +1,12 @@
 import { formatDisplayDate, formatDisplayTime } from '../utils/eventDateTime'
+import { formatEventLocation } from '../utils/eventLocation'
 
 function EventCard({ event }) {
   const typeClass = event.eventType.toLowerCase().replace(/[^a-z0-9]+/g, '-')
   const displayDate = formatDisplayDate(event.eventDate || event.date) || event.date
   const startTime = formatDisplayTime(event.startTime)
   const endTime = formatDisplayTime(event.endTime)
+  const location = formatEventLocation(event)
 
   return (
     <article className={`card event-card event-surface event-surface--${typeClass}`}>
@@ -17,7 +19,7 @@ function EventCard({ event }) {
         </div>
         <h3>{event.title}</h3>
         <p className="event-card__meta">{displayDate} · {startTime} - {endTime}</p>
-        <p className="event-card__location">{event.locationName}</p>
+        <p className="event-card__location">{location}</p>
       </div>
     </article>
   )

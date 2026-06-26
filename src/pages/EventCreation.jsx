@@ -1,8 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Button from '../components/Button'
 import { EVENT_TYPES } from '../constants/eventTypes'
-import { UNC_EVENT_LOCATIONS } from '../constants/locations'
 import { useAuth } from '../context/AuthContext'
 import { createEvent, fetchEventById, updateEvent } from '../firebase'
 import {
@@ -13,6 +12,7 @@ import {
   TIME_OPTIONS,
   toDateInputValue,
 } from '../utils/eventDateTime'
+import { hasGoogleMapsApiKey, loadGoogleMapsPlaces } from '../utils/googleMaps'
 
 const initialFormState = {
   title: '',
@@ -22,6 +22,9 @@ const initialFormState = {
   endTime: '',
   locationId: '',
   locationName: '',
+  formattedAddress: '',
+  placeId: '',
+  room: '',
   latitude: '',
   longitude: '',
   radiusMeters: '',
@@ -30,18 +33,120 @@ const initialFormState = {
   description: '',
 }
 
+const CHECK_IN_EVENT_TYPES = ['chapter', 'service', 'professional-development']
+const EVENT_CREATION_SUCCESS_KEY = 'presence:event-creation-success'
+
+const normalizeEventType = (eventType = '') => eventType.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+
+const requiresCheckInLocation = (eventType) => CHECK_IN_EVENT_TYPES.includes(normalizeEventType(eventType))
+
+const isTbdLocation = (locationName = '') => locationName.trim().toLowerCase() === 'tbd'
+
 function EventCreation() {
   const { eventId } = useParams()
   const isEditing = Boolean(eventId)
   const [form, setForm] = useState(initialFormState)
   const [errors, setErrors] = useState({})
-  const [successMessage, setSuccessMessage] = useState('')
+  const [successMessage, setSuccessMessage] = useState(() => {
+    const storedSuccessMessage = window.sessionStorage.getItem(EVENT_CREATION_SUCCESS_KEY)
+    if (storedSuccessMessage) {
+      window.sessionStorage.removeItem(EVENT_CREATION_SUCCESS_KEY)
+    }
+    return storedSuccessMessage || ''
+  })
   const [loading, setLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const [placesStatus, setPlacesStatus] = useState(() => hasGoogleMapsApiKey() ? 'loading' : 'missing-key')
+  const [placesMessage, setPlacesMessage] = useState(() =>
+    hasGoogleMapsApiKey()
+      ? 'Loading Google location search...'
+      : 'Add VITE_GOOGLE_MAPS_API_KEY to enable Google location search.'
+  )
+  const locationSearchInputRef = useRef(null)
+  const autocompleteRef = useRef(null)
   const navigate = useNavigate()
   const { currentUser } = useAuth()
-  const selectedLocation = UNC_EVENT_LOCATIONS.find((location) => location.id === form.locationId)
-  const showCustomLocationFields = form.locationId === 'custom'
+  const locationRequired = requiresCheckInLocation(form.eventType)
+  const hasTbdLocation = isTbdLocation(form.locationName)
+
+  const clearLocationErrors = useCallback(() => {
+    setErrors((current) => {
+      const remainingErrors = { ...current }
+      delete remainingErrors.locationName
+      delete remainingErrors.latitude
+      delete remainingErrors.longitude
+      delete remainingErrors.radiusMeters
+      return remainingErrors
+    })
+  }, [])
+
+  const handleChange = (key) => (event) => {
+    const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value
+    setForm((current) => ({ ...current, [key]: value }))
+  }
+
+  const applyGooglePlace = useCallback((place) => {
+    const location = place?.geometry?.location
+    const latitude = typeof location?.lat === 'function' ? location.lat() : location?.lat
+    const longitude = typeof location?.lng === 'function' ? location.lng() : location?.lng
+
+    if (latitude == null || longitude == null) {
+      return false
+    }
+
+    clearLocationErrors()
+    setErrorMessage('')
+    setForm((current) => ({
+      ...current,
+      locationId: 'google',
+      locationName: place.name || place.formatted_address || locationSearchInputRef.current?.value || '',
+      formattedAddress: place.formatted_address || '',
+      placeId: place.place_id || '',
+      latitude: String(latitude),
+      longitude: String(longitude),
+      radiusMeters: current.radiusMeters || '100',
+    }))
+    return true
+  }, [clearLocationErrors])
+
+  const fetchPlaceDetails = useCallback((placeId) => new Promise((resolve, reject) => {
+    if (!window.google?.maps?.places || !placeId) {
+      reject(new Error('Google Places details are unavailable.'))
+      return
+    }
+
+    const detailNode = document.createElement('div')
+    const placesService = new window.google.maps.places.PlacesService(detailNode)
+    placesService.getDetails(
+      {
+        placeId,
+        fields: ['place_id', 'name', 'formatted_address', 'geometry'],
+      },
+      (placeDetails, status) => {
+        if (status === window.google.maps.places.PlacesServiceStatus.OK && placeDetails) {
+          resolve(placeDetails)
+          return
+        }
+
+        reject(new Error(`Unable to load place details: ${status}`))
+      }
+    )
+  }), [])
+
+  const handleGooglePlaceSelect = useCallback(async (place) => {
+    if (applyGooglePlace(place)) return
+
+    if (place?.place_id) {
+      try {
+        const placeDetails = await fetchPlaceDetails(place.place_id)
+        if (applyGooglePlace(placeDetails)) return
+      } catch (error) {
+        console.error('Unable to fetch selected place details:', error)
+      }
+    }
+
+    setErrorMessage('That place does not include coordinates. Please choose another Google suggestion.')
+  }, [applyGooglePlace, fetchPlaceDetails])
 
   useEffect(() => {
     if (!eventId) return
@@ -57,16 +162,17 @@ function EventCreation() {
           return
         }
 
-        const matchingLocation = UNC_EVENT_LOCATIONS.find((location) => location.name === existingEvent.locationName)
-
         setForm({
           title: existingEvent.title || '',
           eventType: existingEvent.eventType || '',
           date: toDateInputValue(existingEvent.eventDate || existingEvent.date),
           startTime: formatDisplayTime(existingEvent.startTime || ''),
           endTime: formatDisplayTime(existingEvent.endTime || ''),
-          locationId: matchingLocation?.id || 'custom',
+          locationId: existingEvent.placeId ? 'google' : existingEvent.locationId || '',
           locationName: existingEvent.locationName || '',
+          formattedAddress: existingEvent.formattedAddress || '',
+          placeId: existingEvent.placeId || '',
+          room: existingEvent.room || '',
           latitude: existingEvent.latitude != null ? String(existingEvent.latitude) : '',
           longitude: existingEvent.longitude != null ? String(existingEvent.longitude) : '',
           radiusMeters: existingEvent.radiusMeters != null ? String(existingEvent.radiusMeters) : '',
@@ -85,72 +191,86 @@ function EventCreation() {
     loadEvent()
   }, [eventId])
 
-  const handleChange = (key) => (event) => {
-    const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value
-    setForm((current) => ({ ...current, [key]: value }))
+  useEffect(() => {
+    let isMounted = true
+    let placeListener = null
+
+    if (!locationSearchInputRef.current || !hasGoogleMapsApiKey()) return undefined
+
+    loadGoogleMapsPlaces()
+      .then((google) => {
+        if (!isMounted || !locationSearchInputRef.current) return
+
+        const autocomplete = new google.maps.places.Autocomplete(locationSearchInputRef.current, {
+          fields: ['place_id', 'name', 'formatted_address', 'geometry'],
+        })
+
+        autocompleteRef.current = autocomplete
+        placeListener = autocomplete.addListener('place_changed', () => {
+          const place = autocomplete.getPlace()
+          handleGooglePlaceSelect(place)
+        })
+        setPlacesStatus('ready')
+        setPlacesMessage('')
+      })
+      .catch((error) => {
+        console.error('Google location search failed:', error)
+        if (!isMounted) return
+        setPlacesStatus('error')
+        setPlacesMessage('Google location search is unavailable right now.')
+      })
+
+    return () => {
+      isMounted = false
+      if (placeListener?.remove) placeListener.remove()
+    }
+  }, [handleGooglePlaceSelect])
+
+  const handleSetTbdLocation = () => {
+    clearLocationErrors()
+    setErrorMessage('')
+    if (locationSearchInputRef.current) {
+      locationSearchInputRef.current.value = 'TBD'
+    }
+    setForm((current) => ({
+      ...current,
+      locationId: 'tbd',
+      locationName: 'TBD',
+      formattedAddress: '',
+      placeId: '',
+      latitude: '',
+      longitude: '',
+      radiusMeters: '',
+    }))
   }
 
-  const handleLocationChange = (event) => {
-    const locationId = event.target.value
-    const selectedLocationOption = UNC_EVENT_LOCATIONS.find((location) => location.id === locationId)
-
-    setErrors((current) => {
-      const remainingErrors = { ...current }
-      delete remainingErrors.locationName
-      delete remainingErrors.latitude
-      delete remainingErrors.longitude
-      delete remainingErrors.radiusMeters
-      return remainingErrors
-    })
-
-    setForm((current) => {
-      if (!selectedLocationOption) {
-        return {
-          ...current,
-          locationId,
-          locationName: locationId === 'custom' ? current.locationName : '',
-          latitude: locationId === 'custom' ? current.latitude : '',
-          longitude: locationId === 'custom' ? current.longitude : '',
-          radiusMeters: locationId === 'custom' ? current.radiusMeters : '',
-        }
-      }
-
-      return {
-        ...current,
-        locationId,
-        locationName: selectedLocationOption.name,
-        latitude: String(selectedLocationOption.latitude),
-        longitude: String(selectedLocationOption.longitude),
-        radiusMeters: String(selectedLocationOption.radiusMeters),
-      }
-    })
-  }
-
-  const validate = () => {
+  const validate = (formToValidate = form) => {
     const nextErrors = {}
+    const needsLocation = requiresCheckInLocation(formToValidate.eventType)
+    const isTbd = isTbdLocation(formToValidate.locationName)
 
-    if (!form.title.trim()) nextErrors.title = 'Title is required.'
-    if (!form.eventType) nextErrors.eventType = 'Event type is required.'
-    if (!form.date) nextErrors.date = 'Date is required.'
-    if (!form.startTime) nextErrors.startTime = 'Start time is required.'
-    if (!form.endTime) nextErrors.endTime = 'End time is required.'
-    if (!form.locationName.trim()) nextErrors.locationName = 'Location is required.'
+    if (!formToValidate.title.trim()) nextErrors.title = 'Title is required.'
+    if (!formToValidate.eventType) nextErrors.eventType = 'Event type is required.'
+    if (!formToValidate.date) nextErrors.date = 'Date is required.'
+    if (!formToValidate.startTime) nextErrors.startTime = 'Start time is required.'
+    if (!formToValidate.endTime) nextErrors.endTime = 'End time is required.'
+    if (needsLocation && !formToValidate.locationName.trim()) nextErrors.locationName = 'Location is required.'
 
-    const latitude = parseFloat(form.latitude)
-    if (Number.isNaN(latitude)) nextErrors.latitude = 'Latitude must be a valid number.'
+    const latitude = parseFloat(formToValidate.latitude)
+    if (needsLocation && !isTbd && Number.isNaN(latitude)) nextErrors.latitude = 'Latitude must be a valid number.'
 
-    const longitude = parseFloat(form.longitude)
-    if (Number.isNaN(longitude)) nextErrors.longitude = 'Longitude must be a valid number.'
+    const longitude = parseFloat(formToValidate.longitude)
+    if (needsLocation && !isTbd && Number.isNaN(longitude)) nextErrors.longitude = 'Longitude must be a valid number.'
 
-    const radius = Number(form.radiusMeters)
-    if (Number.isNaN(radius) || radius <= 0) nextErrors.radiusMeters = 'Radius must be greater than 0 meters.'
+    const radius = Number(formToValidate.radiusMeters)
+    if (needsLocation && !isTbd && (Number.isNaN(radius) || radius <= 0)) nextErrors.radiusMeters = 'Radius must be greater than 0 meters.'
 
-    const points = Number(form.points)
+    const points = Number(formToValidate.points)
     if (Number.isNaN(points) || points < 0) nextErrors.points = 'Points must be 0 or greater.'
 
-    if (form.startTime && form.endTime) {
-      const startValue = parseEventTimeMinutes(form.startTime)
-      const endValue = parseEventTimeMinutes(form.endTime)
+    if (formToValidate.startTime && formToValidate.endTime) {
+      const startValue = parseEventTimeMinutes(formToValidate.startTime)
+      const endValue = parseEventTimeMinutes(formToValidate.endTime)
       if (endValue <= startValue) nextErrors.endTime = 'End time must be after start time.'
     }
 
@@ -158,32 +278,103 @@ function EventCreation() {
     return Object.keys(nextErrors).length === 0
   }
 
+  const geocodeLocationText = (locationText) => new Promise((resolve, reject) => {
+    if (!window.google?.maps?.Geocoder) {
+      reject(new Error('Google geocoding is unavailable.'))
+      return
+    }
+
+    const geocoder = new window.google.maps.Geocoder()
+    geocoder.geocode({ address: locationText }, (results, status) => {
+      const firstResult = results?.[0]
+      const location = firstResult?.geometry?.location
+      const latitude = typeof location?.lat === 'function' ? location.lat() : location?.lat
+      const longitude = typeof location?.lng === 'function' ? location.lng() : location?.lng
+
+      if (status === 'OK' && latitude != null && longitude != null) {
+        resolve({
+          locationName: firstResult.name || locationText,
+          formattedAddress: firstResult.formatted_address || locationText,
+          placeId: firstResult.place_id || '',
+          latitude: String(latitude),
+          longitude: String(longitude),
+        })
+        return
+      }
+
+      reject(new Error(`Unable to geocode location: ${status}`))
+    })
+  })
+
+  const resolveLocationBeforeSubmit = async () => {
+    const needsLocation = requiresCheckInLocation(form.eventType)
+    const isTbd = isTbdLocation(form.locationName)
+    const hasCoordinates = !Number.isNaN(parseFloat(form.latitude)) && !Number.isNaN(parseFloat(form.longitude))
+
+    if (!needsLocation || isTbd || hasCoordinates) return form
+
+    const locationText = locationSearchInputRef.current?.value?.trim() || form.locationName.trim()
+    if (!locationText) return form
+
+    try {
+      await loadGoogleMapsPlaces()
+      const geocodedLocation = await geocodeLocationText(locationText)
+      const nextForm = {
+        ...form,
+        locationId: 'google',
+        locationName: geocodedLocation.locationName,
+        formattedAddress: geocodedLocation.formattedAddress,
+        placeId: geocodedLocation.placeId,
+        latitude: geocodedLocation.latitude,
+        longitude: geocodedLocation.longitude,
+        radiusMeters: form.radiusMeters || '100',
+      }
+
+      setForm(nextForm)
+      clearLocationErrors()
+      return nextForm
+    } catch (error) {
+      console.error('Unable to resolve event location before save:', error)
+      setErrorMessage('Unable to find coordinates for that address. Please choose a Google suggestion or set the location as TBD.')
+      return form
+    }
+  }
+
   const handleSubmit = async (event) => {
     event.preventDefault()
     setSuccessMessage('')
     setErrorMessage('')
 
-    if (!validate()) return
+    const formToSave = await resolveLocationBeforeSubmit()
+
+    if (!validate(formToSave)) return
     if (!currentUser?.email) {
       setErrorMessage('You must be signed in to save an event.')
       return
     }
 
-    const eventStartDate = buildEventDateTime(form.date, form.startTime)
-    const eventEndDate = buildEventDateTime(form.date, form.endTime)
+    const eventStartDate = buildEventDateTime(formToSave.date, formToSave.startTime)
+    const eventEndDate = buildEventDateTime(formToSave.date, formToSave.endTime)
+    const latitude = parseFloat(formToSave.latitude)
+    const longitude = parseFloat(formToSave.longitude)
+    const radiusMeters = Number(formToSave.radiusMeters)
     const savedEvent = {
-      title: form.title.trim(),
-      eventType: form.eventType,
-      date: formatDisplayDate(form.date),
-      startTime: formatDisplayTime(form.startTime),
-      endTime: formatDisplayTime(form.endTime),
-      locationName: form.locationName.trim(),
-      latitude: parseFloat(form.latitude),
-      longitude: parseFloat(form.longitude),
-      radiusMeters: Number(form.radiusMeters),
-      points: Number(form.points),
-      required: form.required,
-      description: form.description.trim(),
+      title: formToSave.title.trim(),
+      eventType: formToSave.eventType,
+      date: formatDisplayDate(formToSave.date),
+      startTime: formatDisplayTime(formToSave.startTime),
+      endTime: formatDisplayTime(formToSave.endTime),
+      locationName: formToSave.locationName.trim(),
+      formattedAddress: formToSave.formattedAddress.trim(),
+      placeId: formToSave.placeId.trim(),
+      room: formToSave.room.trim(),
+      locationId: formToSave.locationId,
+      latitude: Number.isNaN(latitude) ? null : latitude,
+      longitude: Number.isNaN(longitude) ? null : longitude,
+      radiusMeters: Number.isNaN(radiusMeters) || radiusMeters <= 0 ? null : radiusMeters,
+      points: Number(formToSave.points),
+      required: formToSave.required,
+      description: formToSave.description.trim(),
       eventDate: eventStartDate.toISOString(),
       endDate: eventEndDate.toISOString(),
     }
@@ -197,7 +388,9 @@ function EventCreation() {
         await updateEvent(eventId, savedEvent)
       } else {
         await createEvent(savedEvent)
-        setForm(initialFormState)
+        window.sessionStorage.setItem(EVENT_CREATION_SUCCESS_KEY, `Event "${savedEvent.title}" created successfully.`)
+        window.location.reload()
+        return
       }
 
       setSuccessMessage(`Event "${savedEvent.title}" ${isEditing ? 'updated' : 'created'} successfully.`)
@@ -282,57 +475,62 @@ function EventCreation() {
           </label>
         </div>
 
-        <label>
-          Location
-          <select value={form.locationId} onChange={handleLocationChange}>
-            <option value="">Select location</option>
-            {UNC_EVENT_LOCATIONS.map((location) => (
-              <option key={location.id} value={location.id}>{location.name}</option>
-            ))}
-            <option value="custom">Custom location</option>
-          </select>
-          {errors.locationName && <span className="field-error">{errors.locationName}</span>}
-        </label>
-
-        {selectedLocation && (
-          <div className="location-autofill-summary" aria-live="polite">
-            <div><span>Latitude</span><strong>{selectedLocation.latitude}</strong></div>
-            <div><span>Longitude</span><strong>{selectedLocation.longitude}</strong></div>
-            <div><span>Radius</span><strong>{selectedLocation.radiusMeters}m</strong></div>
-          </div>
-        )}
-
-        {showCustomLocationFields && (
-          <>
-            <label>
-              Location name
-              <input type="text" value={form.locationName} onChange={handleChange('locationName')} placeholder="Campus Hall" />
-              {errors.locationName && <span className="field-error">{errors.locationName}</span>}
-            </label>
-
-            <div className="form-row">
-              <label>
-                Latitude
-                <input type="number" step="0.000001" value={form.latitude} onChange={handleChange('latitude')} placeholder="35.9086" />
-                {errors.latitude && <span className="field-error">{errors.latitude}</span>}
-              </label>
-              <label>
-                Longitude
-                <input type="number" step="0.000001" value={form.longitude} onChange={handleChange('longitude')} placeholder="-79.0469" />
-                {errors.longitude && <span className="field-error">{errors.longitude}</span>}
-              </label>
+        <div className="location-search-block">
+          <label className="places-search-field">
+            Enter location
+            <input
+              ref={locationSearchInputRef}
+              type="text"
+              placeholder="Search for a building, business, or address"
+              autoComplete="off"
+            />
+          </label>
+          {placesMessage && (
+            <p className={`places-status places-status--${placesStatus}`}>
+              {placesMessage}
+            </p>
+          )}
+          {form.placeId && (
+            <div className="google-place-summary" aria-live="polite">
+              <div>
+                <span>Selected place</span>
+                <strong>{form.locationName}</strong>
+              </div>
+              {form.formattedAddress && <p>{form.formattedAddress}</p>}
             </div>
+          )}
+          {hasTbdLocation && (
+            <div className="google-place-summary" aria-live="polite">
+              <div>
+                <span>Selected place</span>
+                <strong>TBD</strong>
+              </div>
+              <p>Location will be added later.</p>
+            </div>
+          )}
+          <button type="button" className="button button--secondary location-tbd-button" onClick={handleSetTbdLocation}>
+            Set Location as TBD
+          </button>
+        </div>
 
-            <label>
-              Allowed radius (meters)
-              <input type="number" min="1" value={form.radiusMeters} onChange={handleChange('radiusMeters')} placeholder="100" />
-              {errors.radiusMeters && <span className="field-error">{errors.radiusMeters}</span>}
-            </label>
-          </>
+        {form.locationName && (
+          <label>
+            Room
+            <input type="text" value={form.room} onChange={handleChange('room')} placeholder="Room 101, auditorium, lobby..." />
+          </label>
         )}
 
-        {!showCustomLocationFields && (errors.latitude || errors.longitude || errors.radiusMeters) && (
-          <div className="form-error">Select a location or choose Custom location to enter coordinates manually.</div>
+        <div className="sr-only" aria-hidden="true">
+          <input type="hidden" value={form.locationName} readOnly />
+          <input type="hidden" value={form.latitude} readOnly />
+          <input type="hidden" value={form.longitude} readOnly />
+          <input type="hidden" value={form.radiusMeters} readOnly />
+        </div>
+
+        {locationRequired && (errors.latitude || errors.longitude || errors.radiusMeters) && (
+          <div className="form-error">
+            Choose a Google place so check-in coordinates can be saved.
+          </div>
         )}
 
         <div className="form-row">

@@ -1,3 +1,5 @@
+import { formatEventLocation } from './eventLocation'
+
 const padDate = (value) => value.toString().padStart(2, '0')
 
 export const toCalendarDate = (date) => {
@@ -10,7 +12,7 @@ export const buildCalendarUrls = (event) => {
   const end = toCalendarDate(event.endDate)
   const title = encodeURIComponent(event.title || '')
   const details = encodeURIComponent(event.description || '')
-  const location = encodeURIComponent(event.locationName || event.location || '')
+  const location = encodeURIComponent(formatEventLocation(event))
   const dates = `${start}/${end}`
 
   return {
@@ -31,7 +33,7 @@ export const downloadIcs = (event) => {
     `SUMMARY:${event.title || ''}`,
     `DTSTART:${start}`,
     `DTEND:${end}`,
-    `LOCATION:${event.locationName || event.location || ''}`,
+    `LOCATION:${formatEventLocation(event)}`,
     `DESCRIPTION:${event.description || ''}`,
     'END:VEVENT',
     'END:VCALENDAR',

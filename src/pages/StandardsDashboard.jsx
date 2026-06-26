@@ -10,7 +10,7 @@ import {
   recordExcusedChapterCheckIn,
   updateExcusalStatus,
 } from '../firebase'
-import { computeAttendanceMetricsForMember, computeEngagementScore, engagementCategory, isAtRisk } from '../utils/engagement'
+import { computeAttendanceMetricsForMember, computeRequirementRiskForMember } from '../utils/engagement'
 import { canReviewExcusals } from '../utils/permissions'
 
 const formatDate = (value) => {
@@ -96,9 +96,8 @@ function StandardsDashboard() {
 
     const memberMetrics = members.map((member) => {
       const metrics = computeAttendanceMetricsForMember(member.id, events, checkIns)
-      const score = computeEngagementScore(metrics)
-      const risk = isAtRisk({ ...metrics }, score)
-      return { member, metrics, score, risk }
+      const risk = computeRequirementRiskForMember(member, events, checkIns)
+      return { member, metrics, risk }
     })
 
     const avgAttendance = memberMetrics.reduce((sum, row) => sum + (row.metrics.overallRate || 0), 0) / memberMetrics.length || 0
@@ -109,7 +108,7 @@ function StandardsDashboard() {
 
   const pendingExcusals = excusals.filter((request) => request.status === 'pending')
   const reviewedExcusals = excusals.filter((request) => ['approved', 'denied'].includes(request.status))
-  const missedRequired = analytics.memberMetrics.reduce((sum, row) => sum + (row.metrics.missedRequiredCount || 0), 0)
+  const missedRequired = analytics.memberMetrics.reduce((sum, row) => sum + (row.risk.requiredChapter.missed || 0), 0)
 
   return (
     <section className="page standards-page">
@@ -117,7 +116,7 @@ function StandardsDashboard() {
         <div>
           <p className="eyebrow">VP of Standards</p>
           <h1>Standards Dashboard</h1>
-          <p className="muted">Attendance risk, required-event misses, and excusal review.</p>
+          <p className="muted">Requirement progress, required-event misses, and excusal review.</p>
         </div>
       </div>
 
@@ -146,6 +145,10 @@ function StandardsDashboard() {
 
           <div className="section-block">
             <h2>Members At Risk</h2>
+            <p className="muted standards-risk-explainer">
+              At risk means a member is behind on attendance requirements based on events that have already happened:
+              required Chapter events, 2 Service events, and 3 Professional Development events.
+            </p>
             {analytics.atRisk.length > 0 ? (
               <div className="standards-risk-list">
                 {analytics.atRisk.map((row) => (
@@ -156,21 +159,21 @@ function StandardsDashboard() {
                     </div>
                     <div className="standards-risk-card__metrics">
                       <div>
-                        <span>Attendance</span>
-                        <strong>{Math.round(row.metrics.overallRate)}%</strong>
+                        <span>Required Chapter</span>
+                        <strong>{row.risk.requiredChapter.attended}/{row.risk.requiredChapter.expected}</strong>
                       </div>
                       <div>
-                        <span>Required</span>
-                        <strong>{Math.round(row.metrics.requiredRate)}%</strong>
+                        <span>Service</span>
+                        <strong>{row.risk.service.attended}/{row.risk.service.required}</strong>
                       </div>
                       <div>
-                        <span>Missed</span>
-                        <strong>{row.metrics.missedRequiredCount || 0}</strong>
+                        <span>Professional Dev</span>
+                        <strong>{row.risk.professionalDevelopment.attended}/{row.risk.professionalDevelopment.required}</strong>
                       </div>
                       <div>
-                        <span>Engagement</span>
-                        <strong>{row.score}</strong>
-                        <em>{engagementCategory(row.score)}</em>
+                        <span>Why flagged</span>
+                        <strong>{row.risk.reasons.length}</strong>
+                        <em>{row.risk.reasons.join('; ')}</em>
                       </div>
                     </div>
                   </div>

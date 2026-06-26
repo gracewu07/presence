@@ -5,6 +5,7 @@ import Button from '../components/Button'
 import * as memberService from '../services/memberService'
 import { isAllowedEmail } from '../config/authConfig'
 import { FAMILIES, PLEDGE_CLASSES } from '../constants/memberGroups'
+import { fetchCheckIns } from '../firebase'
 import {
   ROLE_ADMIN,
   ROLE_MEMBER,
@@ -97,6 +98,7 @@ function MemberManagement() {
   const canViewMembers = canViewApprovedMembers(currentUser)
   const canManage = canManageMembers(currentUser)
   const [members, setMembers] = useState([])
+  const [checkIns, setCheckIns] = useState([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState({ name: '', email: '', pledgeClass: '', family: '', role: ROLE_MEMBER })
@@ -110,8 +112,15 @@ function MemberManagement() {
     async function load() {
       setLoading(true)
       try {
-        const m = await memberService.fetchMembers()
+        const [m, c] = await Promise.all([
+          memberService.fetchMembers(),
+          fetchCheckIns().catch((error) => {
+            console.error('Failed to load check-ins for member points', error)
+            return []
+          }),
+        ])
         setMembers(m)
+        setCheckIns(c)
       } catch (err) {
         console.error('Failed to load members', err)
       } finally {
@@ -241,7 +250,23 @@ function MemberManagement() {
 
   const invalidCsvRows = csvRows.filter((row) => row.errors.length > 0)
   const validCsvRows = csvRows.filter((row) => row.errors.length === 0)
-  const visibleMembers = canManage ? members : members.filter((member) => member.accessStatus === 'approved')
+  const pointTotalsByMember = checkIns.reduce((totals, checkIn) => {
+    const memberId = (checkIn.memberEmail || checkIn.memberId || '').trim().toLowerCase()
+    if (!memberId) return totals
+
+    totals.set(memberId, (totals.get(memberId) || 0) + Number(checkIn.pointsAwarded ?? 0))
+    return totals
+  }, new Map())
+  const membersWithLivePoints = members.map((member) => {
+    const memberId = (member.email || member.id || '').trim().toLowerCase()
+    return {
+      ...member,
+      totalPoints: pointTotalsByMember.get(memberId) || 0,
+    }
+  })
+  const visibleMembers = canManage
+    ? membersWithLivePoints
+    : membersWithLivePoints.filter((member) => member.accessStatus === 'approved')
 
   return (
     <section className="page member-management-page">
