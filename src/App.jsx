@@ -104,6 +104,14 @@ function App() {
             }
           />
           <Route
+            path="admin/events/:eventId/edit"
+            element={
+              <AdminRoute user={currentUser}>
+                <EventCreation />
+              </AdminRoute>
+            }
+          />
+          <Route
             path="admin/standards"
             element={
               <AdminRoute user={currentUser} requireStandards>

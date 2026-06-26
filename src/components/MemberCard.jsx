@@ -3,6 +3,8 @@ import { getGroupClassName } from '../constants/memberGroups'
 import { getRoleLabel } from '../utils/permissions'
 
 function MemberCard({ member }) {
+  const pointValue = Number(member.totalPoints ?? member.points ?? 0)
+
   return (
     <article className="card member-card">
       <div>
@@ -11,18 +13,20 @@ function MemberCard({ member }) {
         <div className="member-group-badges">
           {member.pledgeClass && (
             <span className={`member-group-badge member-group-badge--class-${getGroupClassName(member.pledgeClass)}`}>
-              {member.pledgeClass}
+              <span className="member-group-badge__label">Class</span>
+              <strong>{member.pledgeClass}</strong>
             </span>
           )}
           {member.family && (
             <span className={`member-group-badge member-group-badge--family-${getGroupClassName(member.family)}`}>
-              {member.family}
+              <span className="member-group-badge__label">Family</span>
+              <strong>{member.family}</strong>
             </span>
           )}
         </div>
       </div>
       <div>
-        <p>{member.points} pts</p>
+        <p>{pointValue} pts</p>
         <StatusBadge label={member.status} status={member.status} />
       </div>
     </article>

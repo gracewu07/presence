@@ -30,7 +30,7 @@ export function computeAttendanceMetricsForMember(memberId, events = [], checkIn
   const attendedEventIds = new Set(memberCheckIns.map((c) => c.eventId))
 
   // Overall attendance rate: percent of all eligible events attended
-  const eligibleEvents = events.filter((e) => true) // placeholder for eligibility rules
+  const eligibleEvents = events
   const overallRate = percent(attendedEventIds.size, eligibleEvents.length)
 
   // Required event attendance rate

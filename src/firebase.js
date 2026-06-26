@@ -9,6 +9,7 @@ import {
   where,
   getDocs,
   updateDoc,
+  deleteDoc,
   orderBy,
   limit,
   serverTimestamp,
@@ -68,6 +69,19 @@ export async function createEvent(eventData) {
     ...eventData,
     createdAt: serverTimestamp(),
   })
+}
+
+export async function updateEvent(eventId, eventData) {
+  const eventRef = doc(db, 'events', eventId)
+  await updateDoc(eventRef, {
+    ...eventData,
+    updatedAt: serverTimestamp(),
+  })
+}
+
+export async function deleteEvent(eventId) {
+  const eventRef = doc(db, 'events', eventId)
+  await deleteDoc(eventRef)
 }
 
 export async function fetchEvents() {
@@ -130,14 +144,24 @@ export async function fetchMemberCheckIns(memberId) {
 export async function fetchMemberExcusalRequests(memberId) {
   const requestsRef = collection(db, 'excusalRequests')
   const normalizedMemberId = normalizeMemberEmail(memberId)
-  const byMemberIdQuery = query(requestsRef, where('memberId', '==', normalizedMemberId), orderBy('submittedAt', 'desc'))
-  const byEmailQuery = query(requestsRef, where('memberEmail', '==', normalizedMemberId), orderBy('submittedAt', 'desc'))
-  const [byMemberIdSnapshot, byEmailSnapshot] = await Promise.all([getDocs(byMemberIdQuery), getDocs(byEmailQuery)])
+  const byMemberIdQuery = query(requestsRef, where('memberId', '==', normalizedMemberId))
+  const byEmailQuery = query(requestsRef, where('memberEmail', '==', normalizedMemberId))
   const docsById = new Map()
-  ;[byMemberIdSnapshot, byEmailSnapshot].forEach((snapshot) => {
-    snapshot.docs.forEach((docSnap) => docsById.set(docSnap.id, { id: docSnap.id, ...docSnap.data() }))
+
+  for (const memberQuery of [byMemberIdQuery, byEmailQuery]) {
+    try {
+      const snapshot = await getDocs(memberQuery)
+      snapshot.docs.forEach((docSnap) => docsById.set(docSnap.id, { id: docSnap.id, ...docSnap.data() }))
+    } catch (error) {
+      console.error('Unable to load member excusal request query:', error)
+    }
+  }
+
+  return Array.from(docsById.values()).sort((first, second) => {
+    const firstDate = first.submittedAt?.toDate ? first.submittedAt.toDate() : new Date(first.submittedAt || 0)
+    const secondDate = second.submittedAt?.toDate ? second.submittedAt.toDate() : new Date(second.submittedAt || 0)
+    return secondDate - firstDate
   })
-  return Array.from(docsById.values())
 }
 
 export async function fetchExcusalRequests() {
@@ -195,13 +219,14 @@ export async function fetchLeaderboard(limitCount = 10) {
 export async function submitExcusalRequest(requestData) {
   const requestsRef = collection(db, 'excusalRequests')
   const memberEmail = normalizeMemberEmail(requestData.memberEmail || requestData.memberId)
-  await addDoc(requestsRef, {
+  const docRef = await addDoc(requestsRef, {
     ...requestData,
     memberId: memberEmail,
     memberEmail,
     status: 'pending',
     submittedAt: serverTimestamp(),
   })
+  return docRef.id
 }
 
 export async function updateExcusalStatus(requestId, status, reviewNotes = '') {
@@ -211,6 +236,34 @@ export async function updateExcusalStatus(requestId, status, reviewNotes = '') {
     reviewedAt: serverTimestamp(),
     reviewNotes,
   })
+}
+
+export async function recordExcusedChapterCheckIn(excusalRequest) {
+  const memberEmail = normalizeMemberEmail(excusalRequest.memberEmail || excusalRequest.memberId)
+  if (!memberEmail || !excusalRequest.eventId) return { created: false, reason: 'missing-data' }
+
+  const event = await fetchEventById(excusalRequest.eventId)
+  const eventType = String(event?.eventType || '').trim().toLowerCase()
+  if (eventType !== 'chapter') return { created: false, reason: 'not-chapter' }
+
+  const existingCheckIn = await findCheckInByEventAndMember(excusalRequest.eventId, memberEmail)
+  if (existingCheckIn) return { created: false, reason: 'already-checked-in' }
+
+  await recordCheckIn({
+    eventId: excusalRequest.eventId,
+    memberId: memberEmail,
+    memberEmail,
+    memberName: excusalRequest.memberName || memberEmail,
+    timestamp: new Date().toISOString(),
+    distanceMeters: null,
+    locationVerified: false,
+    excusalApproved: true,
+    excusalRequestId: excusalRequest.id,
+    pointsAwarded: Number(event?.points ?? 0),
+    eventType: event?.eventType || 'Chapter',
+  })
+
+  return { created: true, reason: 'excusal-approved' }
 }
 
 export async function fetchAppSettings() {

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import StatusBadge from '../components/StatusBadge'
 import Button from '../components/Button'
-import { fetchExcusalRequests, fetchEvents, submitExcusalRequest } from '../firebase'
+import { fetchEvents, fetchMemberExcusalRequests, submitExcusalRequest } from '../firebase'
 
 const mergeEventsById = (...eventLists) => {
   const eventsById = new Map()
@@ -20,7 +20,15 @@ const mergeEventsById = (...eventLists) => {
 const formatDate = (value) => {
   if (!value) return 'Not submitted yet'
   const date = value?.toDate ? value.toDate() : new Date(value)
-  return Number.isNaN(date.getTime()) ? 'Not submitted yet' : date.toLocaleString()
+  return Number.isNaN(date.getTime())
+    ? 'Not submitted yet'
+    : date.toLocaleString([], {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      })
 }
 
 const formatFileSize = (size) => {
@@ -40,22 +48,31 @@ function ExcusalRequests() {
   const [formMessage, setFormMessage] = useState(null)
 
   useEffect(() => {
+    if (!memberId) return
+
     async function load() {
       setLoading(true)
       try {
-        const [allRequests, allEvents] = await Promise.all([fetchExcusalRequests(), fetchEvents()])
-        setRequests(allRequests)
+        const allEvents = await fetchEvents()
         setEvents(mergeEventsById(allEvents))
-      } catch (err) {
-        console.error('Failed to load excusal data', err)
+      } catch (eventError) {
+        console.error('Failed to load excusal events', eventError)
         setEvents([])
+      }
+
+      try {
+        const memberExcusals = await fetchMemberExcusalRequests(memberId)
+        setRequests(memberExcusals)
+      } catch (requestError) {
+        console.error('Failed to load member excusal requests', requestError)
+        setRequests([])
       } finally {
         setLoading(false)
       }
     }
 
     load()
-  }, [])
+  }, [memberId])
 
   const memberRequests = useMemo(() => {
     const memberEmail = currentUser?.email?.trim().toLowerCase()
@@ -64,41 +81,66 @@ function ExcusalRequests() {
       return request.memberId === memberId || requestEmail === memberEmail
     })
   }, [requests, currentUser, memberId])
+  const requiredEvents = useMemo(() => events.filter((event) => event.required), [events])
 
   async function handleSubmit(e) {
     e.preventDefault()
     if (!form.eventId || !form.reason) return
 
+    const formElement = e.currentTarget
     setSaving(true)
     setFormMessage(null)
     try {
       const selectedEvent = events.find((event) => event.id === form.eventId)
+      if (!selectedEvent?.required) {
+        setFormMessage({ type: 'error', text: 'Excusals can only be submitted for required events.' })
+        return
+      }
+      const memberEmail = currentUser?.email?.trim().toLowerCase() || memberId || ''
+      const memberName = currentUser?.name || currentUser?.displayName || memberEmail || 'Member'
       const attachment = form.attachment
         ? {
-            name: form.attachment.name,
-            type: form.attachment.type,
-            size: form.attachment.size,
+            name: form.attachment.name || '',
+            type: form.attachment.type || '',
+            size: form.attachment.size || 0,
           }
         : null
 
-      await submitExcusalRequest({
-        memberId,
-        memberName: currentUser.name,
-        memberEmail: memberId,
+      const submittedRequest = {
+        memberId: memberEmail,
+        memberName,
+        memberEmail,
         eventId: form.eventId,
         eventTitle: selectedEvent?.title || '',
         reason: form.reason,
         attachment,
-      })
+      }
+      const submittedId = await submitExcusalRequest(submittedRequest)
 
       setForm({ eventId: '', reason: '', attachment: null })
-      e.currentTarget.reset()
+      formElement.reset()
       setFormMessage({ type: 'success', text: 'Excusal submitted.' })
-      const allRequests = await fetchExcusalRequests()
-      setRequests(allRequests)
+      setRequests((current) => [
+        {
+          id: submittedId,
+          ...submittedRequest,
+          status: 'pending',
+          submittedAt: new Date().toISOString(),
+        },
+        ...current.filter((request) => request.id !== submittedId),
+      ])
+      try {
+        const memberExcusals = await fetchMemberExcusalRequests(memberId)
+        setRequests(memberExcusals)
+      } catch (refreshError) {
+        console.error('Failed to refresh member excusal requests', refreshError)
+      }
     } catch (err) {
       console.error('Failed to submit excusal', err)
-      setFormMessage({ type: 'error', text: 'Unable to submit excusal. Please try again.' })
+      setFormMessage({
+        type: 'error',
+        text: err?.message ? `Unable to submit excusal: ${err.message}` : 'Unable to submit excusal. Please try again.',
+      })
     } finally {
       setSaving(false)
     }
@@ -120,7 +162,7 @@ function ExcusalRequests() {
         <div className="card excusal-panel">
           <div className="excusal-panel__header">
             <h3>Submit an excusal</h3>
-            <p className="muted">Choose the event, add a short reason, and attach proof if needed.</p>
+            <p className="muted">Choose a required event, add a short reason, and attach proof if needed.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="excusal-form">
@@ -128,14 +170,15 @@ function ExcusalRequests() {
               <span>Event</span>
               <span className="excusal-select-wrap">
                 <select value={form.eventId} onChange={(e) => setForm((state) => ({ ...state, eventId: e.target.value }))}>
-                  <option value="">Select an event</option>
-                  {events.map((event) => (
+                  <option value="">Select a required event</option>
+                  {requiredEvents.map((event) => (
                     <option key={event.id} value={event.id}>
                       {event.title} - {event.eventType}
                     </option>
                   ))}
                 </select>
               </span>
+              {requiredEvents.length === 0 && <small>No required events are available for excusal requests.</small>}
             </label>
 
             <label className="excusal-field">

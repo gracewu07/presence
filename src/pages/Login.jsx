@@ -41,6 +41,7 @@ function Login() {
     const result = await resetPassword(email)
 
     if (result?.sent) {
+      setPassword('')
       setMessage('Password reset email sent. Check your UNC inbox.')
     }
   }

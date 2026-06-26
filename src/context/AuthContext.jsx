@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import {
+  changeCurrentPassword,
   createAccountWithPassword,
   deleteCurrentAuthUser,
   onAuthStateChanged,
@@ -146,7 +147,6 @@ export function AuthProvider({ children }) {
     setLoading(true)
 
     try {
-      await fetchApprovedMemberForEmail(email)
       await sendPasswordReset(email)
       return { sent: true }
     } catch (err) {
@@ -155,7 +155,18 @@ export function AuthProvider({ children }) {
     } finally {
       setLoading(false)
     }
-  }, [fetchApprovedMemberForEmail])
+  }, [])
+
+  const changePassword = useCallback(async (currentPassword, newPassword) => {
+    setError(null)
+    try {
+      await changeCurrentPassword(currentPassword, newPassword)
+      return { changed: true }
+    } catch (err) {
+      setError(err.message || 'Unable to change password.')
+      return { changed: false, message: err.message || 'Unable to change password.' }
+    }
+  }, [])
 
   const signOut = useCallback(async () => {
     setError(null)
@@ -186,7 +197,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ currentUser, loading, error, signIn, createAccount, resetPassword, signOut, updateProfilePhoto, updateProfilePreferences }}>
+    <AuthContext.Provider value={{ currentUser, loading, error, signIn, createAccount, resetPassword, changePassword, signOut, updateProfilePhoto, updateProfilePreferences }}>
       {children}
     </AuthContext.Provider>
   )

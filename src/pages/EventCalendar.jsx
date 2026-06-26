@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import CalendarEventCard from '../components/CalendarEventCard'
 import { EVENT_TYPE_FILTERS } from '../constants/eventTypes'
-import { fetchEvents } from '../firebase'
+import { useAuth } from '../context/AuthContext'
+import { deleteEvent, fetchEvents } from '../firebase'
 import { buildCalendarUrls, downloadIcs } from '../utils/calendarLinks'
+import { formatDisplayDate, formatDisplayTime } from '../utils/eventDateTime'
+import { isAdminRole } from '../utils/permissions'
 
 const parseEventTime = (time) => {
   if (!time) return '00:00'
@@ -59,6 +63,7 @@ const buildMonthDays = (monthIndex, year) => {
 }
 
 function EventCalendar() {
+  const { currentUser } = useAuth()
   const [view, setView] = useState('list')
   const [filter, setFilter] = useState('All')
   const [search, setSearch] = useState('')
@@ -133,6 +138,7 @@ function EventCalendar() {
 
   const searchPlaceholder = 'Search by title or type...'
   const selectedCalendarUrls = selectedCalendarEvent ? buildCalendarUrls(selectedCalendarEvent) : null
+  const canEditEvents = isAdminRole(currentUser)
 
   const openCalendarEvent = (event) => {
     setShowModalCalendarOptions(false)
@@ -142,6 +148,22 @@ function EventCalendar() {
   const closeCalendarEvent = () => {
     setShowModalCalendarOptions(false)
     setSelectedCalendarEvent(null)
+  }
+
+  const handleDeleteEvent = async (event) => {
+    const confirmed = window.confirm(`Delete "${event.title}"? This cannot be undone.`)
+    if (!confirmed) return
+
+    try {
+      await deleteEvent(event.id)
+      setEvents((current) => current.filter((item) => item.id !== event.id))
+      if (selectedCalendarEvent?.id === event.id) {
+        closeCalendarEvent()
+      }
+    } catch (deleteError) {
+      console.error('Failed to delete event:', deleteError)
+      setError('Unable to delete event. Please try again later.')
+    }
   }
 
   return (
@@ -202,7 +224,12 @@ function EventCalendar() {
         <div className="grid grid--cards">
           {selectedEvents.length > 0 ? (
             selectedEvents.map((event) => (
-              <CalendarEventCard key={event.id} event={event} />
+              <CalendarEventCard
+                key={event.id}
+                event={event}
+                canEdit={canEditEvents}
+                onDelete={handleDeleteEvent}
+              />
             ))
           ) : (
             <div className="empty-state">
@@ -279,11 +306,11 @@ function EventCalendar() {
             <div className="calendar-modal__details">
               <div>
                 <p className="label">Date</p>
-                <p>{selectedCalendarEvent.date}</p>
+                <p>{formatDisplayDate(selectedCalendarEvent.eventDate || selectedCalendarEvent.date) || selectedCalendarEvent.date}</p>
               </div>
               <div>
                 <p className="label">Time</p>
-                <p>{selectedCalendarEvent.startTime} - {selectedCalendarEvent.endTime}</p>
+                <p>{formatDisplayTime(selectedCalendarEvent.startTime)} - {formatDisplayTime(selectedCalendarEvent.endTime)}</p>
               </div>
               <div>
                 <p className="label">Location</p>
@@ -295,6 +322,20 @@ function EventCalendar() {
               </div>
             </div>
             <div className="calendar-card__actions calendar-modal__actions">
+              {canEditEvents && (
+                <>
+                  <Link className="button button--secondary calendar-add-button" to={`/admin/events/${selectedCalendarEvent.id}/edit`}>
+                    Edit Event
+                  </Link>
+                  <button
+                    type="button"
+                    className="button button--secondary button--danger calendar-add-button"
+                    onClick={() => handleDeleteEvent(selectedCalendarEvent)}
+                  >
+                    Delete Event
+                  </button>
+                </>
+              )}
               <button
                 type="button"
                 className="button button--secondary calendar-add-button"

@@ -22,19 +22,20 @@ const typeClassForEvent = (eventType) => {
 }
 
 const getEventDateValue = (event) => {
+  const value = event.eventDate
+  if (value?.toDate) return value.toDate()
+  if (value) {
+    const date = new Date(value)
+    if (!Number.isNaN(date.getTime())) return date
+  }
+
   if (event.date) {
     const date = event.date.includes('-')
       ? new Date(event.date)
       : new Date(`${event.date}, ${new Date().getFullYear()} ${event.startTime || '00:00'}`)
     return Number.isNaN(date.getTime()) ? null : date
   }
-
-  const value = event.eventDate
-  if (value?.toDate) return value.toDate()
-  if (!value) return null
-
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? null : date
+  return null
 }
 
 const uniqueEventCount = (checkIns) => new Set(checkIns.map((checkIn) => checkIn.eventId).filter(Boolean)).size

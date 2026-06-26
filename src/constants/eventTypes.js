@@ -4,6 +4,7 @@ export const EVENT_TYPES = [
   'Professional Development',
   'Social',
   'Recruitment',
+  'Other',
 ]
 
 export const EVENT_TYPE_FILTERS = ['All', ...EVENT_TYPES]

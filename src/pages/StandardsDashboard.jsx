@@ -2,14 +2,29 @@ import { useEffect, useMemo, useState } from 'react'
 import Button from '../components/Button'
 import StatusBadge from '../components/StatusBadge'
 import { useAuth } from '../context/AuthContext'
-import { fetchMembers, fetchEvents, fetchCheckIns, fetchExcusalRequests, updateExcusalStatus } from '../firebase'
+import {
+  fetchMembers,
+  fetchEvents,
+  fetchCheckIns,
+  fetchExcusalRequests,
+  recordExcusedChapterCheckIn,
+  updateExcusalStatus,
+} from '../firebase'
 import { computeAttendanceMetricsForMember, computeEngagementScore, engagementCategory, isAtRisk } from '../utils/engagement'
 import { canReviewExcusals } from '../utils/permissions'
 
 const formatDate = (value) => {
   if (!value) return 'Not submitted yet'
   const date = value?.toDate ? value.toDate() : new Date(value)
-  return Number.isNaN(date.getTime()) ? 'Not submitted yet' : date.toLocaleString()
+  return Number.isNaN(date.getTime())
+    ? 'Not submitted yet'
+    : date.toLocaleString([], {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      })
 }
 
 function StandardsDashboard() {
@@ -54,12 +69,19 @@ function StandardsDashboard() {
     setReviewMessage(null)
 
     try {
+      const request = excusals.find((excusal) => excusal.id === requestId)
       await updateExcusalStatus(requestId, status, status === 'approved' ? 'Approved by Standards' : 'Denied by Standards')
-      const updatedRequests = await fetchExcusalRequests()
+      if (status === 'approved' && request) {
+        await recordExcusedChapterCheckIn(request)
+      }
+      const [updatedRequests, updatedCheckIns] = await Promise.all([fetchExcusalRequests(), fetchCheckIns()])
       setExcusals(updatedRequests)
+      setCheckIns(updatedCheckIns)
       setReviewMessage({
         type: 'success',
-        text: `Excusal ${status}.`,
+        text: status === 'approved'
+          ? 'Excusal approved. Chapter event excusals now count as check-ins.'
+          : 'Excusal denied.',
       })
     } catch (err) {
       console.error('Failed to update excusal request', err)
@@ -86,6 +108,7 @@ function StandardsDashboard() {
   }, [members, events, checkIns])
 
   const pendingExcusals = excusals.filter((request) => request.status === 'pending')
+  const reviewedExcusals = excusals.filter((request) => ['approved', 'denied'].includes(request.status))
   const missedRequired = analytics.memberMetrics.reduce((sum, row) => sum + (row.metrics.missedRequiredCount || 0), 0)
 
   return (
@@ -124,20 +147,35 @@ function StandardsDashboard() {
           <div className="section-block">
             <h2>Members At Risk</h2>
             {analytics.atRisk.length > 0 ? (
-              analytics.atRisk.map((row) => (
-                <div key={row.member.id} className="card request-card">
-                  <div>
-                    <h3>{row.member.name}</h3>
-                    <p className="muted">{row.member.email}</p>
-                    <p className="muted">Attendance: {Math.round(row.metrics.overallRate)}% · Required: {Math.round(row.metrics.requiredRate)}%</p>
-                    <p className="muted">Missed required: {row.metrics.missedRequiredCount || 0}</p>
+              <div className="standards-risk-list">
+                {analytics.atRisk.map((row) => (
+                  <div key={row.member.id} className="card request-card standards-risk-card">
+                    <div className="standards-risk-card__identity">
+                      <h3>{row.member.name}</h3>
+                      <p className="muted">{row.member.email}</p>
+                    </div>
+                    <div className="standards-risk-card__metrics">
+                      <div>
+                        <span>Attendance</span>
+                        <strong>{Math.round(row.metrics.overallRate)}%</strong>
+                      </div>
+                      <div>
+                        <span>Required</span>
+                        <strong>{Math.round(row.metrics.requiredRate)}%</strong>
+                      </div>
+                      <div>
+                        <span>Missed</span>
+                        <strong>{row.metrics.missedRequiredCount || 0}</strong>
+                      </div>
+                      <div>
+                        <span>Engagement</span>
+                        <strong>{row.score}</strong>
+                        <em>{engagementCategory(row.score)}</em>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="label">Engagement</p>
-                    <p>{row.score} · {engagementCategory(row.score)}</p>
-                  </div>
-                </div>
-              ))
+                ))}
+              </div>
             ) : (
               <div className="empty-state">No members flagged as at risk.</div>
             )}
@@ -148,18 +186,20 @@ function StandardsDashboard() {
             {reviewMessage && (
               <p className={reviewMessage.type === 'error' ? 'form-error' : 'form-success'}>{reviewMessage.text}</p>
             )}
-            <div className="grid grid--cards">
+            <div className="standards-excusal-review-list">
               {pendingExcusals.length === 0 ? (
                 <div className="empty-state">No pending excusal requests.</div>
               ) : (
                 pendingExcusals.map((request) => (
-                  <div key={request.id} className="card request-card excusal-request-card excusal-request-card--pending">
-                    <div>
+                  <div key={request.id} className="card request-card excusal-request-card standards-excusal-card excusal-request-card--pending">
+                    <div className="excusal-request-card__content">
                       <div className="excusal-request-card__topline">
-                        <h3>{request.memberName}</h3>
+                        <div>
+                          <h3>{request.memberName || request.memberEmail || 'Member'}</h3>
+                          <p className="standards-excusal-card__event">{request.eventTitle || 'Event not listed'}</p>
+                        </div>
                         <StatusBadge label={request.status || 'pending'} status={request.status || 'pending'} />
                       </div>
-                      <p className="muted">{request.eventTitle}</p>
                       <div className="excusal-request-card__details">
                         <p><span>Submitted</span>{formatDate(request.submittedAt)}</p>
                         <p><span>Reason</span>{request.reason}</p>
@@ -168,19 +208,10 @@ function StandardsDashboard() {
                     </div>
                     {canReview && (
                       <div className="excusal-actions">
-                        <Button
-                          type="button"
-                          onClick={() => reviewExcusal(request.id, 'approved')}
-                          disabled={reviewingRequestId === request.id}
-                        >
+                        <Button type="button" onClick={() => reviewExcusal(request.id, 'approved')} disabled={reviewingRequestId === request.id}>
                           Approve
                         </Button>
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          onClick={() => reviewExcusal(request.id, 'denied')}
-                          disabled={reviewingRequestId === request.id}
-                        >
+                        <Button type="button" variant="secondary" onClick={() => reviewExcusal(request.id, 'denied')} disabled={reviewingRequestId === request.id}>
                           Deny
                         </Button>
                       </div>
@@ -190,6 +221,40 @@ function StandardsDashboard() {
               )}
             </div>
           </div>
+
+          {canReview && (
+            <div className="section-block">
+              <h2>Past Excusal Decisions</h2>
+              <div className="standards-excusal-review-list">
+                {reviewedExcusals.length === 0 ? (
+                  <div className="empty-state">No approved or denied excusal requests yet.</div>
+                ) : (
+                  reviewedExcusals.map((request) => (
+                    <div
+                      key={request.id}
+                      className={`card request-card excusal-request-card standards-excusal-card excusal-request-card--${request.status}`}
+                    >
+                      <div className="excusal-request-card__content">
+                        <div className="excusal-request-card__topline">
+                          <div>
+                            <h3>{request.memberName || request.memberEmail || 'Member'}</h3>
+                            <p className="standards-excusal-card__event">{request.eventTitle || 'Event not listed'}</p>
+                          </div>
+                          <StatusBadge label={request.status || 'pending'} status={request.status || 'pending'} />
+                        </div>
+                        <div className="excusal-request-card__details">
+                          <p><span>Submitted</span>{formatDate(request.submittedAt)}</p>
+                          <p><span>Reviewed</span>{formatDate(request.reviewedAt)}</p>
+                          <p><span>Reason</span>{request.reason}</p>
+                          {request.attachment?.name && <p><span>Attachment</span>{request.attachment.name}</p>}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
         </>
       )}
     </section>

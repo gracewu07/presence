@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Button from '../components/Button'
 import { useAuth } from '../context/AuthContext'
 import { getRoleLabel } from '../utils/permissions'
@@ -28,15 +28,13 @@ function preferencesForUser(user) {
   }
 }
 
-function Settings() {
-  const { currentUser, updateProfilePreferences } = useAuth()
+function SettingsForm({ currentUser, updateProfilePreferences, changePassword }) {
   const [preferences, setPreferences] = useState(() => preferencesForUser(currentUser))
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
   const [savingPreferences, setSavingPreferences] = useState(false)
+  const [savingPassword, setSavingPassword] = useState(false)
   const [message, setMessage] = useState(null)
-
-  useEffect(() => {
-    setPreferences(preferencesForUser(currentUser))
-  }, [currentUser])
+  const [passwordMessage, setPasswordMessage] = useState(null)
 
   const updatePreference = (field) => (event) => {
     const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value
@@ -62,6 +60,31 @@ function Settings() {
   const resetPreferences = () => {
     setPreferences(preferencesForUser(currentUser))
     setMessage({ type: 'success', text: 'Settings reset to your saved preferences.' })
+  }
+
+  const updatePasswordField = (field) => (event) => {
+    setPasswordForm((current) => ({ ...current, [field]: event.target.value }))
+  }
+
+  const savePassword = async () => {
+    setPasswordMessage(null)
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordMessage({ type: 'error', text: 'New passwords do not match.' })
+      return
+    }
+
+    setSavingPassword(true)
+    const result = await changePassword?.(passwordForm.currentPassword, passwordForm.newPassword)
+    setSavingPassword(false)
+
+    if (result?.changed) {
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
+      setPasswordMessage({ type: 'success', text: 'Password updated successfully.' })
+      return
+    }
+
+    setPasswordMessage({ type: 'error', text: result?.message || 'Unable to change password.' })
   }
 
   return (
@@ -163,6 +186,54 @@ function Settings() {
           </div>
         </div>
 
+        <div className="card settings-panel">
+          <div className="settings-panel__header">
+            <h2>Password</h2>
+            <p className="muted">Update the password you use to sign in to Presence.</p>
+          </div>
+
+          <div className="settings-field-grid">
+            <label className="settings-field">
+              <span>Current password</span>
+              <input
+                type="password"
+                value={passwordForm.currentPassword}
+                onChange={updatePasswordField('currentPassword')}
+                autoComplete="current-password"
+              />
+            </label>
+            <label className="settings-field">
+              <span>New password</span>
+              <input
+                type="password"
+                value={passwordForm.newPassword}
+                onChange={updatePasswordField('newPassword')}
+                autoComplete="new-password"
+              />
+            </label>
+            <label className="settings-field">
+              <span>Confirm new password</span>
+              <input
+                type="password"
+                value={passwordForm.confirmPassword}
+                onChange={updatePasswordField('confirmPassword')}
+                autoComplete="new-password"
+              />
+            </label>
+          </div>
+
+          {passwordMessage && (
+            <p className={`settings-message ${passwordMessage.type === 'error' ? 'error-message' : 'success-message'}`}>
+              {passwordMessage.text}
+            </p>
+          )}
+          <div className="settings-actions">
+            <Button type="button" variant="secondary" onClick={savePassword} disabled={savingPassword}>
+              {savingPassword ? 'Updating...' : 'Change Password'}
+            </Button>
+          </div>
+        </div>
+
         <div className="settings-footer">
           {message && (
             <p className={`settings-message ${message.type === 'error' ? 'error-message' : 'success-message'}`}>
@@ -180,6 +251,19 @@ function Settings() {
         </div>
       </form>
     </section>
+  )
+}
+
+function Settings() {
+  const { currentUser, updateProfilePreferences, changePassword } = useAuth()
+
+  return (
+    <SettingsForm
+      key={currentUser?.email || 'guest-settings'}
+      currentUser={currentUser}
+      updateProfilePreferences={updateProfilePreferences}
+      changePassword={changePassword}
+    />
   )
 }
 

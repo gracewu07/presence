@@ -2,6 +2,7 @@
 import Button from '../components/Button'
 import { useAuth } from '../context/AuthContext'
 import { fetchEvents, fetchMemberCheckIns, findCheckInByEventAndMember, recordCheckIn } from '../firebase'
+import { formatDisplayDate, formatDisplayTime } from '../utils/eventDateTime'
 import { haversineDistance } from '../utils/haversine'
 
 const parseDateTime = (date, time) => {
@@ -28,6 +29,8 @@ const parseDateTime = (date, time) => {
 }
 
 const canCheckIn = (event) => {
+  if (!event || !requiresCheckIn(event)) return false
+
   const now = new Date()
   const start = new Date(event.startDate)
   const end = new Date(event.endDate)
@@ -38,8 +41,13 @@ const canCheckIn = (event) => {
 
 const formatTime = (dateString) => new Date(dateString).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
 
+const normalizeEventType = (eventType = '') => eventType.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+
+const requiresCheckIn = (event) => !['social', 'recruitment'].includes(normalizeEventType(event?.eventType))
+
 const getCheckInState = (event) => {
   if (!event) return null
+  if (!requiresCheckIn(event)) return 'No check in'
   return canCheckIn(event) ? 'Check in now' : 'Upcoming'
 }
 
@@ -106,6 +114,11 @@ function MemberCheckIn() {
 
     if (!selectedEvent) {
       setMessage({ type: 'error', text: 'No upcoming event is available for check-in.' })
+      return
+    }
+
+    if (!requiresCheckIn(selectedEvent)) {
+      setMessage({ type: 'error', text: 'This event does not require check-in.' })
       return
     }
 
@@ -203,9 +216,11 @@ function MemberCheckIn() {
           <section className={`checkin-status-strip ${canCheckIn(selectedEvent) ? 'checkin-status-strip--ready' : ''}`}>
             <p>{checkInState}</p>
             <span>
-              {canCheckIn(selectedEvent)
-                ? `Open until ${formatTime(selectedEvent.endDate)}`
-                : `Opens at ${formatTime(new Date(selectedEvent.startDate).getTime() - 15 * 60 * 1000)}`}
+              {!requiresCheckIn(selectedEvent)
+                ? 'No check-in required'
+                : canCheckIn(selectedEvent)
+                  ? `Open until ${formatTime(selectedEvent.endDate)}`
+                  : `Opens at ${formatTime(new Date(selectedEvent.startDate).getTime() - 15 * 60 * 1000)}`}
             </span>
           </section>
 
@@ -225,11 +240,11 @@ function MemberCheckIn() {
             <div className="checkin-detail-grid">
               <div>
                 <p className="label">Date</p>
-                <p>{selectedEvent.date}</p>
+                <p>{formatDisplayDate(selectedEvent.eventDate || selectedEvent.date) || selectedEvent.date}</p>
               </div>
               <div>
                 <p className="label">Time</p>
-                <p>{selectedEvent.startTime} - {selectedEvent.endTime}</p>
+                <p>{formatDisplayTime(selectedEvent.startTime)} - {formatDisplayTime(selectedEvent.endTime)}</p>
               </div>
               <div>
                 <p className="label">Points</p>
@@ -253,9 +268,11 @@ function MemberCheckIn() {
                 ? 'Checking in…'
                 : checkedIn
                   ? 'Already Checked In'
-                  : canCheckIn(selectedEvent)
-                    ? 'Check In'
-                    : 'Check In Opens Soon'}
+                  : !requiresCheckIn(selectedEvent)
+                    ? 'No Check In'
+                    : canCheckIn(selectedEvent)
+                      ? 'Check In'
+                      : 'Check In Opens Soon'}
             </Button>
 
             {checkedIn && (

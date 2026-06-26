@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { fetchMembers, fetchEvents, fetchCheckIns, fetchUpcomingEvents, fetchExcusalRequests } from '../firebase'
+import { Link } from 'react-router-dom'
+import { deleteEvent, fetchMembers, fetchEvents, fetchCheckIns, fetchUpcomingEvents, fetchExcusalRequests } from '../firebase'
+import { formatDisplayDate } from '../utils/eventDateTime'
 import { ROLE_ADMIN, ROLE_MEMBER, ROLE_SUB_ADMIN, ROLE_SUPER_ADMIN, normalizeRole } from '../utils/permissions'
 
 function AdminDashboard() {
@@ -42,6 +44,19 @@ function AdminDashboard() {
   )
   const pendingExcusals = excusals.filter((request) => request.status === 'pending')
 
+  const handleDeleteEvent = async (event) => {
+    const confirmed = window.confirm(`Delete "${event.title}"? This cannot be undone.`)
+    if (!confirmed) return
+
+    try {
+      await deleteEvent(event.id)
+      setEvents((current) => current.filter((item) => item.id !== event.id))
+      setUpcoming((current) => current.filter((item) => item.id !== event.id))
+    } catch (error) {
+      console.error('Failed to delete event:', error)
+    }
+  }
+
   return (
     <section className="page admin-page">
       <div className="page__header">
@@ -83,9 +98,21 @@ function AdminDashboard() {
                   <div key={event.id} className="event-card">
                     <div>
                       <strong>{event.title}</strong>
-                      <p className="muted">{event.eventType} · {event.eventDate || event.date}</p>
+                      <p className="muted">{event.eventType} · {event.date || formatDisplayDate(event.eventDate)}</p>
                     </div>
-                    <div className="muted">{event.points} pts</div>
+                    <div className="admin-event-actions">
+                      <span className="muted">{event.points} pts</span>
+                      <Link className="button button--secondary button--compact" to={`/admin/events/${event.id}/edit`}>
+                        Edit
+                      </Link>
+                      <button
+                        type="button"
+                        className="button button--secondary button--danger button--compact"
+                        onClick={() => handleDeleteEvent(event)}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 ))
               )}

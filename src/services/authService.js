@@ -1,10 +1,13 @@
 import {
   auth,
   createUserWithEmailAndPassword,
+  EmailAuthProvider,
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
   deleteUser,
+  reauthenticateWithCredential,
   signOut,
+  updatePassword,
   firebaseOnAuthStateChanged,
 } from '../lib/firebase'
 import { isAllowedEmail } from '../config/authConfig'
@@ -36,6 +39,10 @@ function getAuthErrorMessage(error) {
       return 'Please choose a stronger password with at least 6 characters.'
     case 'auth/missing-password':
       return 'Please enter your password.'
+    case 'auth/requires-recent-login':
+      return 'Please sign out and sign back in before changing your password.'
+    case 'auth/too-many-requests':
+      return 'Too many attempts. Please wait a bit and try again.'
     default:
       return error?.message || 'Firebase sign-in failed. Please try again.'
   }
@@ -77,6 +84,30 @@ export async function sendPasswordReset(email) {
   try {
     await sendPasswordResetEmail(auth, normalizedEmail)
     return normalizedEmail
+  } catch (error) {
+    throw new Error(getAuthErrorMessage(error), { cause: error })
+  }
+}
+
+export async function changeCurrentPassword(currentPassword, newPassword) {
+  const user = auth.currentUser
+
+  if (!user?.email) {
+    throw new Error('You must be signed in to change your password.')
+  }
+
+  if (!currentPassword) {
+    throw new Error('Please enter your current password.')
+  }
+
+  if (!newPassword || newPassword.length < 6) {
+    throw new Error('Please choose a stronger password with at least 6 characters.')
+  }
+
+  try {
+    const credential = EmailAuthProvider.credential(user.email, currentPassword)
+    await reauthenticateWithCredential(user, credential)
+    await updatePassword(user, newPassword)
   } catch (error) {
     throw new Error(getAuthErrorMessage(error), { cause: error })
   }

@@ -1,10 +1,15 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { formatDisplayDate, formatDisplayTime } from '../utils/eventDateTime'
 import { buildCalendarUrls, downloadIcs } from '../utils/calendarLinks'
 
-function CalendarEventCard({ event }) {
+function CalendarEventCard({ event, canEdit = false, onDelete }) {
   const [showCalendarOptions, setShowCalendarOptions] = useState(false)
   const typeClass = event.eventType.replace(/\s+/g, '-').toLowerCase()
   const calendarUrls = buildCalendarUrls(event)
+  const displayDate = formatDisplayDate(event.eventDate || event.date) || event.date
+  const startTime = formatDisplayTime(event.startTime)
+  const endTime = formatDisplayTime(event.endTime)
 
   return (
     <article className={`card calendar-card event-surface event-surface--${typeClass}`}>
@@ -16,15 +21,29 @@ function CalendarEventCard({ event }) {
       </div>
       <div className="calendar-card__top">
         <div>
-          <span className="calendar-card__date">{event.date}</span>
+          <span className="calendar-card__date">{displayDate}</span>
           <h3>{event.title}</h3>
-          <p className="calendar-card__meta">{event.startTime} - {event.endTime}</p>
+          <p className="calendar-card__meta">{startTime} - {endTime}</p>
           <p className="calendar-card__meta">{event.locationName}</p>
           <p className="calendar-card__meta">{event.points} points</p>
         </div>
       </div>
 
       <div className="calendar-card__actions">
+        {canEdit && (
+          <>
+            <Link className="button button--secondary calendar-add-button" to={`/admin/events/${event.id}/edit`}>
+              Edit Event
+            </Link>
+            <button
+              type="button"
+              className="button button--secondary button--danger calendar-add-button"
+              onClick={() => onDelete?.(event)}
+            >
+              Delete Event
+            </button>
+          </>
+        )}
         <button
           type="button"
           className="button button--secondary calendar-add-button"
