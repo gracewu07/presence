@@ -8411,6 +8411,21 @@ textarea:focus,
     height: 28px !important;
   }
 
+  .event-creation-page .event-form input[type='date'] {
+    width: 100% !important;
+    max-width: 100%;
+    height: 56px;
+    min-height: 56px;
+    padding: 0 18px !important;
+    text-align: left;
+  }
+
+  .event-creation-page .event-form input[type='date']::-webkit-date-and-time-value {
+    width: 100%;
+    min-height: 1.6em;
+    text-align: left;
+  }
+
   .muted,
   .calendar-card__meta,
   .event-card__date,
