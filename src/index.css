@@ -33,8 +33,8 @@
   --event-tint-pd: #eefbf8;
   --event-accent-social: #9297cc;
   --event-tint-social: #eef0ff;
-  --event-accent-recruitment: #d48f5e;
-  --event-tint-recruitment: #f8f1eb;
+  --event-accent-recruitment: #eda451;
+  --event-tint-recruitment: #fff3e4;
   --event-accent-other: #e79abc;
   --event-tint-other: #fff0f7;
 }
@@ -5463,8 +5463,8 @@ textarea:focus,
 }
 
 .mobile-nav__icon {
-  width: 23px;
-  height: 23px;
+  width: 31px;
+  height: 31px;
 }
 
 .event-surface,
@@ -6423,6 +6423,7 @@ body {
 .button--secondary,
 .calendar-chip,
 .calendar-toggle .button,
+.calendar-options a,
 .calendar-options button,
 .csv-upload__button,
 .excusal-upload__button {
@@ -6434,9 +6435,31 @@ body {
 .button:hover,
 .calendar-chip:hover,
 .calendar-toggle .button:hover,
+.calendar-options a:hover,
 .calendar-options button:hover,
 .more-link-card:hover {
   background: var(--ui-blue-soft) !important;
+}
+
+.calendar-options a,
+.calendar-options button {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 0 !important;
+  font-weight: 400 !important;
+  outline: 0;
+  text-decoration: none;
+}
+
+.calendar-options button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.calendar-options a:focus-visible,
+.calendar-options button:focus-visible {
+  outline: 3px solid rgba(147, 223, 242, 0.32);
+  outline-offset: 2px;
 }
 
 input,
@@ -6479,6 +6502,24 @@ textarea:focus,
 .excusal-upload:focus-within {
   border-color: var(--ui-blue) !important;
   outline: 4px solid rgba(147, 223, 242, 0.26) !important;
+}
+
+.event-creation-page .event-form input[type='date'] {
+  display: block;
+  min-height: 50px;
+  padding: 0 18px;
+  text-align: left;
+  line-height: normal;
+}
+
+.event-creation-page .event-form input[type='date']::-webkit-date-and-time-value {
+  min-height: 1.4em;
+  margin: 0;
+  text-align: left;
+}
+
+.event-creation-page .event-form input[type='date']::-webkit-calendar-picker-indicator {
+  margin-left: auto;
 }
 
 .navbar {
@@ -6753,6 +6794,7 @@ textarea:focus,
 
 .navbar__brand {
   min-width: 0;
+  text-decoration: none;
 }
 
 .navbar__logo {
@@ -6790,6 +6832,20 @@ textarea:focus,
   white-space: nowrap;
 }
 
+.navbar__profile-link {
+  max-width: 160px;
+  overflow: hidden;
+  color: var(--ui-muted);
+  font-weight: 650;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.navbar__profile-link:hover {
+  color: var(--ui-navy);
+}
+
 @media (max-width: 767px) {
   .navbar {
     display: flex !important;
@@ -6799,7 +6855,8 @@ textarea:focus,
     display: none !important;
   }
 
-  .navbar__meta span {
+  .navbar__meta span,
+  .navbar__profile-link {
     max-width: 140px;
   }
 }
@@ -8298,5 +8355,34 @@ textarea:focus,
 
   .standards-risk-card__metrics {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .mobile-nav__icon {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  .muted,
+  .calendar-card__meta,
+  .event-card__date,
+  .event-card__location {
+    font-size: 0.94rem;
+  }
+
+  .eyebrow,
+  .event-card__type,
+  .calendar-card__tag,
+  .calendar-month-event span,
+  .checkin-detail-grid .label,
+  .more-link-card p.muted,
+  .field-error,
+  .form-error,
+  .form-success,
+  .member-management-page .member-group-badge__label,
+  .recent-checkin-card__meta,
+  .standards-risk-card__meta {
+    font-size: 0.86rem;
   }
 }

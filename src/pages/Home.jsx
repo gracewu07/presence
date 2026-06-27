@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import EventCard from '../components/EventCard'
 import StatCard from '../components/StatCard'
 import { fetchCheckIns, fetchEvents } from '../firebase'
@@ -89,6 +90,14 @@ function Home() {
 
   useEffect(() => {
     async function loadHomeData() {
+      if (!currentUser) {
+        setEvents([])
+        setMemberStats(calculateRequirementBlurbs([], [], null))
+        setError(null)
+        setLoading(false)
+        return
+      }
+
       setLoading(true)
       setError(null)
       try {
@@ -118,6 +127,31 @@ function Home() {
     loadHomeData()
   }, [currentUser])
   const firstName = currentUser ? getMemberFirstName(currentUser) : 'Presence Member'
+
+  if (!currentUser) {
+    return (
+      <section className="page home-page">
+        <div className="page__header">
+          <div>
+            <p className="eyebrow">Home</p>
+            <h1>Welcome to Presence</h1>
+            <p className="muted">Sign in to check in, view events, and track points for AKPsi.</p>
+          </div>
+        </div>
+
+        <div className="section-block">
+          <div className="section-heading">
+            <h2>Upcoming events</h2>
+            <p>Events happening in the next week.</p>
+          </div>
+          <div className="empty-state">
+            <p>Sign in to view events.</p>
+            <Link className="button button--primary" to="/login">Sign In</Link>
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section className="page home-page">

@@ -117,9 +117,9 @@ function Navbar({ currentUser }) {
   return (
     <>
       <header className="navbar">
-        <div className="navbar__brand">
+        <NavLink to="/" className="navbar__brand" aria-label="Go to home">
           <img src={akpsiLogo} alt="AKPsi UNC" className="navbar__logo" />
-        </div>
+        </NavLink>
 
         <nav className="navbar__nav" aria-label="Primary navigation">
           {links.map((link) => (
@@ -131,7 +131,9 @@ function Navbar({ currentUser }) {
 
         <div className="navbar__meta">
           {currentUser ? (
-            <span>{currentUser.name}</span>
+            <NavLink to="/profile" className="navbar__profile-link">
+              {currentUser.name}
+            </NavLink>
           ) : (
             <NavLink to="/login" className="button button--primary navbar__action">
               Sign In
