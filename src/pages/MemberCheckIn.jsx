@@ -58,6 +58,14 @@ const CHECK_IN_EVENT_TYPES = ['chapter', 'service', 'professional-development']
 
 const requiresCheckIn = (event) => CHECK_IN_EVENT_TYPES.includes(normalizeEventType(event?.eventType))
 
+const hasValidCheckInLocation = (event) => {
+  const latitude = Number(event?.latitude)
+  const longitude = Number(event?.longitude)
+  const radiusMeters = Number(event?.radiusMeters)
+
+  return Number.isFinite(latitude) && Number.isFinite(longitude) && Number.isFinite(radiusMeters) && radiusMeters > 0
+}
+
 const getCheckInState = (event) => {
   if (!event) return null
   if (!requiresCheckIn(event)) return 'No check in'
@@ -140,6 +148,14 @@ function MemberCheckIn() {
       return
     }
 
+    if (!hasValidCheckInLocation(selectedEvent)) {
+      setMessage({
+        type: 'error',
+        text: 'Check-in is unavailable because this event does not have a verified location. Please contact an admin.',
+      })
+      return
+    }
+
     if (!navigator.geolocation) {
       setMessage({ type: 'error', text: 'Your browser does not support geolocation.' })
       return
@@ -174,9 +190,12 @@ function MemberCheckIn() {
 
       const userLat = position.coords.latitude
       const userLon = position.coords.longitude
-      const distance = haversineDistance(userLat, userLon, selectedEvent.latitude, selectedEvent.longitude)
+      const eventLatitude = Number(selectedEvent.latitude)
+      const eventLongitude = Number(selectedEvent.longitude)
+      const eventRadius = Number(selectedEvent.radiusMeters)
+      const distance = haversineDistance(userLat, userLon, eventLatitude, eventLongitude)
 
-      if (distance > selectedEvent.radiusMeters) {
+      if (distance > eventRadius) {
         setMessage({ type: 'error', text: 'You are too far away from the event location to check in.' })
         return
       }

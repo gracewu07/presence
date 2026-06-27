@@ -24,7 +24,7 @@ function getAuthErrorMessage(error) {
     case 'auth/operation-not-allowed':
       return 'Firebase email/password sign-in is not enabled. Enable Email/Password in Firebase Authentication.'
     case 'auth/unauthorized-domain':
-      return 'This app URL is not authorized in Firebase Authentication. Add localhost to Authentication > Settings > Authorized domains.'
+      return 'This app URL is not authorized in Firebase Authentication. Add your Vercel or custom domain to Authentication > Settings > Authorized domains.'
     case 'auth/invalid-email':
       return 'Please enter a valid UNC email ending in @unc.edu.'
     case 'auth/network-request-failed':

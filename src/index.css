@@ -6519,11 +6519,13 @@ textarea:focus,
 
 .mobile-nav {
   min-height: calc(68px + env(safe-area-inset-bottom));
+  padding-bottom: calc(14px + env(safe-area-inset-bottom));
   border-top: 1px solid var(--ui-border) !important;
   background: rgba(255, 255, 255, 0.98) !important;
 }
 
 .mobile-nav__link {
+  align-self: start;
   color: #a5adb7;
 }
 
