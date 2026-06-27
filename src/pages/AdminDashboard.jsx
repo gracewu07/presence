@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import LoadingState from '../components/LoadingState'
 import { deleteEvent, fetchMembers, fetchEvents, fetchCheckIns, fetchUpcomingEvents, fetchExcusalRequests } from '../firebase'
 import { formatDisplayDate } from '../utils/eventDateTime'
 import { useAuth } from '../context/AuthContext'
@@ -93,7 +94,7 @@ function AdminDashboard() {
       </div>
 
       {loading ? (
-        <div className="empty-state">Loading admin data...</div>
+        <LoadingState message="Loading admin data..." compact />
       ) : (
         <>
           <div className="grid grid--stats">

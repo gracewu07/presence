@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import LoadingState from '../components/LoadingState'
 import { fetchMembers, fetchEvents, fetchCheckIns, subscribeToCheckIns } from '../firebase'
 import { computeAttendanceMetricsForMember, computeEngagementScore } from '../utils/engagement'
 
@@ -421,7 +422,7 @@ export default function AnalyticsDashboard() {
     ]
   }, [attendanceByEvent, checkIns, events, members])
 
-  if (loading) return <div className="page page--loading">Loading analytics…</div>
+  if (loading) return <LoadingState message="Loading analytics..." />
 
   const renderEmptyChartNote = (message) => <p className="analytics-empty-chart-note">{message}</p>
 

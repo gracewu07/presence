@@ -1,5 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
 import Button from '../components/Button'
+import LoadingState from '../components/LoadingState'
 import { useAuth } from '../context/AuthContext'
 import { fetchEvents, fetchMemberCheckIns, findCheckInByEventAndMember, recordCheckIn } from '../firebase'
 import { formatDisplayDate, formatDisplayTime } from '../utils/eventDateTime'
@@ -242,7 +243,7 @@ function MemberCheckIn() {
       </div>
 
       {loading ? (
-        <div className="empty-state">Loading event…</div>
+        <LoadingState message="Loading event..." compact />
       ) : selectedEvent ? (
         <div className="checkin-focus">
           <section className={`checkin-status-strip ${canCheckIn(selectedEvent) ? 'checkin-status-strip--ready' : ''}`}>

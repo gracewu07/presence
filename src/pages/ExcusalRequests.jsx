@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import StatusBadge from '../components/StatusBadge'
 import Button from '../components/Button'
+import LoadingState from '../components/LoadingState'
 import { fetchEvents, fetchMemberExcusalRequests, submitExcusalRequest } from '../firebase'
 
 const mergeEventsById = (...eventLists) => {
@@ -146,7 +147,7 @@ function ExcusalRequests() {
     }
   }
 
-  if (loading) return <div className="page page--loading">Loading excusal requests...</div>
+  if (loading) return <LoadingState message="Loading excusal requests..." />
 
   return (
     <section className="page excusals-page">

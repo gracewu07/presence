@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import MemberCard from '../components/MemberCard'
 import Button from '../components/Button'
+import LoadingState from '../components/LoadingState'
 import * as memberService from '../services/memberService'
 import { isAllowedEmail } from '../config/authConfig'
 import { FAMILIES, PLEDGE_CLASSES } from '../constants/memberGroups'
@@ -238,7 +239,7 @@ function MemberManagement() {
     }
   }
 
-  if (loading) return <div className="page page--loading">Loading members…</div>
+  if (loading) return <LoadingState message="Loading members..." />
 
   if (!canViewMembers) {
     return (

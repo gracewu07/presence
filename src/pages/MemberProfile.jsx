@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import StatusBadge from '../components/StatusBadge'
 import Button from '../components/Button'
+import LoadingState from '../components/LoadingState'
 import StatCard from '../components/StatCard'
 import { getGroupClassName } from '../constants/memberGroups'
 import {
@@ -166,7 +167,7 @@ function MemberProfile() {
   }, [allCheckIns, memberId, members, totalPoints])
 
   if (!currentUser || loading) {
-    return <div className="page page--loading">Loading profile...</div>
+    return <LoadingState message="Loading profile..." />
   }
 
   const missedRequired = events

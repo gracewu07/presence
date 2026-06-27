@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import EventCard from '../components/EventCard'
+import LoadingState from '../components/LoadingState'
 import StatCard from '../components/StatCard'
 import { fetchCheckIns, fetchEvents } from '../firebase'
 import { useAuth } from '../context/AuthContext'
@@ -175,7 +176,7 @@ function Home() {
           <p>Events happening in the next week.</p>
         </div>
         {loading ? (
-          <div className="empty-state">Loading events…</div>
+          <LoadingState message="Loading events..." compact />
         ) : error ? (
           <div className="empty-state form-error">{error}</div>
         ) : (

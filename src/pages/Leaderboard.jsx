@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import Button from '../components/Button'
+import LoadingState from '../components/LoadingState'
 import { fetchAppSettings, fetchCheckIns, updateLeaderboardVisibility } from '../firebase'
 import { getMemberDisplayName } from '../utils/memberDisplay'
 import { canEditLeaderboardVisibility, canViewFullLeaderboard } from '../utils/permissions'
@@ -116,7 +117,7 @@ function Leaderboard() {
 
       <div className="leaderboard-panel">
         {loading ? (
-          <div className="empty-state">Loading leaderboard…</div>
+          <LoadingState message="Loading leaderboard..." compact />
         ) : error ? (
           <div className="empty-state error-message">{error}</div>
         ) : (

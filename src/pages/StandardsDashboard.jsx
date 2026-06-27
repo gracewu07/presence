@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import Button from '../components/Button'
+import LoadingState from '../components/LoadingState'
 import StatusBadge from '../components/StatusBadge'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -121,7 +122,7 @@ function StandardsDashboard() {
       </div>
 
       {loading ? (
-        <div className="empty-state">Loading standards data...</div>
+        <LoadingState message="Loading standards data..." compact />
       ) : (
         <>
           <div className="grid grid--stats">

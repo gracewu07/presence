@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import CalendarEventCard from '../components/CalendarEventCard'
+import LoadingState from '../components/LoadingState'
 import { EVENT_TYPE_FILTERS } from '../constants/eventTypes'
 import { useAuth } from '../context/AuthContext'
 import { deleteEvent, fetchEvents } from '../firebase'
@@ -220,7 +221,7 @@ function EventCalendar() {
       </div>
 
       {loading ? (
-        <div className="empty-state">Loading events…</div>
+        <LoadingState message="Loading events..." compact />
       ) : error ? (
         <div className="empty-state form-error">{error}</div>
       ) : view === 'list' ? (

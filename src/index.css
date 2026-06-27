@@ -8356,41 +8356,125 @@ textarea:focus,
   color: var(--ui-navy);
 }
 
+.loading-state {
+  display: grid;
+  place-items: center;
+  padding: 30px;
+  color: var(--ui-navy);
+}
+
+.loading-state--compact {
+  min-height: 150px;
+}
+
 .loading-card {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
-  min-height: 52px;
-  padding: 12px 18px;
+  gap: 14px;
+  min-height: 62px;
+  padding: 12px 20px 12px 12px;
   border: 1px solid var(--ui-border);
   border-radius: 999px;
-  background: var(--ui-blue-soft);
+  background:
+    radial-gradient(circle at 16% 22%, rgba(147, 223, 242, 0.26), transparent 36px),
+    radial-gradient(circle at 82% 78%, rgba(199, 240, 248, 0.34), transparent 42px),
+    #ffffff;
+  overflow: hidden;
+  position: relative;
+}
+
+.loading-card::after {
+  content: '';
+  position: absolute;
+  inset: auto auto -20px 16px;
+  width: 82px;
+  height: 54px;
+  border-radius: 58% 42% 62% 38% / 52% 44% 56% 48%;
+  background: rgba(147, 223, 242, 0.14);
+  animation: loadingBlobDrift 2.2s ease-in-out infinite alternate;
 }
 
 .loading-card p {
+  position: relative;
+  z-index: 1;
   margin: 0;
   color: var(--ui-navy);
   font-size: 0.95rem;
   font-weight: 650;
 }
 
-.loading-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  background: var(--ui-blue);
-  animation: loadingPulse 1s ease-in-out infinite alternate;
+.loading-mark {
+  position: relative;
+  z-index: 1;
+  display: inline-grid;
+  grid-template-columns: repeat(3, 8px);
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 42px;
+  height: 42px;
+  padding: 0 4px;
+  border: 1px solid rgba(147, 223, 242, 0.54);
+  border-radius: 56% 44% 60% 40% / 45% 58% 42% 55%;
+  background:
+    radial-gradient(circle at 28% 24%, rgba(255, 255, 255, 0.95), transparent 14px),
+    radial-gradient(circle at 70% 72%, rgba(147, 223, 242, 0.42), transparent 18px),
+    rgba(237, 250, 255, 0.96);
+  animation: loadingBlobMorph 2.4s ease-in-out infinite alternate;
 }
 
-@keyframes loadingPulse {
+.loading-mark span {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--ui-navy);
+  animation: loadingDotWave 0.9s ease-in-out infinite;
+}
+
+.loading-mark span:nth-child(2) {
+  animation-delay: 0.12s;
+}
+
+.loading-mark span:nth-child(3) {
+  animation-delay: 0.24s;
+}
+
+@keyframes loadingDotWave {
   from {
     opacity: 0.45;
-    transform: scale(0.85);
+    transform: translateY(3px) scale(0.82);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translateY(-3px) scale(1.08);
   }
 
   to {
-    opacity: 1;
-    transform: scale(1.15);
+    opacity: 0.45;
+    transform: translateY(3px) scale(0.82);
+  }
+}
+
+@keyframes loadingBlobDrift {
+  from {
+    transform: translateX(0) scale(1) rotate(-4deg);
+  }
+
+  to {
+    transform: translateX(10px) scale(1.08) rotate(5deg);
+  }
+}
+
+@keyframes loadingBlobMorph {
+  from {
+    border-radius: 56% 44% 60% 40% / 45% 58% 42% 55%;
+    transform: rotate(-2deg);
+  }
+
+  to {
+    border-radius: 42% 58% 44% 56% / 58% 40% 60% 42%;
+    transform: rotate(3deg);
   }
 }
 

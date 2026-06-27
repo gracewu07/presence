@@ -4,6 +4,7 @@ import { useAuth } from './context/AuthContext'
 import Layout from './components/Layout'
 import PrivateRoute from './components/PrivateRoute'
 import AdminRoute from './components/AdminRoute'
+import LoadingState from './components/LoadingState'
 
 const Home = lazy(() => import('./pages/Home'))
 const Login = lazy(() => import('./pages/Login'))
@@ -20,27 +21,16 @@ const AnalyticsDashboard = lazy(() => import('./pages/AnalyticsDashboard'))
 const Settings = lazy(() => import('./pages/Settings'))
 const More = lazy(() => import('./pages/More'))
 
-function AppLoadingFallback({ message }) {
-  return (
-    <div className="loading-screen" role="status" aria-live="polite">
-      <div className="loading-card">
-        <span className="loading-dot" aria-hidden="true"></span>
-        <p>{message}</p>
-      </div>
-    </div>
-  )
-}
-
 function App() {
   const { currentUser, loading } = useAuth()
 
   if (loading) {
-    return <AppLoadingFallback message="Loading authentication..." />
+    return <LoadingState message="Loading authentication..." />
   }
 
   return (
     <BrowserRouter>
-      <Suspense fallback={<AppLoadingFallback message="Loading page..." />}>
+      <Suspense fallback={<LoadingState message="Loading page..." />}>
         <Routes>
           <Route element={<Layout currentUser={currentUser} />}>
             <Route index element={<Home />} />

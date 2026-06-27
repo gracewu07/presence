@@ -1,9 +1,7 @@
+import LoadingState from './LoadingState'
+
 function LoadingSpinner() {
-  return (
-    <div className="spinner-wrapper">
-      <div className="spinner" aria-label="Loading"></div>
-    </div>
-  )
+  return <LoadingState compact />
 }
 
 export default LoadingSpinner
