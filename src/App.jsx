@@ -20,16 +20,27 @@ const AnalyticsDashboard = lazy(() => import('./pages/AnalyticsDashboard'))
 const Settings = lazy(() => import('./pages/Settings'))
 const More = lazy(() => import('./pages/More'))
 
+function AppLoadingFallback({ message }) {
+  return (
+    <div className="loading-screen" role="status" aria-live="polite">
+      <div className="loading-card">
+        <span className="loading-dot" aria-hidden="true"></span>
+        <p>{message}</p>
+      </div>
+    </div>
+  )
+}
+
 function App() {
   const { currentUser, loading } = useAuth()
 
   if (loading) {
-    return <div className="loading-screen">Loading authentication...</div>
+    return <AppLoadingFallback message="Loading authentication..." />
   }
 
   return (
     <BrowserRouter>
-      <Suspense fallback={<div className="loading-screen">Loading page...</div>}>
+      <Suspense fallback={<AppLoadingFallback message="Loading page..." />}>
         <Routes>
           <Route element={<Layout currentUser={currentUser} />}>
             <Route index element={<Home />} />
