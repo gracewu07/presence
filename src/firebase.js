@@ -14,7 +14,7 @@ import {
   limit,
   serverTimestamp,
   onSnapshot,
-} from './lib/firebase'
+} from './lib/firebaseFirestore'
 import { getMemberDocumentId, normalizeMemberEmail } from './services/memberService'
 
 export async function fetchMemberProfile(memberId) {

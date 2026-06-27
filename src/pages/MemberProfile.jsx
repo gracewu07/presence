@@ -31,6 +31,8 @@ function MemberProfile() {
   const { currentUser, signOut, updateProfilePhoto } = useAuth()
   const memberId = currentUser?.email?.trim().toLowerCase() || currentUser?.uid
   const [loading, setLoading] = useState(true)
+  const [historyLoading, setHistoryLoading] = useState(true)
+  const [rankLoading, setRankLoading] = useState(true)
   const [memberCheckIns, setMemberCheckIns] = useState([])
   const [events, setEvents] = useState([])
   const [leaderboardMembers, setLeaderboardMembers] = useState([])
@@ -38,11 +40,14 @@ function MemberProfile() {
 
   useEffect(() => {
     if (!currentUser) return
+    let isActive = true
 
     async function loadProfileData() {
       setLoading(true)
+      setHistoryLoading(true)
+      setRankLoading(true)
       try {
-        const [memberChecks, memberExcusals, leaderboardSnapshot] = await Promise.all([
+        const [memberChecks, memberExcusals] = await Promise.all([
           fetchMemberCheckIns(memberId).catch((error) => {
             console.error('Failed to load member check-ins', error)
             return []
@@ -51,16 +56,19 @@ function MemberProfile() {
             console.error('Failed to load member excusals', error)
             return []
           }),
-          fetchLeaderboard(200).catch((error) => {
-            console.error('Failed to load leaderboard for profile rank', error)
-            return []
-          }),
         ])
+
+        if (!isActive) return
+
+        setMemberCheckIns(memberChecks)
+        setExcusalRequests(memberExcusals)
+        setLoading(false)
 
         const currentYear = new Date().getFullYear()
         const yearStart = new Date(currentYear, 0, 1).toISOString()
         const yearEnd = new Date(currentYear + 1, 0, 1).toISOString()
-        const [currentYearEvents, attendedEvents] = await Promise.all([
+
+        Promise.all([
           fetchEventsByDateRange(yearStart, yearEnd).catch((error) => {
             console.error('Failed to load current-year events for profile', error)
             return []
@@ -70,23 +78,43 @@ function MemberProfile() {
             return []
           }),
         ])
-        const eventsById = new Map()
-        ;[currentYearEvents, attendedEvents].flat().forEach((event) => {
-          if (event?.id) eventsById.set(event.id, event)
-        })
+          .then(([currentYearEvents, attendedEvents]) => {
+            if (!isActive) return
+            const eventsById = new Map()
+            ;[currentYearEvents, attendedEvents].flat().forEach((event) => {
+              if (event?.id) eventsById.set(event.id, event)
+            })
+            setEvents(Array.from(eventsById.values()))
+          })
+          .finally(() => {
+            if (isActive) setHistoryLoading(false)
+          })
 
-        setMemberCheckIns(memberChecks)
-        setEvents(Array.from(eventsById.values()))
-        setLeaderboardMembers(leaderboardSnapshot)
-        setExcusalRequests(memberExcusals)
+        fetchLeaderboard(200)
+          .then((leaderboardSnapshot) => {
+            if (isActive) setLeaderboardMembers(leaderboardSnapshot)
+          })
+          .catch((error) => {
+            console.error('Failed to load leaderboard for profile rank', error)
+          })
+          .finally(() => {
+            if (isActive) setRankLoading(false)
+          })
       } catch (err) {
         console.error('Failed to load profile data', err)
+        if (isActive) {
+          setHistoryLoading(false)
+          setRankLoading(false)
+        }
       } finally {
-        setLoading(false)
+        if (isActive) setLoading(false)
       }
     }
 
     loadProfileData()
+    return () => {
+      isActive = false
+    }
   }, [currentUser, memberId])
 
   const attendanceHistory = useMemo(() => {
@@ -105,7 +133,11 @@ function MemberProfile() {
     })
   }, [memberCheckIns, events])
 
-  const totalPoints = useMemo(() => memberCheckIns.reduce((sum, checkIn) => sum + Number(checkIn.pointsAwarded ?? 0), 0), [memberCheckIns])
+  const totalPoints = useMemo(() => {
+    const checkInTotal = memberCheckIns.reduce((sum, checkIn) => sum + Number(checkIn.pointsAwarded ?? 0), 0)
+    if (loading && memberCheckIns.length === 0) return Number(currentUser?.totalPoints ?? 0)
+    return checkInTotal
+  }, [currentUser?.totalPoints, loading, memberCheckIns])
 
   const eventsAttended = memberCheckIns.length
 
@@ -161,7 +193,7 @@ function MemberProfile() {
     return index === -1 ? null : index + 1
   }, [leaderboardMembers, memberId, totalPoints])
 
-  if (!currentUser || loading) {
+  if (!currentUser) {
     return <LoadingState message="Loading profile..." />
   }
 
@@ -220,7 +252,7 @@ function MemberProfile() {
           </div>
           <div className="profile-hero-meta__item">
             <span>Leaderboard Rank</span>
-            <strong>{leaderboardRank ? `#${leaderboardRank}` : 'Unranked'}</strong>
+            <strong>{rankLoading ? 'Loading...' : leaderboardRank ? `#${leaderboardRank}` : 'Unranked'}</strong>
           </div>
         </div>
       </div>
@@ -235,7 +267,9 @@ function MemberProfile() {
         <div>
           <h2>Attendance History</h2>
           <div className="card profile-section-card">
-            {attendanceHistory.length === 0 ? (
+            {loading || historyLoading ? (
+              <LoadingState message="Loading attendance..." compact />
+            ) : attendanceHistory.length === 0 ? (
               <div className="empty-state">No attendance history available.</div>
             ) : (
               attendanceHistory.map((history) => (

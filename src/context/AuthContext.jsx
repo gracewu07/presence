@@ -8,7 +8,6 @@ import {
   signInWithPassword,
   signOutUser,
 } from '../services/authService'
-import { fetchMemberByEmail } from '../services/memberService'
 
 const AuthContext = createContext(null)
 const PROFILE_PHOTO_STORAGE_KEY = 'presenceProfilePhoto'
@@ -26,6 +25,11 @@ const getStoredMemberSettings = (email) => {
 }
 
 const getProfilePhoto = () => localStorage.getItem(PROFILE_PHOTO_STORAGE_KEY) || ''
+
+async function fetchMemberByEmail(email) {
+  const memberService = await import('../services/memberService')
+  return memberService.fetchMemberByEmail(email)
+}
 
 function applyLocalProfileState(member, firebaseUser) {
   const savedSettings = getStoredMemberSettings(member.email)

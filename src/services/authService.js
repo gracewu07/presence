@@ -9,7 +9,7 @@ import {
   signOut,
   updatePassword,
   firebaseOnAuthStateChanged,
-} from '../lib/firebase'
+} from '../lib/firebaseAuth'
 import { isAllowedEmail } from '../config/authConfig'
 
 function normalizeEmail(email) {

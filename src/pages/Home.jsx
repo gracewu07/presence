@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import EventCard from '../components/EventCard'
 import LoadingState from '../components/LoadingState'
 import StatCard from '../components/StatCard'
-import { fetchCheckIns, fetchEvents } from '../firebase'
+import { fetchEventsByDateRange, fetchMemberCheckIns } from '../firebase'
 import { useAuth } from '../context/AuthContext'
 import { getMemberFirstName } from '../utils/memberDisplay'
 
@@ -102,21 +102,26 @@ function Home() {
       setLoading(true)
       setError(null)
       try {
-        const [eventSnapshot, checkInSnapshot] = await Promise.all([
-          fetchEvents().catch(() => []),
-          fetchCheckIns().catch(() => []),
-        ])
-        const allEvents = eventSnapshot || []
-        const allCheckIns = checkInSnapshot || []
         const now = new Date()
         const sevenDaysFromNow = new Date(now)
         sevenDaysFromNow.setDate(now.getDate() + 7)
+        const currentYear = now.getFullYear()
+        const yearStart = new Date(currentYear, 0, 1).toISOString()
+        const yearEnd = new Date(currentYear + 1, 0, 1).toISOString()
+        const memberId = currentUser.email?.trim().toLowerCase() || currentUser.uid || currentUser.id
+
+        const [eventSnapshot, checkInSnapshot] = await Promise.all([
+          fetchEventsByDateRange(yearStart, yearEnd).catch(() => []),
+          fetchMemberCheckIns(memberId).catch(() => []),
+        ])
+        const allEvents = eventSnapshot || []
+        const memberCheckIns = checkInSnapshot || []
 
         setEvents(allEvents.filter((event) => {
           const eventDate = getEventDateValue(event)
           return eventDate && eventDate >= now && eventDate <= sevenDaysFromNow
         }))
-        setMemberStats(calculateRequirementBlurbs(allEvents, allCheckIns, currentUser))
+        setMemberStats(calculateRequirementBlurbs(allEvents, memberCheckIns, currentUser))
       } catch (err) {
         console.error('Unable to load home data:', err)
         setError('Unable to load events. Please refresh the page.')

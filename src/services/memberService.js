@@ -1,4 +1,4 @@
-import { db, collection, query, where, getDocs, doc, setDoc, getDoc, updateDoc, serverTimestamp } from '../lib/firebase'
+import { db, collection, query, where, getDocs, doc, setDoc, getDoc, updateDoc, serverTimestamp } from '../lib/firebaseFirestore'
 import { isAllowedEmail } from '../config/authConfig'
 import { ROLE_MEMBER, normalizeRole } from '../utils/permissions'
 
