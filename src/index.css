@@ -8515,6 +8515,34 @@ textarea:focus,
     text-align: left;
   }
 
+  .home-page .stat-card--progress {
+    min-height: 176px !important;
+    padding-bottom: 94px !important;
+    overflow: hidden;
+  }
+
+  .home-page .stat-card--progress .circular-progress {
+    z-index: 3;
+    right: auto !important;
+    bottom: 18px !important;
+    left: 50% !important;
+    width: 78px !important;
+    height: 78px !important;
+    padding: 5px;
+    background:
+      radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.82), transparent 28%),
+      conic-gradient(var(--progress-color, var(--ui-blue)) var(--progress-current), rgba(17, 19, 24, 0.16) 0) !important;
+    transform: translateX(-50%) !important;
+  }
+
+  .home-page .stat-card--progress .circular-progress__inner {
+    background: rgba(255, 255, 255, 0.86);
+  }
+
+  .home-page .stat-card--progress .circular-progress__inner span {
+    font-size: 1rem !important;
+  }
+
   .muted,
   .calendar-card__meta,
   .event-card__date,

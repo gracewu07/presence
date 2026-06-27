@@ -25,23 +25,35 @@ service cloud.firestore {
     }
 
     function role() {
-      return memberData().role;
+      return memberData().role is string ? memberData().role.lower() : '';
+    }
+
+    function hasAdminRole() {
+      return role().matches('^\\s*(admin|super[-_ ]?admin|vp[-_ ]?(of[-_ ]?)?standards)\\s*$');
+    }
+
+    function hasSuperAdminRole() {
+      return role().matches('^\\s*(super[-_ ]?admin|vp[-_ ]?(of[-_ ]?)?standards)\\s*$');
+    }
+
+    function hasSubAdminRole() {
+      return role().matches('^\\s*(sub[-_ ]?admin|standards chair)\\s*$');
     }
 
     function isAdmin() {
-      return isApproved() && role() in ['admin', 'super-admin'];
+      return isApproved() && hasAdminRole();
     }
 
     function isSuperAdmin() {
-      return isApproved() && role() == 'super-admin';
+      return isApproved() && hasSuperAdminRole();
     }
 
     function canViewStandards() {
-      return isApproved() && role() in ['sub-admin', 'super-admin'];
+      return isApproved() && (hasSubAdminRole() || hasSuperAdminRole());
     }
 
     function canViewAnalytics() {
-      return isApproved() && role() in ['admin', 'sub-admin', 'super-admin'];
+      return isApproved() && (hasAdminRole() || hasSubAdminRole());
     }
 
     function requestMemberId() {
