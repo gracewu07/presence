@@ -198,6 +198,55 @@ export async function fetchMemberCheckIns(memberId) {
   return Array.from(docsById.values())
 }
 
+export function subscribeToMemberCheckIns(memberId, onNext, onError) {
+  const checkInsRef = collection(db, 'checkIns')
+  const normalizedMemberId = normalizeMemberEmail(memberId)
+  const docsBySource = {
+    memberId: new Map(),
+    memberEmail: new Map(),
+  }
+
+  if (!normalizedMemberId) {
+    onNext([])
+    return () => {}
+  }
+
+  const emit = () => {
+    const docsById = new Map()
+    Object.values(docsBySource).forEach((sourceDocs) => {
+      sourceDocs.forEach((checkIn, id) => docsById.set(id, checkIn))
+    })
+    onNext(Array.from(docsById.values()))
+  }
+  const syncSnapshot = (sourceKey) => (snapshot) => {
+    docsBySource[sourceKey].clear()
+    snapshot.docs.forEach((docSnap) => {
+      docsBySource[sourceKey].set(docSnap.id, { id: docSnap.id, ...docSnap.data() })
+    })
+    emit()
+  }
+  const handleError = (error) => {
+    console.error('Unable to subscribe to member check-ins:', error)
+    onError?.(error)
+  }
+
+  const unsubscribeMemberId = onSnapshot(
+    query(checkInsRef, where('memberId', '==', normalizedMemberId)),
+    syncSnapshot('memberId'),
+    handleError
+  )
+  const unsubscribeEmail = onSnapshot(
+    query(checkInsRef, where('memberEmail', '==', normalizedMemberId)),
+    syncSnapshot('memberEmail'),
+    handleError
+  )
+
+  return () => {
+    unsubscribeMemberId()
+    unsubscribeEmail()
+  }
+}
+
 export async function fetchMemberExcusalRequests(memberId) {
   const requestsRef = collection(db, 'excusalRequests')
   const normalizedMemberId = normalizeMemberEmail(memberId)

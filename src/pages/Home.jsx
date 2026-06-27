@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import EventCard from '../components/EventCard'
 import LoadingState from '../components/LoadingState'
 import StatCard from '../components/StatCard'
-import { fetchEventsByDateRange, fetchMemberCheckIns } from '../firebase'
+import { fetchEventsByDateRange, subscribeToMemberCheckIns } from '../firebase'
 import { useAuth } from '../context/AuthContext'
 import { getMemberFirstName } from '../utils/memberDisplay'
 
@@ -90,6 +90,9 @@ function Home() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
+    let unsubscribeCheckIns = null
+    let isActive = true
+
     async function loadHomeData() {
       if (!currentUser) {
         setEvents([])
@@ -110,27 +113,39 @@ function Home() {
         const yearEnd = new Date(currentYear + 1, 0, 1).toISOString()
         const memberId = currentUser.email?.trim().toLowerCase() || currentUser.uid || currentUser.id
 
-        const [eventSnapshot, checkInSnapshot] = await Promise.all([
-          fetchEventsByDateRange(yearStart, yearEnd).catch(() => []),
-          fetchMemberCheckIns(memberId).catch(() => []),
-        ])
+        const eventSnapshot = await fetchEventsByDateRange(yearStart, yearEnd).catch(() => [])
+        if (!isActive) return
         const allEvents = eventSnapshot || []
-        const memberCheckIns = checkInSnapshot || []
 
         setEvents(allEvents.filter((event) => {
           const eventDate = getEventDateValue(event)
           return eventDate && eventDate >= now && eventDate <= sevenDaysFromNow
         }))
-        setMemberStats(calculateRequirementBlurbs(allEvents, memberCheckIns, currentUser))
+        setMemberStats(calculateRequirementBlurbs(allEvents, [], currentUser))
+
+        unsubscribeCheckIns = subscribeToMemberCheckIns(
+          memberId,
+          (memberCheckIns) => {
+            setMemberStats(calculateRequirementBlurbs(allEvents, memberCheckIns, currentUser))
+          },
+          () => {
+            setError('Unable to load your latest progress. Please refresh the page.')
+          }
+        )
       } catch (err) {
         console.error('Unable to load home data:', err)
         setError('Unable to load events. Please refresh the page.')
       } finally {
-        setLoading(false)
+        if (isActive) setLoading(false)
       }
     }
 
     loadHomeData()
+
+    return () => {
+      isActive = false
+      unsubscribeCheckIns?.()
+    }
   }, [currentUser])
   const firstName = currentUser ? getMemberFirstName(currentUser) : 'Presence Member'
 

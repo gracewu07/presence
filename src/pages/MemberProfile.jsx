@@ -6,11 +6,11 @@ import LoadingState from '../components/LoadingState'
 import StatCard from '../components/StatCard'
 import { getGroupClassName } from '../constants/memberGroups'
 import {
-  fetchMemberCheckIns,
   fetchEventsByDateRange,
   fetchEventsByIds,
   fetchLeaderboard,
   fetchMemberExcusalRequests,
+  subscribeToMemberCheckIns,
 } from '../firebase'
 import { getRoleLabel } from '../utils/permissions'
 
@@ -41,54 +41,62 @@ function MemberProfile() {
   useEffect(() => {
     if (!currentUser) return
     let isActive = true
+    let unsubscribeCheckIns = null
+
+    const loadEventDetails = (memberChecks) => {
+      setHistoryLoading(true)
+      const currentYear = new Date().getFullYear()
+      const yearStart = new Date(currentYear, 0, 1).toISOString()
+      const yearEnd = new Date(currentYear + 1, 0, 1).toISOString()
+
+      Promise.all([
+        fetchEventsByDateRange(yearStart, yearEnd).catch((error) => {
+          console.error('Failed to load current-year events for profile', error)
+          return []
+        }),
+        fetchEventsByIds(memberChecks.map((checkIn) => checkIn.eventId)).catch((error) => {
+          console.error('Failed to load attended events for profile', error)
+          return []
+        }),
+      ])
+        .then(([currentYearEvents, attendedEvents]) => {
+          if (!isActive) return
+          const eventsById = new Map()
+          ;[currentYearEvents, attendedEvents].flat().forEach((event) => {
+            if (event?.id) eventsById.set(event.id, event)
+          })
+          setEvents(Array.from(eventsById.values()))
+        })
+        .finally(() => {
+          if (isActive) setHistoryLoading(false)
+        })
+    }
 
     async function loadProfileData() {
       setLoading(true)
       setHistoryLoading(true)
       setRankLoading(true)
       try {
-        const [memberChecks, memberExcusals] = await Promise.all([
-          fetchMemberCheckIns(memberId).catch((error) => {
-            console.error('Failed to load member check-ins', error)
-            return []
-          }),
-          fetchMemberExcusalRequests(memberId).catch((error) => {
-            console.error('Failed to load member excusals', error)
-            return []
-          }),
-        ])
+        const memberExcusals = await fetchMemberExcusalRequests(memberId).catch((error) => {
+          console.error('Failed to load member excusals', error)
+          return []
+        })
 
         if (!isActive) return
 
-        setMemberCheckIns(memberChecks)
         setExcusalRequests(memberExcusals)
         setLoading(false)
 
-        const currentYear = new Date().getFullYear()
-        const yearStart = new Date(currentYear, 0, 1).toISOString()
-        const yearEnd = new Date(currentYear + 1, 0, 1).toISOString()
-
-        Promise.all([
-          fetchEventsByDateRange(yearStart, yearEnd).catch((error) => {
-            console.error('Failed to load current-year events for profile', error)
-            return []
-          }),
-          fetchEventsByIds(memberChecks.map((checkIn) => checkIn.eventId)).catch((error) => {
-            console.error('Failed to load attended events for profile', error)
-            return []
-          }),
-        ])
-          .then(([currentYearEvents, attendedEvents]) => {
-            if (!isActive) return
-            const eventsById = new Map()
-            ;[currentYearEvents, attendedEvents].flat().forEach((event) => {
-              if (event?.id) eventsById.set(event.id, event)
-            })
-            setEvents(Array.from(eventsById.values()))
-          })
-          .finally(() => {
+        unsubscribeCheckIns = subscribeToMemberCheckIns(
+          memberId,
+          (memberChecks) => {
+            setMemberCheckIns(memberChecks)
+            loadEventDetails(memberChecks)
+          },
+          () => {
             if (isActive) setHistoryLoading(false)
-          })
+          }
+        )
 
         fetchLeaderboard(200)
           .then((leaderboardSnapshot) => {
@@ -114,6 +122,7 @@ function MemberProfile() {
     loadProfileData()
     return () => {
       isActive = false
+      unsubscribeCheckIns?.()
     }
   }, [currentUser, memberId])
 
@@ -277,19 +286,17 @@ function MemberProfile() {
                   key={history.id}
                   className={`event-card event-surface event-surface--${typeClassForEvent(history.eventType)} profile-history-card`}
                 >
-                  <div>
-                    <div className="event-card__topline">
-                      <div className={`event-card__type event-type-badge event-type-badge--${typeClassForEvent(history.eventType)}`}>
-                        {history.eventType}
-                      </div>
-                      {history.locationVerified && <span className="required-note">Verified</span>}
+                  {history.locationVerified && <span className="required-note">Verified</span>}
+                  <div className="event-card__topline">
+                    <div className={`event-card__type event-type-badge event-type-badge--${typeClassForEvent(history.eventType)}`}>
+                      {history.eventType}
                     </div>
-                    <h3>{history.title}</h3>
-                    <p className="event-card__meta">{toLocaleShort(history.date)}</p>
                   </div>
-                  <div>
-                    <p className="event-card__location">{history.points} points</p>
-                    <p className="muted">Checked in {toLocaleShort(history.timestamp)}</p>
+                  <h3>{history.title}</h3>
+                  <p className="event-card__meta">{toLocaleShort(history.date)}</p>
+                  <div className="profile-history-card__footer">
+                    <span>{history.points} points</span>
+                    <span>Checked in {toLocaleShort(history.timestamp)}</span>
                   </div>
                 </div>
               ))
