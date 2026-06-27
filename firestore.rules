@@ -1,0 +1,101 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null && request.auth.token.email is string;
+    }
+
+    function memberId() {
+      return request.auth.token.email.lower();
+    }
+
+    function memberPath() {
+      return /databases/$(database)/documents/members/$(memberId());
+    }
+
+    function memberData() {
+      return get(memberPath()).data;
+    }
+
+    function isApproved() {
+      return signedIn()
+        && exists(memberPath())
+        && memberData().accessStatus == 'approved';
+    }
+
+    function role() {
+      return memberData().role;
+    }
+
+    function isAdmin() {
+      return isApproved() && role() in ['admin', 'super-admin'];
+    }
+
+    function isSuperAdmin() {
+      return isApproved() && role() == 'super-admin';
+    }
+
+    function canViewStandards() {
+      return isApproved() && role() in ['sub-admin', 'super-admin'];
+    }
+
+    function canViewAnalytics() {
+      return isApproved() && role() in ['admin', 'sub-admin', 'super-admin'];
+    }
+
+    function requestMemberId() {
+      return (request.resource.data.memberEmail is string)
+        ? request.resource.data.memberEmail.lower()
+        : (
+          (request.resource.data.memberId is string)
+            ? request.resource.data.memberId.lower()
+            : ''
+        );
+    }
+
+    function resourceMemberId() {
+      return (resource.data.memberEmail is string)
+        ? resource.data.memberEmail.lower()
+        : (
+          (resource.data.memberId is string)
+            ? resource.data.memberId.lower()
+            : ''
+        );
+    }
+
+    match /members/{memberDocId} {
+      allow read: if isApproved();
+      allow create, update, delete: if isSuperAdmin();
+    }
+
+    match /events/{eventId} {
+      allow read: if isApproved();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /checkIns/{checkInId} {
+      allow read: if isApproved();
+      allow create: if isApproved()
+        && (requestMemberId() == memberId() || isSuperAdmin());
+      allow update, delete: if isSuperAdmin();
+    }
+
+    match /excusalRequests/{requestId} {
+      allow read: if isApproved()
+        && (resourceMemberId() == memberId() || canViewStandards());
+      allow create: if isApproved() && requestMemberId() == memberId();
+      allow update: if isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    match /appSettings/{settingId} {
+      allow read: if isApproved();
+      allow create, update, delete: if isSuperAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

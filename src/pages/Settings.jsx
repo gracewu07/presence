@@ -126,7 +126,7 @@ function SettingsForm({ currentUser, updateProfilePreferences, changePassword })
                 type="text"
                 value={preferences.displayName}
                 onChange={updatePreference('displayName')}
-                placeholder="Grace Wu"
+                placeholder="Member Name"
               />
             </label>
             <label className="settings-field">
@@ -135,7 +135,7 @@ function SettingsForm({ currentUser, updateProfilePreferences, changePassword })
                 type="text"
                 value={preferences.preferredName}
                 onChange={updatePreference('preferredName')}
-                placeholder="Grace"
+                placeholder="Preferred name"
               />
             </label>
             <label className="settings-field">
@@ -144,7 +144,7 @@ function SettingsForm({ currentUser, updateProfilePreferences, changePassword })
                 type="email"
                 value={preferences.contactEmail}
                 onChange={updatePreference('contactEmail')}
-                placeholder="gracewu@unc.edu"
+                placeholder="onyen@unc.edu"
               />
             </label>
             <label className="settings-field">

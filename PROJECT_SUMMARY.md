@@ -28,4 +28,4 @@ Presence helps UNC AKPsi manage chapter attendance and member engagement.
 - Mock/demo data should not appear in production.
 - Firebase config is loaded from Vite environment variables in `src/lib/firebase.js`.
 - Google Places uses `VITE_GOOGLE_MAPS_API_KEY` when configured.
-- Firestore security rules should be reviewed before public deployment.
+- Firestore security rules are versioned in `firestore.rules` and should be reviewed/deployed before public use.

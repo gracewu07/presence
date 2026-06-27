@@ -11,8 +11,6 @@ The app uses:
 * JavaScript / JSX
 * Firebase
 * React Router
-* Recharts
-* QR code libraries
 * ESLint
 
 The coding agent should help maintain, improve, debug, and document the project while preserving the existing structure and user experience unless explicitly asked to change it.
@@ -31,7 +29,6 @@ Important folders and files include:
 * `src/context/` — React context providers
 * `src/services/` — app services such as authentication and member logic
 * `src/utils/` — helper functions
-* `src/data/` — mock or seed data
 * `src/config/` — app configuration
 * `src/lib/` — library setup, including Firebase
 * `package.json` — scripts and dependencies
@@ -132,7 +129,6 @@ Ask before making major changes to:
 
 * `.env` or environment variable files
 * `src/firebase.js`
-* `src/firebaseConfig.js`
 * `src/lib/firebase.js`
 * `src/context/AuthContext.jsx`
 * `src/services/authService.js`
