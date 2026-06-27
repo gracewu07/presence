@@ -2,7 +2,7 @@
 import Button from '../components/Button'
 import LoadingState from '../components/LoadingState'
 import { useAuth } from '../context/AuthContext'
-import { fetchEvents, fetchMemberCheckIns, findCheckInByEventAndMember, recordCheckIn } from '../firebase'
+import { fetchEventsForCheckInWindow, fetchMemberCheckIns, findCheckInByEventAndMember, recordCheckIn } from '../firebase'
 import { formatDisplayDate, formatDisplayTime } from '../utils/eventDateTime'
 import { formatEventLocation } from '../utils/eventLocation'
 import { haversineDistance } from '../utils/haversine'
@@ -88,7 +88,7 @@ function MemberCheckIn() {
       setMessage(null)
 
       try {
-        const eventsPromise = fetchEvents()
+        const eventsPromise = fetchEventsForCheckInWindow()
         const checkInsPromise = currentUser
           ? fetchMemberCheckIns(memberId).catch((err) => {
               console.error('Unable to load member check-ins:', err)

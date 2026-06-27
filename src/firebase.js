@@ -98,10 +98,10 @@ export async function fetchEvents() {
   }
 }
 
-export async function fetchUpcomingEvents() {
+export async function fetchUpcomingEvents(limitCount = 20) {
   const eventsRef = collection(db, 'events')
   const now = new Date().toISOString()
-  const q = query(eventsRef, where('eventDate', '>=', now), orderBy('eventDate', 'asc'))
+  const q = query(eventsRef, where('eventDate', '>=', now), orderBy('eventDate', 'asc'), limit(limitCount))
 
   try {
     const snapshot = await getDocs(q)
@@ -110,6 +110,51 @@ export async function fetchUpcomingEvents() {
     console.error('Unable to load upcoming firestore events:', error)
     return []
   }
+}
+
+export async function fetchEventsByDateRange(startIso, endIso) {
+  const eventsRef = collection(db, 'events')
+  const q = query(
+    eventsRef,
+    where('eventDate', '>=', startIso),
+    where('eventDate', '<=', endIso),
+    orderBy('eventDate', 'asc')
+  )
+
+  try {
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
+  } catch (error) {
+    console.error('Unable to load firestore events by date range:', error)
+    return []
+  }
+}
+
+export async function fetchEventsForCheckInWindow(limitCount = 20) {
+  const eventsRef = collection(db, 'events')
+  const now = new Date().toISOString()
+  const q = query(eventsRef, where('endDate', '>=', now), orderBy('endDate', 'asc'), limit(limitCount))
+
+  try {
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
+  } catch (error) {
+    console.error('Unable to load check-in window events:', error)
+    return []
+  }
+}
+
+export async function fetchEventsByIds(eventIds = []) {
+  const uniqueIds = Array.from(new Set(eventIds.filter(Boolean)))
+  if (uniqueIds.length === 0) return []
+
+  const snapshots = await Promise.all(
+    uniqueIds.map((eventId) => getDoc(doc(db, 'events', eventId)).catch(() => null))
+  )
+
+  return snapshots
+    .filter((snapshot) => snapshot?.exists?.())
+    .map((snapshot) => ({ id: snapshot.id, ...snapshot.data() }))
 }
 
 export async function recordCheckIn(checkInData) {

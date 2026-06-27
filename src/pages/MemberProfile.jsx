@@ -7,9 +7,9 @@ import StatCard from '../components/StatCard'
 import { getGroupClassName } from '../constants/memberGroups'
 import {
   fetchMemberCheckIns,
-  fetchEvents,
-  fetchCheckIns,
-  fetchMembers,
+  fetchEventsByDateRange,
+  fetchEventsByIds,
+  fetchLeaderboard,
   fetchMemberExcusalRequests,
 } from '../firebase'
 import { getRoleLabel } from '../utils/permissions'
@@ -33,8 +33,7 @@ function MemberProfile() {
   const [loading, setLoading] = useState(true)
   const [memberCheckIns, setMemberCheckIns] = useState([])
   const [events, setEvents] = useState([])
-  const [allCheckIns, setAllCheckIns] = useState([])
-  const [members, setMembers] = useState([])
+  const [leaderboardMembers, setLeaderboardMembers] = useState([])
   const [excusalRequests, setExcusalRequests] = useState([])
 
   useEffect(() => {
@@ -43,33 +42,42 @@ function MemberProfile() {
     async function loadProfileData() {
       setLoading(true)
       try {
-        const [memberChecks, allChecks, allEvents, allMembers, memberExcusals] = await Promise.all([
+        const [memberChecks, memberExcusals, leaderboardSnapshot] = await Promise.all([
           fetchMemberCheckIns(memberId).catch((error) => {
             console.error('Failed to load member check-ins', error)
-            return []
-          }),
-          fetchCheckIns().catch((error) => {
-            console.error('Failed to load all check-ins for profile ranking', error)
-            return []
-          }),
-          fetchEvents().catch((error) => {
-            console.error('Failed to load events for profile', error)
-            return []
-          }),
-          fetchMembers().catch((error) => {
-            console.error('Failed to load members for profile ranking', error)
             return []
           }),
           fetchMemberExcusalRequests(memberId).catch((error) => {
             console.error('Failed to load member excusals', error)
             return []
           }),
+          fetchLeaderboard(200).catch((error) => {
+            console.error('Failed to load leaderboard for profile rank', error)
+            return []
+          }),
         ])
 
+        const currentYear = new Date().getFullYear()
+        const yearStart = new Date(currentYear, 0, 1).toISOString()
+        const yearEnd = new Date(currentYear + 1, 0, 1).toISOString()
+        const [currentYearEvents, attendedEvents] = await Promise.all([
+          fetchEventsByDateRange(yearStart, yearEnd).catch((error) => {
+            console.error('Failed to load current-year events for profile', error)
+            return []
+          }),
+          fetchEventsByIds(memberChecks.map((checkIn) => checkIn.eventId)).catch((error) => {
+            console.error('Failed to load attended events for profile', error)
+            return []
+          }),
+        ])
+        const eventsById = new Map()
+        ;[currentYearEvents, attendedEvents].flat().forEach((event) => {
+          if (event?.id) eventsById.set(event.id, event)
+        })
+
         setMemberCheckIns(memberChecks)
-        setAllCheckIns(allChecks)
-        setEvents(allEvents)
-        setMembers(allMembers)
+        setEvents(Array.from(eventsById.values()))
+        setLeaderboardMembers(leaderboardSnapshot)
         setExcusalRequests(memberExcusals)
       } catch (err) {
         console.error('Failed to load profile data', err)
@@ -134,28 +142,15 @@ function MemberProfile() {
 
   const leaderboardRank = useMemo(() => {
     const totals = new Map()
-    const hasCheckInRankData = allCheckIns.length > 0
+    leaderboardMembers.forEach((member) => {
+      const id = (member.email || member.id || '').trim().toLowerCase()
+      if (!id || member.accessStatus !== 'approved') return
 
-    if (hasCheckInRankData) {
-      allCheckIns.forEach((checkIn) => {
-        const id = (checkIn.memberEmail || checkIn.memberId || '').trim().toLowerCase()
-        if (!id) return
-
-        const current = totals.get(id) || { memberId: id, totalPoints: 0 }
-        current.totalPoints += Number(checkIn.pointsAwarded ?? 0)
-        totals.set(id, current)
+      totals.set(id, {
+        memberId: id,
+        totalPoints: Number(member.totalPoints ?? member.points ?? 0),
       })
-    } else {
-      members.forEach((member) => {
-        const id = (member.email || member.id || '').trim().toLowerCase()
-        if (!id || member.accessStatus !== 'approved') return
-
-        totals.set(id, {
-          memberId: id,
-          totalPoints: Number(member.totalPoints ?? member.points ?? 0),
-        })
-      })
-    }
+    })
 
     if (memberId && !totals.has(memberId)) {
       totals.set(memberId, { memberId, totalPoints })
@@ -164,7 +159,7 @@ function MemberProfile() {
     const ranked = Array.from(totals.values()).sort((a, b) => b.totalPoints - a.totalPoints || a.memberId.localeCompare(b.memberId))
     const index = ranked.findIndex((rank) => rank.memberId === memberId)
     return index === -1 ? null : index + 1
-  }, [allCheckIns, memberId, members, totalPoints])
+  }, [leaderboardMembers, memberId, totalPoints])
 
   if (!currentUser || loading) {
     return <LoadingState message="Loading profile..." />

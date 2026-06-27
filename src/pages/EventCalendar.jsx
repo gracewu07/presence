@@ -4,7 +4,7 @@ import CalendarEventCard from '../components/CalendarEventCard'
 import LoadingState from '../components/LoadingState'
 import { EVENT_TYPE_FILTERS } from '../constants/eventTypes'
 import { useAuth } from '../context/AuthContext'
-import { deleteEvent, fetchEvents } from '../firebase'
+import { deleteEvent, fetchEventsByDateRange } from '../firebase'
 import { buildCalendarUrls, downloadIcs } from '../utils/calendarLinks'
 import { formatDisplayDate, formatDisplayTime } from '../utils/eventDateTime'
 import { formatEventLocation } from '../utils/eventLocation'
@@ -81,7 +81,10 @@ function EventCalendar() {
       setError(null)
 
       try {
-        const firestoreEvents = await fetchEvents()
+        const currentYear = new Date().getFullYear()
+        const rangeStart = new Date(currentYear, 5, 1).toISOString()
+        const rangeEnd = new Date(currentYear + 1, 0, 1).toISOString()
+        const firestoreEvents = await fetchEventsByDateRange(rangeStart, rangeEnd)
         setEvents(firestoreEvents)
       } catch (err) {
         console.error('Failed to load events:', err)
